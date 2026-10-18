@@ -1,0 +1,10 @@
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
+
+# Yayınlanmayacak dosyalar (telifli kılavuzlar, kaynak fotoğraflar, sistem dosyaları)
+*.pdf
+1.png
+2.png
+3.jpg
+.DS_Store
+.ignore

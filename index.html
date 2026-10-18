@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Elektronik Laboratuvarı</title>
+<meta name="description" content="Multimetre, fonksiyon jeneratörü ve osiloskop kullanımı için animasyonlu eğitimler ve breadboard deney simülatörü.">
+<style>
+  :root{--bg:#f4f6f9;--panel:#fff;--ink:#1f2933;--sub:#52606d;--accent:#1d6fa5;--line:#d9e2ec;}
+  @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1720;--panel:#17212c;--ink:#e6edf3;--sub:#9fb0c0;--accent:#5aa9e6;--line:#2a3846;}}
+  :root[data-theme="dark"]{--bg:#0f1720;--panel:#17212c;--ink:#e6edf3;--sub:#9fb0c0;--accent:#5aa9e6;--line:#2a3846;}
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;line-height:1.55;}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 16px 60px;}
+  header{background:linear-gradient(135deg,#1d6fa5,#0d3b57);color:#fff;border-radius:16px;padding:28px 30px;margin-bottom:24px;}
+  header h1{margin:0 0 6px;font-size:1.7rem;}
+  header p{margin:0;opacity:.9;max-width:720px;}
+  h2{font-size:1.05rem;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin:28px 0 12px;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+  a.card{display:flex;flex-direction:column;gap:8px;text-decoration:none;color:inherit;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px;transition:border-color .15s,transform .15s;}
+  a.card:hover{border-color:var(--accent);transform:translateY(-2px);}
+  a.card .tag{font-size:.75rem;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;}
+  a.card h3{margin:0;font-size:1.15rem;color:var(--accent);}
+  a.card p{margin:0;font-size:.93rem;color:var(--sub);}
+  a.card.wide{grid-column:1 / -1;}
+  .go{margin-top:auto;font-weight:600;color:var(--accent);font-size:.9rem;}
+  footer{margin-top:36px;font-size:.85rem;color:var(--sub);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Elektronik Laboratuvarı</h1>
+    <p>Laboratuvar cihazlarını gerçek ön panelleriyle öğren, sonra breadboard üzerinde devre kurup ölç. Tarayıcıda çalışır, kurulum gerektirmez.</p>
+  </header>
+
+  <h2>Deney simülatörü</h2>
+  <div class="grid">
+    <a class="card wide" href="Deney_Simulatoru.html">
+      <span class="tag">Breadboard + 3 cihaz</span>
+      <h3>Elektronik Deney Simülatörü</h3>
+      <p>Gerçek devre çözücüyle çalışan breadboard: butonla LED, potansiyometre, yarım/tam dalga ve köprü doğrultmaç, kırpıcılar, DC kıyıcı ve buck dönüştürücü. Multimetre, fonksiyon jeneratörü ve osiloskopla ölçüm yap; serbest modda kendi devreni kur.</p>
+      <span class="go">Simülatörü aç →</span>
+    </a>
+  </div>
+
+  <h2>Cihaz eğitimleri</h2>
+  <div class="grid">
+    <a class="card" href="Multimetre_Egitimi.html">
+      <span class="tag">UNI-T UT136B+</span>
+      <h3>Multimetre</h3>
+      <p>Gerilim, akım, direnç, süreklilik, diyot, kapasite, frekans, hFE ve NCV ölçümleri; prob girişleri ve güvenlik.</p>
+      <span class="go">Eğitime başla →</span>
+    </a>
+    <a class="card" href="Fonksiyon_Jeneratoru_Egitimi.html">
+      <span class="tag">UNI-T UTG932E</span>
+      <h3>Fonksiyon Jeneratörü</h3>
+      <p>Dalga şekli, frekans, genlik, offset, faz, görev oranı (PWM) ve çıkış yükü ayarları.</p>
+      <span class="go">Eğitime başla →</span>
+    </a>
+    <a class="card" href="Osiloskop_Egitimi.html">
+      <span class="tag">RIGOL DS1202Z-E</span>
+      <h3>Osiloskop</h3>
+      <p>AUTO, dikey ve yatay ayarlar, tetikleme, otomatik ölçümler, imleçler ve prob ayarı.</p>
+      <span class="go">Eğitime başla →</span>
+    </a>
+    <a class="card" href="Lab_Jenerator_Osiloskop.html">
+      <span class="tag">İki cihaz birlikte</span>
+      <h3>Jeneratör + Osiloskop</h3>
+      <p>Jeneratörde üretilen sinyali osiloskopta ölçüp doğrulama; faz, PWM, yük ve prob hataları.</p>
+      <span class="go">Laboratuvarı aç →</span>
+    </a>
+  </div>
+
+  <footer>Sayfalar tarayıcıda çalışan simülasyonlardır; gerçek cihaz kılavuzlarının yerine geçmez.</footer>
+</div>
+</body>
+</html>

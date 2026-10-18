@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fonksiyon Jeneratörü Eğitimi - UTG932E</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#ffffff; --ink:#1f2933; --sub:#52606d;
+    --accent:#1d6fa5; --accent2:#c0392b; --line:#d9e2ec;
+    --ok:#1f7a45; --okbg:#eaf7ec; --warn:#8a5a00; --warnbg:#fff6e5; --bad:#9b1c1c; --badbg:#fdeaea; --info:#1d4e75; --infobg:#eaf2f8;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;line-height:1.55;}
+  .app{max-width:1320px;margin:0 auto;padding:22px 20px 60px;}
+  header.cover{background:linear-gradient(135deg,#1d6fa5,#0d3b57);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:16px;box-shadow:0 8px 24px rgba(13,59,87,.22);}
+  header.cover h1{margin:0 0 4px;font-size:1.55rem;}
+  header.cover p{margin:0;opacity:.9;font-size:.95rem;}
+  nav#chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  nav#chips button{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 13px;border-radius:20px;cursor:pointer;font-size:.88rem;}
+  nav#chips button:hover{border-color:var(--accent);}
+  nav#chips button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  main{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:18px;align-items:start;}
+  .stage-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 2px 6px rgba(15,35,55,.05);}
+  svg#stage{width:100%;height:auto;display:block;user-select:none;touch-action:none;}
+  .side{display:flex;flex-direction:column;gap:14px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:0 2px 6px rgba(15,35,55,.05);}
+  .card h2{margin:0 0 4px;font-size:1.1rem;color:var(--accent);}
+  .card .stepno{font-size:.78rem;color:var(--sub);text-transform:uppercase;letter-spacing:.04em;}
+  .card p{margin:8px 0;font-size:.95rem;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center;}
+  button.b{border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 13px;border-radius:8px;cursor:pointer;font-size:.9rem;}
+  button.b:hover{border-color:var(--accent);}
+  button.b.pri{background:var(--accent);color:#fff;border-color:var(--accent);}
+  button.b.sm{padding:5px 10px;font-size:.82rem;}
+  button.b.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  button.b:disabled{opacity:.45;cursor:default;}
+  #infoCard h2{font-size:1rem;}
+  #infoCard .dyn{margin-top:8px;font-size:.85rem;color:var(--sub);border-top:1px dashed var(--line);padding-top:8px;}
+  #fb{border-radius:10px;padding:11px 14px;font-size:.92rem;border-left:5px solid var(--info);background:var(--infobg);color:var(--info);min-height:48px;}
+  #fb.ok{border-color:var(--ok);background:var(--okbg);color:var(--ok);}
+  #fb.warn{border-color:#e0a11a;background:var(--warnbg);color:var(--warn);}
+  #fb.bad{border-color:var(--accent2);background:var(--badbg);color:var(--bad);}
+  .scopeRow{display:flex;align-items:center;gap:8px;margin:6px 0;font-size:.88rem;}
+  .scopeRow span.l{min-width:92px;color:var(--sub);}
+  .scopeRow span.v{min-width:84px;font-weight:600;text-align:center;}
+  .halo{fill:none;stroke:#ffc400;stroke-width:4;display:none;animation:pulse 1s infinite;pointer-events:none;}
+  @keyframes pulse{50%{stroke-opacity:.2}}
+  [data-btn],[data-row],[data-chsel]{cursor:pointer;}
+  [data-btn]{transition:transform .08s,filter .08s;}
+  [data-btn].pressed{transform:translate(0,2.5px);filter:brightness(.78);}
+  .blink{animation:bl 1s steps(2,start) infinite;}
+  @keyframes bl{50%{opacity:0}}
+  .flow{fill:none;stroke-width:4;stroke-dasharray:3 14;stroke-linecap:round;animation:fl .7s linear infinite;}
+  @keyframes fl{to{stroke-dashoffset:-17}}
+  .knobwrap{cursor:grab;}
+  @media (max-width:900px){main{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="cover">
+    <h1>Fonksiyon Jeneratörü Kullanımı – Animasyonlu Eğitim Seti</h1>
+    <p>UNI-T UTG932E (30 MHz, 200 MSa/s) üzerinde: dalga şekli, frekans, genlik, offset, faz, görev oranı ve çıkış yükü. Çıkışı alttaki osiloskopta izle. Düğmelere basabilir, büyük döner düğmeyi sürükleyebilirsin.</p>
+  </header>
+  <nav id="chips"></nav>
+  <main>
+    <div class="stage-wrap">
+      <svg id="stage" viewBox="0 0 900 900" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="redglow"><stop offset="0" stop-color="#ff2b2b" stop-opacity=".95"/><stop offset="1" stop-color="#ff2b2b" stop-opacity="0"/></radialGradient>
+          <radialGradient id="knobg" cx="45%" cy="40%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfcdc6"/></radialGradient>
+          <radialGradient id="knobin" cx="45%" cy="40%"><stop offset="0" stop-color="#9aa0a8"/><stop offset="1" stop-color="#d7d9dc"/></radialGradient>
+          <clipPath id="clipScope"><rect x="40" y="605" width="600" height="240"/></clipPath>
+        </defs>
+        <g id="genG" transform="translate(12 10) scale(1.14)"></g>
+        <g id="cableG"></g>
+        <g id="scopeG"></g>
+        <g id="halosAbs"></g>
+      </svg>
+    </div>
+    <aside class="side">
+      <div class="card" id="lessonCard"></div>
+      <div class="card" id="infoCard"></div>
+      <div id="fb"></div>
+      <div class="card" id="scopeCtl">
+        <div class="stepno">Osiloskop ayarı</div>
+        <div class="scopeRow"><span class="l">Zaman/div</span><button class="b sm" id="tdm">◀</button><span class="v" id="tdv"></span><button class="b sm" id="tdp">▶</button></div>
+        <div class="scopeRow"><span class="l">Volt/div</span><button class="b sm" id="vdm">◀</button><span class="v" id="vdv"></span><button class="b sm" id="vdp">▶</button></div>
+        <div class="row"><button class="b sm on" id="autoBtn">Auto ölçek</button><button class="b sm" id="muteBtn">🔊 Ses açık</button></div>
+      </div>
+      <div class="card" id="presetCard" style="display:none"></div>
+    </aside>
+  </main>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const stage=$('#stage');
+const CHCOL=['#ffd23f','#3ad1ff'], CHCOL2=['#b98a00','#0f87b3'];
+const WAVES=['sine','square','pulse','ramp','arb','noise','dc'];
+const WNAME={sine:'Sine',square:'Square',pulse:'Pulse',ramp:'Ramp',arb:'Arb',noise:'Noise',dc:'DC'};
+const WICON={sine:'M0 7 C4 -2 8 -2 13 7 S22 16 26 7',square:'M0 12 V2 H9 V12 H18 V2 H26',pulse:'M0 12 H5 V2 H11 V12 H26',ramp:'M0 12 L9 2 L18 12 L26 4',arb:'M0 9 L5 3 L9 11 L14 4 L19 12 L26 6',noise:'M0 7 L2 3 L4 11 L6 5 L8 10 L10 2 L12 9 L14 4 L17 11 L19 3 L22 10 L26 5',dc:'M0 7 H26'};
+const FMAX={sine:30e6,square:15e6,pulse:15e6,ramp:1e6,arb:6e6,noise:1e6,dc:1e6};
+const LAB={freq:'Freq',amp:'Amp',off:'Offset',phase:'Phase',duty:'Duty'};
+const PUNIT={freq:'Hz',amp:'Vpp',off:'V',phase:'°',duty:'%'};
+
+/* ---------- Dalga şekilleri ---------- */
+function shape(w,p,d){
+  switch(w){
+    case 'sine':return Math.sin(2*Math.PI*p);
+    case 'square':case 'pulse':return p<d?1:-1;
+    case 'ramp':return p<d?-1+2*p/d:1-2*(p-d)/(1-d);
+    case 'arb':return 2*(1-Math.exp(-5*p))/(1-Math.exp(-5))-1;
+    case 'noise':return Math.random()*2-1;
+    default:return 0;
+  }
+}
+const RMS={};
+WAVES.forEach(w=>{let s=0;const N=2000;for(let i=0;i<N;i++){const v=w==='noise'?0.5773:shape(w,i/N,0.5);s+=v*v;}RMS[w]=Math.sqrt(s/N);});
+function paramList(w){return w==='dc'?['off']:w==='noise'?['amp','off']:(w==='square'||w==='pulse'||w==='ramp')?['freq','amp','off','phase','duty']:['freq','amp','off','phase'];}
+const labOf=(p,w)=>p==='duty'?(w==='ramp'?'Symm':'Duty'):LAB[p];
+
+/* ---------- Durum ---------- */
+const newCh=()=>({on:false,wave:'sine',freq:1000,amp:0.1,off:0,phase:0,duty:50});
+const CH=[newCh(),newCh()];
+const G={ch:0,load:'HighZ',menu:'wave',page:0,param:'freq',entry:null,edit:false,cur:{freq:3,amp:-2,off:-2,phase:0,duty:0},info:'screen',mode:'lesson',lesson:0,step:0,busy:0,mute:false};
+const CRANGE={freq:[-3,7],amp:[-3,1],off:[-3,1],phase:[-2,2],duty:[-2,1]};
+const TD=[],VD=[];
+[-8,-7,-6,-5,-4,-3,-2,-1,0].forEach(e=>[1,2,5].forEach(m=>TD.push(m*Math.pow(10,e))));
+TD.push(10);
+[-3,-2,-1,0].forEach(e=>[1,2,5].forEach(m=>VD.push(m*Math.pow(10,e))));
+VD.push(10);
+const SCP={td:TD.indexOf(1e-3),vd:VD.indexOf(1),auto:true};
+let dirty=true;
+const mark=()=>{dirty=true;};
+
+/* ---------- Biçimleme ---------- */
+function siFmt(x,u){
+  const a=Math.abs(x);let sc=1,p='';
+  if(a>=1e6){sc=1e6;p='M';}else if(a>=1e3){sc=1e3;p='k';}else if(a>=1||a===0){sc=1;}else if(a>=1e-3){sc=1e-3;p='m';}else if(a>=1e-6){sc=1e-6;p='μ';}else{sc=1e-9;p='n';}
+  return (+(x/sc).toPrecision(4))+' '+p+u;
+}
+function fmtP(p,v){
+  if(p==='freq'){const sc=v>=1e6?1e6:v>=1e3?1e3:1,u=sc===1e6?'MHz':sc===1e3?'kHz':'Hz';const [ip,fp]=(v/sc).toFixed(8).split('.');return{num:ip+'.'+fp.match(/.{1,3}/g).join(','),u,lg:Math.log10(sc),grp:true,ipl:ip.length,st:0,dec:8};}
+  if(p==='amp'){if(v>=1)return{num:v.toFixed(3),u:'Vpp',lg:0,ipl:v.toFixed(3).split('.')[0].length,st:0,dec:3};return{num:String(Math.round(v*1000)),u:'mVpp',lg:-3,ipl:String(Math.round(v*1000)).length,st:0,dec:0};}
+  if(p==='off'){const a=Math.abs(v),sg=v<0?'-':'';if(a>=1){const t=a.toFixed(3);return{num:sg+t,u:'V',lg:0,ipl:t.split('.')[0].length,st:sg.length,dec:3};}const t=String(Math.round(a*1000));return{num:sg+t,u:'mV',lg:-3,ipl:t.length,st:sg.length,dec:0};}
+  const t=v.toFixed(2);return{num:t,u:p==='phase'?'°':'%',lg:0,ipl:t.split('.')[0].length,st:0,dec:2};
+}
+function cidx(f,d){
+  const k=d-f.lg;
+  if(k>=0){const i=f.ipl-1-k;return i<0?-1:f.st+i;}
+  const fi=-k-1;if(fi>=f.dec)return -1;
+  return f.st+f.ipl+1+fi+(f.grp?Math.floor(fi/3):0);
+}
+const stepTxt=(p,d)=>siFmt(Math.pow(10,d),PUNIT[p]==='°'||PUNIT[p]==='%'?PUNIT[p]:PUNIT[p]);
+const ptxt=(p,v)=>{const f=fmtP(p,v);return f.num+' '+f.u;};
+const near=(a,b)=>Math.abs(a-b)<=Math.max(1e-6,Math.abs(b)*0.005);
+
+/* ---------- Parametre ayarlama ---------- */
+function limits(c,p){
+  if(p==='freq')return[1e-6,FMAX[c.wave]];
+  if(p==='amp')return[0.001,Math.min(G.load==='50Ω'?10:20,2*(10-Math.abs(c.off)))];
+  if(p==='off')return[-(10-c.amp/2),10-c.amp/2];
+  if(p==='duty')return[1,99];
+  return[0,359.99];
+}
+function setP(i,p,v){
+  const c=CH[i];let m='';
+  if(p==='phase')v=((v%360)+360)%360;
+  else{const[lo,hi]=limits(c,p);if(v<lo){v=lo;m=`${LAB[p]} alt sınırı ${ptxt(p,lo)}: değer sınırlandı.`;}else if(v>hi){v=hi;m=`${LAB[p]} üst sınırı ${ptxt(p,hi)}: değer sınırlandı.`;}}
+  c[p]=+v.toFixed(9);
+  if(p==='amp'||p==='off'){const m2=10-c.amp/2;if(Math.abs(c.off)>m2)c.off=Math.sign(c.off)*m2;}
+  if(m)say(m,'warn');
+  return m;
+}
+function nudge(p,dir){
+  const c=CH[G.ch],st=Math.pow(10,G.cur[p]);
+  const n=Math.round(c[p]/st)+dir;
+  setP(G.ch,p,n*st);
+}
+function unitsFor(p){
+  const c=CH[G.ch];
+  if(p==='freq')return[['MHz',1e6],['kHz',1e3],['Hz',1],['mHz',1e-3],null,'x'];
+  if(p==='amp'){const f=2/RMS[c.wave];return[['Vpp',1],['mVpp',1e-3],['Vrms',f],['mVrms',f*1e-3],null,'x'];}
+  if(p==='off')return[['V',1],['mV',1e-3],null,null,null,'x'];
+  if(p==='phase')return[['°',1],null,null,null,null,'x'];
+  return[['%',1],null,null,null,null,'x'];
+}
+function ensureParam(){const l=paramList(CH[G.ch].wave);if(!l.includes(G.param))G.param=l[0];}
+
+/* ---------- Ses ---------- */
+let actx=null;
+document.addEventListener('pointerdown',()=>{if(!actx){try{actx=new (window.AudioContext||window.webkitAudioContext)();}catch(e){}}},{once:true});
+function tick(f=900){
+  if(!actx||G.mute)return;
+  try{const o=actx.createOscillator(),g=actx.createGain();o.type='square';o.frequency.value=f;g.gain.value=.04;o.connect(g);g.connect(actx.destination);o.start();g.gain.setTargetAtTime(0,actx.currentTime,.012);o.stop(actx.currentTime+.07);}catch(e){}
+}
+
+/* ---------- Bilgi metinleri ---------- */
+const INFO={
+ screen:['LCD ekran','Üstte kanal durumu (CH1/CH2), solda seçili dalganın parametreleri, sağda dalga önizlemesi, altta soft (menü) tuşlarının etiketleri bulunur.'],
+ chhead:['Kanal başlığı','CH1 / CH2 kutusu hangi kanalı düzenlediğini gösterir (kırmızı ışıma = seçili). "Limit HighZ" yük ayarıdır; sağdaki ON/OFF çıkışın durumudur. Kutuya tıklayarak kanal seç.'],
+ params:['Parametre paneli','Seçili dalganın ayarları: Freq (frekans), Amp (tepeden tepeye genlik), Offset (DC kayma), Phase (faz), Duty/Symm (görev oranı/simetri). Satıra tıklayarak ya da soft tuşla seç; mavi satır düzenlenen parametredir.'],
+ preview:['Dalga önizlemesi','Seçili kanalın dalga şeklinin küçük bir çizimi. Gerçek çıkışı alttaki osiloskopta görürsün.'],
+ softkeys:['Soft (menü) tuşları','Ekranın altındaki 6 tuşun anlamı ekrandaki etikete göre değişir: dalga menüsünde dalga şekli, parametre menüsünde parametre, sayı girerken birim.'],
+ sk0:['Soft tuş 1','Etiketine bak: dalga menüsünde Sine, parametre menüsünde Freq, sayı girerken ilk birim (MHz/Vpp/V...).'],
+ sk1:['Soft tuş 2','Dalga menüsünde Square, parametre menüsünde Amp, sayı girerken ikinci birim (kHz/mVpp/mV...).'],
+ sk2:['Soft tuş 3','Dalga menüsünde Pulse, parametre menüsünde Offset, sayı girerken üçüncü birim (Hz/Vrms...).'],
+ sk3:['Soft tuş 4','Dalga menüsünde Ramp, parametre menüsünde Phase, sayı girerken dördüncü birim (mHz/mVrms).'],
+ sk4:['Soft tuş 5','Dalga menüsünde Arb (keyfi dalga), parametre menüsünde Duty/Symm (sadece kare, darbe ve rampa dalgalarında).'],
+ sk5:['Soft tuş 6','Dalga menüsünde Page Down/Up (2. sayfa: Noise, DC), parametre menüsünde Wave (dalga menüsüne dön), sayı girerken İptal.'],
+ mode:['Mode tuşu','Çalışma modu: Sürekli, Modülasyon, Tarama (Sweep), Burst. Bu eğitimde hep sürekli (Continuous) mod kullanılır.'],
+ wave:['Wave tuşu','Dalga şekli menüsünü açar. Dalga seçince parametre menüsüne geçilir.'],
+ util:['Utility tuşu','Sistem ayarları. Burada Limit (çıkış yükü) HighZ ↔ 50 Ω değiştirilir. Üreteç, ayarlanan genliği yük seçimine göre hesaplar: 50 Ω seçip yüksek empedanslı osiloskopa bağlarsan ekrandaki gerilim iki katı olur.'],
+ knob:['Döner düğme','İki modu var. GEZİNME modunda (sarı çerçeve) düğmeyi çevirmek Freq → Amp → Offset → Phase arasında gezdirir. DÜZENLEME modunda (mavi) her tık imlecin altındaki basamağı artırır/azaltır. Modlar arası geçiş: düğmenin ortasına bas (Enter). Sürükle ya da fare tekerleğini kullan.'],
+ enter:['Enter (düğmenin ortası)','Düğmenin ortasına bas: gezinme modundan düzenlemeye geçer ve geri döner. Sayı yazarken ise girilen değeri varsayılan birimle onaylar (Hz, Vpp, V, °, %).'],
+ left:['← tuşu','Düzenlemede imleci büyük basamağa taşır. Gezinme modunda önceki parametreye (Freq ← Amp) geçer. Sayı girerken geri silme (Backspace) görevi görür.'],
+ right:['→ tuşu','Düzenlemede imleci küçük basamağa taşır. Gezinme modunda sonraki parametreye (Freq → Amp) geçer.'],
+ keypad:['Sayı tuşları','Doğrudan değer yaz, sonra soft tuşlarla birimi seç: değer ancak birim seçince uygulanır. "+/-" işareti değiştirir, "." ondalık ayıracı.'],
+ kpm:['+/- tuşu','Girilen sayının işaretini değiştirir (özellikle Offset için).'],kdot:['. tuşu','Ondalık ayırıcı.'],
+ ch1:['CH1 tuşu','CH1\'i seçer ve çıkışını açar/kapatır (OFF ↔ ON). Çıkış açıkken tuş YEŞİL yanar ve BNC kablosunda sinyal akar.'],
+ ch2:['CH2 tuşu','CH2\'yi seçer ve çıkışını açar/kapatır. Çıkış açıkken tuş YEŞİL yanar. İki kanal bağımsız ayarlanır.'],
+ bnc:['BNC çıkışları','Her kanalın sinyali BNC kabloyla osiloskop girişine gider. Kanal OFF ise kablodan sinyal gitmez.'],
+ p_freq:['Freq: frekans','Saniyedeki tekrar sayısı. T = 1/f. Güç elektroniğinde: şebeke 50 Hz, SMPS/PWM anahtarlama 20 kHz–200 kHz.'],
+ p_amp:['Amp: genlik','Tepeden tepeye gerilim (Vpp). Sinüste Vpp = 2√2·Vrms. Kare dalgada (offset 0) Vrms = Vpp/2. Birimi Vrms yazarsan cihaz dalgaya göre dönüştürür.'],
+ p_off:['Offset: DC bileşen','Sinyalin orta noktasını yukarı/aşağı kaydırır. Lojik seviyeler için: 5 Vpp kare + 2.5 V offset = 0–5 V. Sınır: |offset| + Amp/2 ≤ 10 V.'],
+ p_phase:['Phase: faz','Dalganın başlangıç açısı (0–360°). İki kanalı aynı frekansta tutup fazı değiştirerek faz kaydırma gösterilir.'],
+ p_duty:['Duty: görev oranı','Kare/darbe dalgada yüksek seviyede kalma yüzdesi (PWM duty cycle). Ramp\'te Symm: yükselme süresinin yüzdesi (%50 = üçgen, %100 = testere).'],
+ w_sine:['Sine: sinüs','Şebeke, filtre ve trafo testleri, ses ve rezonans devreleri.'],
+ w_square:['Square: kare dalga','Dijital saat, PWM, MOSFET/IGBT kapı sürme girişi, RC ve RL geçici durum testleri. Görev oranı ayarlanır.'],
+ w_pulse:['Pulse: darbe','Dar/geniş darbeler: tetikleme, sürücü devreleri. Burada görev oranı ayarlanabilir.'],
+ w_ramp:['Ramp: rampa/üçgen','Üçgen (%50) ve testere (%100). PWM üretiminde karşılaştırıcıya verilen taşıyıcı (carrier) dalga olarak kullanılır.'],
+ w_arb:['Arb: keyfi dalga','Kullanıcı tanımlı dalga. Burada yerleşik üstel yükselen bir dalga gösterilir (kondansatör şarjı gibi).'],
+ w_noise:['Noise: gürültü','Rastgele sinyal: sistem/filtre tepki testlerinde.'],
+ w_dc:['DC','Sabit gerilim: sadece Offset ayarlanır (bias).']
+};
+function setInfo(k){if(!INFO[k])return;G.info=k;renderInfo();}
+function renderInfo(){
+  const i=INFO[G.info]||INFO.screen,c=CH[G.ch];
+  $('#infoCard').innerHTML=`<div class="stepno">Bilgi · imleci bir parçanın üzerine getir</div><h2>${i[0]}</h2><p style="margin:2px 0 0">${i[1]}</p>
+  <div class="dyn"><b>Seçili: CH${G.ch+1}</b> · ${WNAME[c.wave]} · ${G.menu==='param'?labOf(G.param,c.wave)+(G.edit?' (düzenleme, adım '+stepTxt(G.param,G.cur[G.param])+')':' (gezinme modu)'):'dalga menüsü'} · Yük: ${G.load}</div>`;
+}
+function say(msg,tone='info'){const f=$('#fb');f.className=tone==='info'?'':tone;f.textContent=msg;}
+
+/* ---------- Üreteç çizimi ---------- */
+const kb=(id,x,y,w,h,lab,fill='#dcd9cf',ink='#2a2a2a',fs=15)=>`<g data-btn="${id}" data-info="${id}"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="5" fill="${fill}" stroke="#9a978c" stroke-width="1.5"/><text x="${x+w/2}" y="${y+h/2+5}" text-anchor="middle" font-size="${fs}" font-weight="700" fill="${ink}" pointer-events="none">${lab}</text></g>`;
+function buildGen(){
+  let s=`<rect x="0" y="0" width="768" height="440" rx="22" fill="#e6e4dc" stroke="#bdbab0" stroke-width="3"/>
+  <rect x="45" y="38" width="484" height="346" rx="8" fill="#26262a"/>
+  <rect x="62" y="46" width="62" height="18" fill="#d7263d"/><text x="93" y="60" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">UNI-T</text>
+  <text x="140" y="62" font-size="17" font-weight="800" font-style="italic" fill="#fff">UTG932E</text>
+  <text x="215" y="60" font-size="10.5" fill="#e0e0e0">Function/Arbitrary Waveform Generator</text>
+  <text x="515" y="53" text-anchor="end" font-size="8.5" fill="#ccc">30MHz</text><text x="515" y="63" text-anchor="end" font-size="8.5" fill="#ccc">200MSa/s</text>
+  <g transform="translate(73 84)" id="lcdRoot" data-info="screen"><g id="lcdG"></g></g>
+  ${[107,178,249,321,392,462].map((cx,i)=>`<g data-btn="sk${i}" data-info="sk${i}"><rect x="${cx-22}" y="345" width="44" height="24" rx="12" fill="#6a6a70" stroke="#111" stroke-width="2"/><rect x="${cx-18}" y="348" width="36" height="9" rx="4" fill="#8a8a92" pointer-events="none"/></g>`).join('')}
+  <rect x="536" y="28" width="214" height="384" rx="14" fill="#efede6" stroke="#cfccc2" stroke-width="2"/>
+  ${kb('mode',556,58,42,26,'Mode','#8fb0d6','#1b2b3d',11)}${kb('wave',556,104,42,26,'Wave','#8fb0d6','#1b2b3d',11)}${kb('util',552,150,50,26,'Utility','#8fb0d6','#1b2b3d',11)}
+  <g class="knobwrap" id="knobHit" data-info="knob"><g id="knobDots">${Array.from({length:30},(_,k)=>{const a=(-60+k*(300/29))*Math.PI/180;return`<circle cx="${685+52*Math.sin(a)}" cy="${92-52*Math.cos(a)}" r="1.6" fill="#8a8a85"/>`;}).join('')}</g>
+   <circle cx="686" cy="95" r="38" fill="#00000022"/>
+   <g id="knobRot"><circle cx="685" cy="92" r="38" fill="url(#knobg)" stroke="#a9a79f" stroke-width="2"/><circle id="knobBtn" data-btn="enter" data-info="enter" cx="685" cy="92" r="21" fill="url(#knobin)" stroke="#8c9096" stroke-width="2"/><circle cx="685" cy="62" r="3.4" fill="#d7263d" pointer-events="none"/>${Array.from({length:24},(_,k)=>`<line x1="685" y1="55" x2="685" y2="58" stroke="#bbb9b1" stroke-width="1.5" transform="rotate(${k*15} 685 92)"/>`).join('')}</g><path d="M692 86 v8 h-12 M684 89 l-4 5 l4 5" fill="none" stroke="#4b5057" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/></g>
+  ${kb('left',633,155,34,26,'←','#dcd9cf','#222',17)}${kb('right',693,155,34,26,'→','#dcd9cf','#222',17)}`;
+  const rows=[['7','8','9'],['4','5','6'],['1','2','3'],['.','0','+/-']],ky=[222,266,307,350],kx=[541,592,642];
+  rows.forEach((r,ri)=>r.forEach((l,ci)=>{const id=l==='.'?'kdot':l==='+/-'?'kpm':'k'+l;s+=kb(id,kx[ci],ky[ri],38,24,l,'#dcd9cf','#222',14);}));
+  s+=kb('ch1',697,224,32,46,'CH1','#8fb0d6','#1b2b3d',9)+kb('ch2',697,306,32,46,'CH2','#8fb0d6','#1b2b3d',9);
+  s+=`<g id="halos" fill="none">
+    <rect class="halo" data-h="screen" x="70" y="80" width="432" height="246" rx="8"/>
+    <rect class="halo" data-h="chhead" x="71" y="82" width="430" height="44" rx="6"/>
+    <rect class="halo" data-h="params" x="74" y="127" width="210" height="154" rx="6"/>
+    <rect class="halo" data-h="preview" x="286" y="127" width="212" height="154" rx="6"/>
+    <rect class="halo" data-h="softkeys" x="74" y="284" width="426" height="90" rx="8"/>
+    <rect class="halo" data-h="mode" x="551" y="53" width="52" height="36" rx="6"/>
+    <rect class="halo" data-h="wave" x="551" y="99" width="52" height="36" rx="6"/>
+    <rect class="halo" data-h="util" x="547" y="145" width="60" height="36" rx="6"/>
+    <circle class="halo" data-h="knob" cx="685" cy="92" r="58"/>
+    <rect class="halo" data-h="arrows" x="628" y="150" width="106" height="36" rx="6"/>
+    <rect class="halo" data-h="keypad" x="534" y="216" width="152" height="164" rx="6"/>
+    <rect class="halo" data-h="ch1" x="691" y="218" width="44" height="58" rx="6"/>
+    <rect class="halo" data-h="ch2" x="691" y="300" width="44" height="58" rx="6"/>
+  </g>`;
+  $('#genG').innerHTML=s;
+}
+buildGen();
+
+/* ---------- Soft tuş etiketleri ---------- */
+function softLabels(){
+  const c=CH[G.ch];
+  if(G.entry!==null){const u=unitsFor(G.param);return u.map((x,i)=>i===5?{t:'İptal'}:x?{t:x[0]}:{t:''});}
+  if(G.menu==='wave'){
+    if(G.page===0)return['sine','square','pulse','ramp','arb'].map(w=>({t:WNAME[w],w,sel:c.wave===w})).concat([{t:'Page Down'}]);
+    return[{t:'Noise',w:'noise',sel:c.wave==='noise'},{t:'DC',w:'dc',sel:c.wave==='dc'},{t:''},{t:''},{t:''},{t:'Page Up'}];
+  }
+  const l=paramList(c.wave),a=[];
+  for(let i=0;i<5;i++)a.push(i<l.length?{t:labOf(l[i],c.wave),sel:G.param===l[i]}:{t:''});
+  a.push({t:'Wave'});return a;
+}
+/* ---------- LCD ---------- */
+function lcdSvg(){
+  const c=CH[G.ch];let s=`<rect width="424" height="238" fill="#04060b" stroke="#0e1830" stroke-width="2"/><rect width="424" height="38" fill="#0a1428"/><line x1="212" y1="0" x2="212" y2="38" stroke="#2a3a5a"/><line x1="0" y1="38" x2="424" y2="38" stroke="#3f6cb0" stroke-width="1.5"/>`;
+  [0,1].forEach(i=>{
+    const x0=i*212,ch=CH[i];
+    s+=`<g data-chsel="${i}" data-info="chhead"><rect x="${x0}" y="0" width="212" height="38" fill="transparent"/>`;
+    if(G.ch===i)s+=`<ellipse cx="${x0+54}" cy="20" rx="56" ry="13" fill="url(#redglow)"/>`;
+    s+=`<text x="${x0+12}" y="28" font-size="24" font-weight="800" fill="#fff" pointer-events="none">CH${i+1}</text>
+     <text x="${x0+88}" y="15" font-size="10" fill="#cfe0ff" pointer-events="none">Limit</text><text x="${x0+88}" y="31" font-size="11" fill="#8fb4ff" pointer-events="none">${G.load==='HighZ'?'HighZ':'50Ω'}</text>
+     <text x="${x0+196}" y="28" text-anchor="end" font-size="14" font-weight="800" fill="${ch.on?'#4ade80':'#fff'}" pointer-events="none">${ch.on?'ON':'OFF'}</text></g>`;
+  });
+  s+=`<g data-row-group="1" data-info="params"><rect x="3" y="44" width="206" height="150" fill="#070b14" stroke="#b3262f" stroke-width="2"/>`;
+  const list=paramList(c.wave),CW=7.2;
+  list.forEach((p,idx)=>{
+    const y=70+idx*28,sel=G.menu==='param'&&G.param===p;
+    s+=`<g data-row="${p}" data-info="p_${p==='duty'&&c.wave==='ramp'?'duty':p}">`;
+    s+=`<rect x="6" y="${y-17}" width="200" height="25" fill="${sel&&(G.edit||G.entry!==null)?'#1a4a9a':'transparent'}" stroke="${sel&&!G.edit&&G.entry===null?'#ffd23f':'none'}" stroke-width="2"/>`;
+    s+=`<text x="12" y="${y}" font-size="13" font-weight="700" fill="#cfe0ff" pointer-events="none">${labOf(p,c.wave)}</text>`;
+    const f=fmtP(p,c[p]);let numTxt=f.num,txt;
+    if(sel&&G.entry!==null){numTxt=G.entry||'_';txt=numTxt+' ';}
+    else txt=numTxt+' '+f.u;
+    const full=sel&&G.entry!==null?G.entry+'_':numTxt+' '+f.u;
+    s+=`<text x="64" y="${y}" font-family="Menlo,Consolas,monospace" font-size="12" fill="${sel&&G.entry!==null?'#ffd23f':'#fff'}" textLength="${(full.length*CW).toFixed(1)}" lengthAdjust="spacing" pointer-events="none" xml:space="preserve">${full}</text>`;
+    if(sel&&G.entry===null&&G.edit){const ix=cidx(f,G.cur[p]);if(ix>=0)s+=`<rect class="blink" x="${64+ix*CW}" y="${y+2}" width="${CW}" height="2" fill="#ffd23f"/>`;}
+    s+='</g>';
+  });
+  if(G.menu==='param'&&G.entry===null)s+=`<text x="204" y="190" text-anchor="end" font-size="9" fill="${G.edit?'#8fb4ff':'#ffd23f'}">${G.edit?'Adım: '+stepTxt(G.param,G.cur[G.param]):'Gezin · Enter: düzenle'}</text>`;
+  if(G.entry!==null)s+=`<text x="204" y="190" text-anchor="end" font-size="9" fill="#ffd23f">Birimi soft tuşla seç</text>`;
+  s+=`</g><g data-info="preview"><rect x="213" y="44" width="208" height="150" fill="#04060b" stroke="#b3262f" stroke-width="2"/>`;
+  const x1=232,x2=402,cy=128,amp=34;
+  s+=`<line x1="${x1}" y1="${cy}" x2="${x2}" y2="${cy}" stroke="#bbb" stroke-dasharray="2 3"/>`;
+  let d='';const N=170,per=c.wave==='dc'?1:2;
+  for(let i=0;i<=N;i++){const p0=((per*i/N)%1+1)%1;const v=(per*i/N>=per)?shape(c.wave,0.9999,c.duty/100):shape(c.wave,p0,c.duty/100);d+=(i?'L':'M')+(x1+i*(x2-x1)/N).toFixed(1)+' '+(cy-v*amp).toFixed(1);}
+  s+=`<path d="${d}" fill="none" stroke="#ffe27a" stroke-width="1.8"/>`;
+  if(c.wave!=='dc'&&c.wave!=='noise')s+=`<path d="M${x1} 66 H${x1+(x2-x1)/2} M${x1+5} 62 L${x1} 66 L${x1+5} 70 M${x1+(x2-x1)/2-5} 62 L${x1+(x2-x1)/2} 66 L${x1+(x2-x1)/2-5} 70" fill="none" stroke="#fff" stroke-width="1.4"/>`;
+  s+='</g>';
+  const sk=softLabels();
+  s+=`<g data-info="softkeys">`;
+  sk.forEach((k,i)=>{
+    const x=i*70.67;
+    s+=`<rect x="${x+1}" y="198" width="68.7" height="39" fill="${k.sel?'#1a4a9a':'#0c1428'}" stroke="#3f6cb0"/>`;
+    if(k.t)s+=`<text x="${x+35.3}" y="${k.w?213:220}" text-anchor="middle" font-size="11" font-weight="700" fill="#e8eeff">${k.t}</text>`;
+    if(k.w)s+=`<path d="${WICON[k.w]}" transform="translate(${x+22} 218)" fill="none" stroke="#e8eeff" stroke-width="1.6"/>`;
+  });
+  s+='</g>';
+  return s;
+}
+
+/* ---------- Osiloskop ---------- */
+function factor(){return G.load==='50Ω'?2:1;}
+function autoScale(){
+  const on=CH.map((c,i)=>i).filter(i=>CH[i].on),ref=on.length?on:[0];
+  const c0=CH[ref[0]];
+  const f=c0.wave==='dc'||c0.wave==='noise'?1000:c0.freq;
+  SCP.td=nearestIdx(TD,(1/f)*2.5/10);
+  const pk=Math.max(...ref.map(i=>Math.abs(CH[i].off)+(CH[i].wave==='dc'?0:CH[i].amp/2)))*factor();
+  SCP.vd=nearestIdx(VD,Math.max(pk/3.5,0.001),true);
+}
+function nearestIdx(arr,x,up){
+  if(up){for(let i=0;i<arr.length;i++)if(arr[i]>=x*0.999)return i;return arr.length-1;}
+  let b=0,bd=1e9;arr.forEach((v,i)=>{const d=Math.abs(Math.log(v/x));if(d<bd){bd=d;b=i;}});return b;
+}
+function buildScope(){
+  let s=`<rect x="12" y="575" width="876" height="310" rx="14" fill="#2d3139" stroke="#14171c" stroke-width="3"/>
+  <text x="40" y="594" font-size="12" font-weight="700" fill="#b8c2cf">OSİLOSKOP · CH1 sarı · CH2 camgöbeği</text>
+  <rect x="38" y="603" width="604" height="244" rx="4" fill="#07120d" stroke="#000" stroke-width="2"/>`;
+  for(let i=0;i<=10;i++)s+=`<line x1="${40+i*60}" y1="605" x2="${40+i*60}" y2="845" stroke="${i===5?'#2f5a47':'#173026'}" stroke-width="${i===5?1.5:1}"/>`;
+  for(let j=0;j<=8;j++)s+=`<line x1="40" y1="${605+j*30}" x2="640" y2="${605+j*30}" stroke="${j===4?'#2f5a47':'#173026'}" stroke-width="${j===4?1.5:1}"/>`;
+  for(let i=0;i<50;i++)s+=`<line x1="${40+i*12}" y1="722" x2="${40+i*12}" y2="728" stroke="#3f7a5f"/>`;
+  for(let j=0;j<40;j++)s+=`<line x1="337" y1="${605+j*6}" x2="343" y2="${605+j*6}" stroke="#3f7a5f"/>`;
+  s+=`<g clip-path="url(#clipScope)"><g id="traces"></g></g><g id="scopeTxt"></g>`;
+  s+=`<g id="bncIn">${[820,860].map((x,i)=>`<circle cx="${x}" cy="865" r="12" fill="#999" stroke="#555" stroke-width="3"/><circle cx="${x}" cy="865" r="5" fill="#222"/><text x="${x}" y="887" text-anchor="middle" font-size="9" font-weight="700" fill="${CHCOL[i]}" style="paint-order:stroke">CH${i+1}</text>`).join('')}</g>`;
+  s+=`<g id="bncOut">${[820,860].map((x,i)=>`<rect x="${x-9}" y="510" width="18" height="28" fill="#c9c6bb" stroke="#8d8a80"/><circle cx="${x}" cy="552" r="12" fill="#bbb" stroke="#555" stroke-width="3"/><circle cx="${x}" cy="552" r="5" fill="#222"/><text x="${x}" y="576" text-anchor="middle" font-size="9" font-weight="700" fill="#555" opacity="0">CH${i+1}</text>`).join('')}</g>`;
+  $('#scopeG').innerHTML=s;
+  $('#halosAbs').innerHTML=`<circle class="halo" data-h="bnc" cx="840" cy="552" r="40"/>`;
+  $('#cableG').innerHTML=[820,860].map((x,i)=>`<path d="M${x} 552 C${x+(i?30:-30)} 650 ${x+(i?30:-30)} 770 ${x} 865" fill="none" stroke="#333" stroke-width="6" stroke-linecap="round"/><path id="flow${i}" class="flow" d="M${x} 552 C${x+(i?30:-30)} 650 ${x+(i?30:-30)} 770 ${x} 865" stroke="${CHCOL[i]}" style="display:none"/>`).join('');
+}
+buildScope();
+function scopeDraw(){
+  const td=TD[SCP.td],vd=VD[SCP.vd],fa=factor();let tr='',tx='';
+  CH.forEach((c,i)=>{
+    if(!c.on)return;
+    const NP=900,pxV=30/vd,per=c.freq*td*10;
+    let d='';
+    if(per>70&&c.wave!=='dc'&&c.wave!=='noise'){
+      const hi=725-((c.off+c.amp/2)*fa)*pxV,lo=725-((c.off-c.amp/2)*fa)*pxV;
+      tr+=`<rect x="40" y="${Math.min(hi,lo)}" width="600" height="${Math.abs(lo-hi)}" fill="${CHCOL[i]}" opacity=".35"/><line x1="40" y1="${hi}" x2="640" y2="${hi}" stroke="${CHCOL[i]}"/><line x1="40" y1="${lo}" x2="640" y2="${lo}" stroke="${CHCOL[i]}"/>`;
+    }else{
+      for(let k=0;k<=NP;k++){
+        const t=k/NP*td*10,p=(((c.freq*t+c.phase/360)%1)+1)%1;
+        const v=(c.off+(c.wave==='dc'?0:c.amp/2*shape(c.wave,p,c.duty/100)))*fa;
+        d+=(k?'L':'M')+(40+k*600/NP).toFixed(1)+' '+(725-v*pxV).toFixed(1);
+      }
+      tr+=`<path d="${d}" fill="none" stroke="${CHCOL[i]}" stroke-width="5" opacity=".18" stroke-linejoin="round"/><path d="${d}" fill="none" stroke="${CHCOL[i]}" stroke-width="2" stroke-linejoin="round"/>`;
+    }
+    tr+=`<path d="M40 ${725-0} l9 -5 v10z" fill="${CHCOL[i]}" transform="translate(0 0)" opacity="${i?0:1}"/>`;
+  });
+  $('#traces').innerHTML=tr;
+  let y=626;
+  CH.forEach((c,i)=>{
+    if(!c.on)return;
+    tx+=`<text x="660" y="${y}" font-size="13" font-weight="800" fill="${CHCOL[i]}">● CH${i+1} · ${WNAME[c.wave]}</text>`;
+    const lines=[];
+    if(c.wave!=='dc'&&c.wave!=='noise')lines.push('f = '+siFmt(c.freq,'Hz')+'  T = '+siFmt(1/c.freq,'s'));
+    if(c.wave!=='dc')lines.push('Vpp = '+siFmt(c.amp*fa,'V'));
+    lines.push('Ofs = '+siFmt(c.off*fa,'V'));
+    if(c.wave==='square'||c.wave==='pulse')lines.push('Duty = '+c.duty.toFixed(1)+' %');
+    if(c.wave==='ramp')lines.push('Symm = '+c.duty.toFixed(1)+' %');
+    if((c.wave==='sine'||c.wave==='ramp'||c.wave==='arb')&&c.amp>0)lines.push('Vrms = '+siFmt(c.amp/2*RMS[c.wave]*fa,'V'));
+    if(i===1&&CH[0].on&&near(c.freq,CH[0].freq)&&c.phase!==CH[0].phase)lines.push('Δφ = '+(((c.phase-CH[0].phase)%360+360)%360).toFixed(1)+'° (CH1\'e göre)');
+    lines.forEach((l,k)=>{tx+=`<text x="660" y="${y+17+k*15}" font-size="11" fill="#d9e2ec" font-family="Menlo,Consolas,monospace">${l}</text>`;});
+    y+=24+lines.length*15+8;
+  });
+  if(!CH[0].on&&!CH[1].on)tx+=`<text x="660" y="640" font-size="12" fill="#9fb3c8">Çıkış kapalı (OFF).</text><text x="660" y="656" font-size="12" fill="#9fb3c8">CH1 tuşuna bas.</text>`;
+  tx+=`<text x="660" y="815" font-size="12" font-weight="700" fill="#4ade80">${siFmt(td,'s')}/div</text><text x="660" y="832" font-size="12" font-weight="700" fill="#4ade80">${siFmt(vd,'V')}/div</text>`;
+  if(fa===2)tx+=`<text x="660" y="793" font-size="11" fill="#ffb4a2">Yük 50Ω ayarı: ×2</text>`;
+  $('#scopeTxt').innerHTML=tx;
+  $('#tdv').textContent=siFmt(td,'s');$('#vdv').textContent=siFmt(vd,'V');
+  $('#autoBtn').classList.toggle('on',SCP.auto);
+  [0,1].forEach(i=>{$('#flow'+i).style.display=CH[i].on?'':'none';});
+}
+
+/* ---------- Tuş mantığı ---------- */
+function flash(b){const e=document.querySelector(`[data-btn="${b}"]`);if(!e)return;e.classList.add('pressed');setTimeout(()=>e.classList.remove('pressed'),140);}
+function press(b,silent){
+  flash(b);setInfo(b);tick(b==='knob'?700:1100);
+  const c=CH[G.ch];
+  if(b==='wave'){G.menu='wave';G.page=0;G.entry=null;say('Dalga menüsü: soft tuşlardan bir dalga şekli seç.');}
+  else if(b==='mode')say('Mode: Sürekli / Modülasyon / Tarama / Burst. Bu eğitimde sürekli (Continuous) mod kullanılıyor.');
+  else if(b==='util'){
+    G.load=G.load==='HighZ'?'50Ω':'HighZ';
+    if(G.load==='50Ω')CH.forEach(x=>{if(x.amp>10)x.amp=10;});
+    say(G.load==='50Ω'?'Yük 50 Ω olarak ayarlandı. Osiloskop girişi yüksek empedanslı olduğundan ekranda gerilim 2 kat görünür.':'Yük HighZ (yüksek empedans). Ekrandaki ayar değeri ile osiloskoptaki değer eşleşir.',G.load==='50Ω'?'warn':'ok');
+  }else if(b==='ch1'||b==='ch2'){
+    const i=b==='ch1'?0:1;G.ch=i;CH[i].on=!CH[i].on;G.entry=null;ensureParam();
+    say(`CH${i+1} çıkışı ${CH[i].on?'AÇIK: sinyal BNC kabloda ilerliyor.':'KAPALI.'}`,CH[i].on?'ok':'info');
+  }else if(b==='enter')doEnter();
+  else if(b==='left'||b==='right'){
+    if(G.entry!==null){if(b==='left')G.entry=G.entry.slice(0,-1);}
+    else if(G.menu!=='param')say('Önce bir parametre seç (Wave → dalga şekli).','warn');
+    else if(!G.edit)moveSel(b==='left'?-1:1);
+    else{const r=CRANGE[G.param];G.cur[G.param]=Math.max(r[0],Math.min(r[1],G.cur[G.param]+(b==='left'?1:-1)));say('İmleç: adım '+stepTxt(G.param,G.cur[G.param]));}
+  }else if(/^k\d$/.test(b)||b==='kdot'||b==='kpm')entryKey(b);
+  else if(/^sk\d$/.test(b))softKey(+b[2]);
+  mark();
+}
+function moveSel(dir){
+  const l=paramList(CH[G.ch].wave);let i=l.indexOf(G.param);i=(i+dir+l.length)%l.length;G.param=l[i];
+  setInfo('p_'+l[i]);say(`Seçim: ${labOf(l[i],CH[G.ch].wave)}. Değiştirmek için Enter'a bas (düğmenin ortası).`);
+}
+function doEnter(){
+  const c=CH[G.ch];
+  if(G.entry!==null){softKey({freq:2,amp:0,off:0,phase:0,duty:0}[G.param]);return;}
+  if(G.menu!=='param'){say('Enter bir parametreyi onaylar. Önce Wave tuşuyla bir dalga şekli seç.','warn');return;}
+  G.edit=!G.edit;
+  say(G.edit?`Düzenleme modu: ${labOf(G.param,c.wave)} değerini düğme ile değiştir (← → basamak). Parametreler arasında gezinmek için tekrar Enter.`:'Gezinme modu: düğmeyi çevirerek Freq, Amp, Offset... arasında gez; Enter ile düzenle.','ok');
+}
+function entryKey(b){
+  const c=CH[G.ch];
+  if(G.menu==='wave'){G.menu='param';G.param=paramList(c.wave)[0];}
+  if(G.entry===null)G.entry='';
+  if(b==='kpm')G.entry=G.entry[0]==='-'?G.entry.slice(1):'-'+G.entry;
+  else if(b==='kdot'){if(!G.entry.includes('.'))G.entry+=(G.entry===''||G.entry==='-'?'0.':'.');}
+  else if(G.entry.replace('-','').length<9)G.entry+=b[1];
+  say(`${labOf(G.param,c.wave)} için sayı yazıyorsun: ${G.entry||'_'}. Birimi soft tuşla seç.`);
+}
+function softKey(i){
+  const c=CH[G.ch];
+  if(G.entry!==null){
+    const u=unitsFor(G.param);
+    if(i===5){G.entry=null;say('Giriş iptal edildi.');return;}
+    if(!u[i])return;
+    const num=parseFloat(G.entry);
+    if(isNaN(num)){G.entry=null;say('Geçersiz sayı.','warn');return;}
+    setP(G.ch,G.param,num*u[i][1]);
+    G.entry=null;
+    if(!$('#fb').className.includes('warn'))say(`${labOf(G.param,c.wave)} = ${ptxt(G.param,c[G.param])} olarak ayarlandı.`,'ok');
+    return;
+  }
+  if(G.menu==='wave'){
+    const L=softLabels()[i];
+    if(L.t==='Page Down'){G.page=1;return;}
+    if(L.t==='Page Up'){G.page=0;return;}
+    if(L.w){
+      c.wave=L.w;c.duty=L.w==='pulse'?20:50;
+      if(c.freq>FMAX[L.w])c.freq=FMAX[L.w];
+      G.menu='param';G.param=paramList(L.w)[0];G.edit=false;setInfo('w_'+L.w);
+      say(`${WNAME[L.w]} seçildi. Düğmeyi çevirerek Freq/Amp/Offset arasında gez, Enter ile düzenle; ya da soft tuşlardan seç.`,'ok');
+    }
+    return;
+  }
+  const l=paramList(c.wave);
+  if(i<l.length){G.param=l[i];G.edit=true;setInfo('p_'+l[i]);say(`${labOf(l[i],c.wave)} seçildi (düzenleme modu): döner düğme, ← → veya sayı tuşlarıyla değiştir.`);}
+  else if(i===5){G.menu='wave';G.page=0;say('Dalga menüsü.');}
+}
+function knobStep(dir){
+  if(G.entry!==null){say('Önce sayı girişini bitir (birim seç) ya da İptal et.','warn');return false;}
+  if(G.menu!=='param'){say('Döner düğme bir parametreyi değiştirir. Önce Wave → bir dalga seç.','warn');return false;}
+  if(!G.edit){moveSel(dir);mark();return true;}
+  nudge(G.param,dir);setInfo('knob');mark();
+  const c=CH[G.ch];say(`${labOf(G.param,c.wave)} = ${ptxt(G.param,c[G.param])}`);
+  return true;
+}
+
+/* ---------- Etkileşim ---------- */
+const GX=(x)=>(x-12)/1.14,GY=(y)=>(y-10)/1.14;
+function svgPt(e){const pt=stage.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(stage.getScreenCTM().inverse());}
+let kdrag=null,kT=0,kA=0,kV=0;
+function knobAng(e){const p=svgPt(e);return Math.atan2(GY(p.y)-92,GX(p.x)-685)*180/Math.PI;}
+stage.addEventListener('pointerdown',e=>{
+  const t=e.target;
+  if(t.id==='knobBtn'){kdrag={a:knobAng(e),acc:0,inner:true,moved:false,x:e.clientX,y:e.clientY};flash('enter');t.setPointerCapture&&t.setPointerCapture(e.pointerId);setInfo('enter');return;}
+  if(t.closest('#knobHit')){kdrag={a:knobAng(e),acc:0};t.setPointerCapture&&t.setPointerCapture(e.pointerId);setInfo('knob');return;}
+  const b=t.closest('[data-btn]');if(b){press(b.dataset.btn);return;}
+  const r=t.closest('[data-row]');if(r){const p=r.dataset.row;const c=CH[G.ch];if(paramList(c.wave).includes(p)){G.menu='param';G.param=p;G.edit=true;G.entry=null;setInfo('p_'+p);mark();say(`${labOf(p,c.wave)} seçildi.`);}return;}
+  const h=t.closest('[data-chsel]');if(h){G.ch=+h.dataset.chsel;G.entry=null;ensureParam();setInfo('chhead');mark();say(`CH${G.ch+1} seçildi (çıkışı değiştirmek için CH${G.ch+1} tuşuna bas).`);}
+});
+stage.addEventListener('pointermove',e=>{
+  if(kdrag){
+    const a=knobAng(e);let d=a-kdrag.a;if(d>180)d-=360;if(d<-180)d+=360;
+    kdrag.a=a;kdrag.acc+=d;
+    if(kdrag.inner&&Math.abs(kdrag.acc)<8&&Math.hypot(e.clientX-kdrag.x,e.clientY-kdrag.y)<8)return;
+    if(kdrag.inner)kdrag.moved=true;
+    while(Math.abs(kdrag.acc)>=18){const dir=kdrag.acc>0?1:-1;kdrag.acc-=18*dir;if(knobStep(dir)){kT+=18*dir;tick(700);}}
+    return;
+  }
+  const el=e.target.closest&&e.target.closest('[data-info]');
+  if(el&&el.dataset.info!==G.info&&!G.hoverLock){setInfo(el.dataset.info);}
+});
+stage.addEventListener('pointerup',()=>{if(kdrag&&kdrag.inner&&!kdrag.moved)press('enter');kdrag=null;});
+stage.addEventListener('wheel',e=>{if(e.target.closest('#knobHit')){e.preventDefault();const dir=e.deltaY<0?1:-1;if(knobStep(dir)){kT+=18*dir;tick(700);}}},{passive:false});
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  if(/^\d$/.test(e.key))press('k'+e.key);
+  else if(e.key==='.')press('kdot');
+  else if(e.key==='Backspace'){if(G.entry!==null){press('left');e.preventDefault();}}
+  else if(e.key==='Escape'){if(G.entry!==null){softKey(5);mark();}}
+  else if(e.key==='Enter'){press('enter');}
+  else if(e.key==='ArrowUp'){if(knobStep(1))kT+=18;}
+  else if(e.key==='ArrowDown'){if(knobStep(-1))kT-=18;}
+  else if(e.key==='ArrowLeft')press('left');
+  else if(e.key==='ArrowRight')press('right');
+});
+$('#tdm').onclick=()=>{SCP.auto=false;SCP.td=Math.max(0,SCP.td-1);mark();};
+$('#tdp').onclick=()=>{SCP.auto=false;SCP.td=Math.min(TD.length-1,SCP.td+1);mark();};
+$('#vdm').onclick=()=>{SCP.auto=false;SCP.vd=Math.max(0,SCP.vd-1);mark();};
+$('#vdp').onclick=()=>{SCP.auto=false;SCP.vd=Math.min(VD.length-1,SCP.vd+1);mark();};
+$('#autoBtn').onclick=()=>{SCP.auto=!SCP.auto;mark();};
+$('#muteBtn').onclick=()=>{G.mute=!G.mute;$('#muteBtn').textContent=G.mute?'🔇 Ses kapalı':'🔊 Ses açık';};
+
+/* ---------- Animasyon döngüsü ---------- */
+function frame(){
+  kV=(kV+(kT-kA)*0.18)*0.78;kA+=kV;
+  if(Math.abs(kT-kA)<0.05&&Math.abs(kV)<0.05){kA=kT;kV=0;}
+  const kr=$('#knobRot');if(kr)kr.setAttribute('transform',`rotate(${kA} 685 92)`);
+  if(dirty){
+    dirty=false;
+    if(SCP.auto)autoScale();
+    $('#lcdG').innerHTML=lcdSvg();
+    ['ch1','ch2'].forEach((b,i)=>{const r=document.querySelector(`[data-btn="${b}"] rect`);if(r){r.setAttribute('fill',CH[i].on?'#4ade80':'#8fb0d6');r.style.filter=CH[i].on?'drop-shadow(0 0 5px #22c55e)':'';}});
+    scopeDraw();
+    renderInfo();
+  }
+  requestAnimationFrame(frame);
+}
+setInterval(()=>{if(CH.some(c=>c.on&&c.wave==='noise'))mark();},300);
+
+/* ---------- Demo (animasyonlu gösterim) ---------- */
+let demoId=0;
+function runDemo(seq,done){
+  const id=++demoId;let i=0;G.busy=1;renderLessonBtns();
+  const next=()=>{
+    if(id!==demoId)return;
+    if(i>=seq.length){G.busy=0;renderLessonBtns();done&&done();return;}
+    const tk=seq[i++];
+    if(tk==='knob+'||tk==='knob-'){const d=tk==='knob+'?1:-1;if(knobStep(d)){kT+=18*d;tick(700);}}
+    else press(tk);
+    setTimeout(next,tk.startsWith('knob')?420:760);
+  };
+  setTimeout(next,300);
+}
+function stopDemo(){demoId++;G.busy=0;}
+
+/* ---------- Dersler ---------- */
+function cfg(i,o){Object.assign(CH[i],o);}
+function toParam(p,i=0){G.ch=i;G.menu='param';G.param=p;G.edit=true;}
+const LESSONS=[
+ {tab:'0 Tanıtım',title:'Cihazı tanıyalım',steps:[
+  {t:'Bu bir UNI-T UTG932E: iki kanallı, 30 MHz\'e kadar sinüs üretebilen fonksiyon/keyfi dalga üreteci. Önce ekrana bakalım: üstte kanal durumu, solda parametreler, sağda dalga önizlemesi, altta menü etiketleri.',hl:['screen'],set:()=>{cfg(0,{on:true});}},
+  {t:'Üstteki CH1 / CH2 kutuları hangi kanalı düzenlediğini gösterir (kırmızı ışıma). OFF/ON çıkışın durumudur. "Limit HighZ" çıkış yükü ayarıdır.',hl:['chhead']},
+  {t:'Sol panel seçili dalganın parametreleridir: Freq (frekans), Amp (genlik), Offset (DC kayma), Phase (faz). Kare dalgada Duty (görev oranı) da eklenir.',hl:['params']},
+  {t:'Sağ panel dalganın önizlemesidir. Gerçek çıkışı alttaki osiloskopta izleyeceğiz.',hl:['preview']},
+  {t:'Ekranın altındaki 6 tuş "soft tuş"tur: anlamı ekrandaki etikete göre değişir (dalga, parametre ya da birim).',hl:['softkeys']},
+  {t:'Mode: çalışma modu (biz sürekli modu kullanırız). Wave: dalga şekli menüsü. Utility: sistem ayarı; burada çıkış yükü HighZ ↔ 50 Ω değiştirilir.',hl:['mode','wave','util']},
+  {t:'Büyük döner düğme: gezinme modunda Freq/Amp/Offset arasında gezdirir, düzenleme modunda değeri değiştirir. Düğmenin ortası Enter tuşudur: modlar arasında geçirir. ← → tuşları basamağı (imleci) seçer.',hl:['knob','arrows']},
+  {t:'Sayı tuşları: değeri doğrudan yaz, sonra soft tuşlarla birimi seç. CH1 ve CH2 tuşları kanalın çıkışını açar/kapatır; çıkış açıkken tuş yeşil yanar.',hl:['keypad','ch1','ch2']},
+  {t:'Çıkış BNC konnektörlerinden kabloyla osiloskop girişine gider. Kanal açık olduğunda kabloda sinyal akar (hareketli noktalar).',hl:['bnc']}
+ ]},
+ {tab:'1 Dalga şekli',title:'Dalga şekli seçimi',steps:[
+  {t:'Wave tuşuna bas: soft tuşlar dalga şekillerini listeler. "▶ Göster" ile animasyonu izle ya da sen bas.',hl:['wave','softkeys'],set:()=>{cfg(0,{on:true,freq:1000,amp:2});},demo:['wave']},
+  {t:'Sine (sinüs): şebeke, filtre ve trafo testleri. Soft tuş 1\'e bas.',hl:['softkeys'],set:()=>{cfg(0,{wave:'sine'});toParam('freq');},demo:['wave','sk0']},
+  {t:'Square (kare): PWM ve MOSFET/IGBT kapı sinyali, RC geçici durum testleri. Soft tuş 2.',hl:['softkeys'],set:()=>{cfg(0,{wave:'square'});toParam('freq');},demo:['wave','sk1']},
+  {t:'Pulse (darbe): dar/geniş görev oranlı darbeler. Varsayılan görev oranı %20.',hl:['softkeys'],set:()=>{cfg(0,{wave:'pulse',duty:20});toParam('freq');},demo:['wave','sk2']},
+  {t:'Ramp (rampa): Symm %50 = üçgen, %100 = testere. PWM üretimi için taşıyıcı (carrier) dalgadır.',hl:['softkeys'],set:()=>{cfg(0,{wave:'ramp'});toParam('freq');},demo:['wave','sk3']},
+  {t:'Arb (keyfi dalga) 5. soft tuş; 6. tuş (Page Down) ikinci sayfayı açar: Noise (gürültü) ve DC.',hl:['softkeys'],set:()=>{cfg(0,{wave:'arb'});toParam('freq');},demo:['wave','sk5','sk0']}
+ ]},
+ {tab:'2 Frekans',title:'Frekans ayarı',steps:[
+  {t:'Sinüs dalga seçili, Freq parametresi mavi çubukla seçili. Başlangıç değeri 1 kHz. Altı çizili basamak, döner düğmenin değiştireceği basamaktır.',hl:['params'],set:()=>{cfg(0,{on:true,amp:2});toParam('freq');}},
+  {t:'Parametreler arasında gezinme: düğmenin ortasındaki Enter tuşuna bas (gezinme modu, sarı çerçeve). Düğmeyi çevirerek Freq → Amp → Offset → Phase arasında gez, tekrar Enter ile düzenlemeye dön. "▶ Göster"e bas.',hl:['knob','params'],set:()=>{},demo:['enter','knob+','knob+','knob-','knob-','enter']},
+  {t:'Düzenleme modunda döner düğmeyi saat yönünde çevir: her tık imlecin altındaki basamağı 1 artırır. Düğmeyi sürükle ya da "▶ Göster"e bas.',hl:['knob'],set:()=>{},demo:['knob+','knob+','knob+']},
+  {t:'← tuşu imleci büyük basamağa taşır (1 kHz → 10 kHz...), → tuşu küçük basamağa. Basamağı değiştirip düğmeyi çevir: kaba ve ince ayar.',hl:['arrows'],set:()=>{},demo:['left','knob+','right','right','knob-']},
+  {t:'Sayı tuşuyla doğrudan yaz: 5, 0, sonra Hz soft tuşu. Birim seçilmeden değer uygulanmaz. Osiloskop otomatik ölçeklenir.',hl:['keypad','softkeys'],set:()=>{},demo:['k5','k0','sk2']},
+  {t:'Birimler: MHz, kHz, Hz, mHz. Periyot T = 1/f (50 Hz → 20 ms). Osiloskop sağ panelinde f ve T değerlerini görürsün. Sınır: sinüs 30 MHz, kare 15 MHz.',hl:['softkeys']}
+ ]},
+ {tab:'3 Genlik/Offset',title:'Genlik ve offset',steps:[
+  {t:'Amp tepeden tepeye gerilimdir (Vpp). Başlangıç 2 Vpp. Osiloskopta −1 V ile +1 V arası salındığını gör.',hl:['params'],set:()=>{cfg(0,{on:true,amp:2,freq:1000});toParam('amp');}},
+  {t:'Genliği düğmeyle artır: her tık 10 mV. ← ile adımı büyüt (100 mV).',hl:['knob'],set:()=>{},demo:['left','knob+','knob+']},
+  {t:'Vrms ile gir: 1 yaz, Vrms soft tuşuna bas. Cihaz sinüs için Vpp = 2√2·Vrms ≈ 2.828 Vpp hesaplar. Kare dalgada ise Vpp = 2·Vrms.',hl:['keypad','softkeys'],set:()=>{},demo:['k1','sk2']},
+  {t:'Offset parametresini seç (soft tuş 3). Offset sinyalin orta noktasını DC olarak kaydırır; ekranda dalga yukarı çıkar. 1 yaz, V birimi.',hl:['params'],set:()=>{cfg(0,{amp:2.828});},demo:['sk2','k1','sk0']},
+  {t:'Lojik seviye örneği: 5 Vpp kare dalga + 2.5 V offset = 0 V … 5 V. Sınır: |offset| + Amp/2 ≤ 10 V (HighZ).',hl:['params'],set:()=>{cfg(0,{wave:'square',amp:5,off:2.5});toParam('off');}}
+ ]},
+ {tab:'4 Faz / iki kanal',title:'Faz ve iki kanal',steps:[
+  {t:'Her iki kanal da 1 kHz sinüs. Aynı fazda oldukları için osiloskopta üst üste biniyorlar (CH2 CH1\'i örtüyor).',hl:['ch1','ch2'],set:()=>{cfg(0,{on:true,amp:2});cfg(1,{on:true,amp:2});G.ch=0;toParam('freq');}},
+  {t:'CH2 kutusuna tıkla ya da CH2 tuşuna bas: dikkat, tuş çıkışı da değiştirir. CH2\'yi seçip Phase parametresini aç.',hl:['chhead','params'],set:()=>{toParam('phase',1);},},
+  {t:'Phase = 90° yaz (9, 0, soft tuş 1 "°"). CH2, CH1\'e göre çeyrek periyot kayar. Osiloskopta Δφ okunur.',hl:['keypad'],set:()=>{cfg(1,{phase:90});toParam('phase',1);}},
+  {t:'Faz farkı = 180° olursa iki sinyal birbirinin tersidir. Güç elektroniğinde 3 faz sistem (120°) ve yarım köprü kapı sinyalleri (180°) için faz ayarı gerekir.',hl:['params'],set:()=>{cfg(1,{phase:180});toParam('phase',1);}}
+ ]},
+ {tab:'5 Görev oranı (PWM)',title:'Duty cycle ve PWM',steps:[
+  {t:'10 kHz, 5 Vpp, 2.5 V offset kare dalga: 0–5 V\'luk PWM sinyali. Başlangıç görev oranı %50.',hl:['params'],set:()=>{cfg(0,{on:true,wave:'square',freq:10000,amp:5,off:2.5,duty:50});toParam('duty');}},
+  {t:'Duty parametresi seçili (5. soft tuş). Düğmeyle %1 adımla azalt: %30\'a getir. Yüksek seviye süresi kısalır.',hl:['knob','params'],set:()=>{},demo:['left','knob-','knob-','knob-','knob-','knob-']},
+  {t:'Duty = t_on / T. 10 kHz\'de T = 100 μs; %30 → 30 μs açık. Ortalama gerilim = Duty × 5 V = 1.5 V. MOSFET sürücü ve DC-DC dönüştürücü testlerinin temelidir.',hl:['params'],set:()=>{cfg(0,{duty:30});toParam('duty');}},
+  {t:'Ramp dalgada aynı parametre Symm (simetri) adını alır. %50 = üçgen, %100 = testere. Üçgen taşıyıcı ile bir referans karşılaştırılarak PWM üretilir.',hl:['params'],set:()=>{cfg(0,{wave:'ramp',duty:50,freq:2000,amp:4,off:0});toParam('duty');}}
+ ]},
+ {tab:'6 Çıkış yükü',title:'Çıkış yükü: HighZ ve 50 Ω',steps:[
+  {t:'Üreteç çıkışı 50 Ω iç dirençlidir. Ekrandaki genlik, "Limit" ayarındaki yük için hesaplanır. Şu an HighZ: ayar değeri = osiloskopta ölçülen değer (2 Vpp).',hl:['chhead'],set:()=>{cfg(0,{on:true,amp:2});}},
+  {t:'Utility tuşuyla Limit\'i 50 Ω yap: üreteç gerçek yükün 50 Ω olduğunu varsayar.',hl:['util'],set:()=>{G.load='50Ω';},demo:['util']},
+  {t:'Ama osiloskop girişi (1 MΩ) yüksek empedanslıdır: gerilim bölünmediği için ekranda 2 Vpp yerine 4 Vpp ölçülür. Genliklerde bu sık yapılan hatadır.',hl:['screen'],set:()=>{G.load='50Ω';}},
+  {t:'Kural: gerçek yük 50 Ω ise (örn. 50 Ω terminasyon) 50 Ω seç; yük yüksek empedanslıysa (osiloskop, kapı girişi) HighZ seç. "Utility"ye tekrar basarak geri dön.',hl:['util']}
+ ]},
+ {tab:'7 Uygulamalar',title:'Güç elektroniği uygulamaları',steps:[
+  {t:'Şebeke testi: 50 Hz sinüs, 6 Vpp. Trafo, doğrultucu ve filtre denemelerinde küçük gerilimli şebeke benzetimi.',hl:['params'],set:()=>{cfg(0,{on:true,wave:'sine',freq:50,amp:6,off:0});toParam('freq');}},
+  {t:'MOSFET kapı sürme girişi: 20 kHz, 5 Vpp kare, offset 2.5 V, %30 duty. Çıkışta 0–5 V\'luk PWM görürsün.',hl:['params'],set:()=>{cfg(0,{on:true,wave:'square',freq:20000,amp:5,off:2.5,duty:30});toParam('duty');}},
+  {t:'RC filtre testi: 1 kHz, 5 Vpp kare dalga ile devrenin adım yanıtını (yükselme zamanını) osiloskopta incelersin. Frekansı değiştirerek kesim frekansının etkisini gör.',hl:['params'],set:()=>{cfg(0,{on:true,wave:'square',freq:1000,amp:5,off:0,duty:50});toParam('freq');}},
+  {t:'PWM taşıyıcısı: 10 kHz üçgen dalga (Ramp, Symm %50), 4 Vpp. Bir DC referansla karşılaştırıldığında görev oranı ayarlanabilen PWM elde edilir.',hl:['params'],set:()=>{cfg(0,{on:true,wave:'ramp',freq:10000,amp:4,off:0,duty:50});toParam('duty');}},
+  {t:'Güvenlik ve doğruluk: yük HighZ mi 50 Ω mu kontrol et; çıkışı devreye bağlamadan önce genlik ve offset\'i ayarlamadan çıkışı açma (CH tuşu); aşırı genlik devre elemanlarına zarar verebilir.',hl:['ch1']}
+ ]}
+];
+const TABS=[...LESSONS.map((l,i)=>({tab:l.tab,i})),{tab:'Serbest mod',i:'free'},{tab:'Sınav',i:'quiz'}];
+const chips=$('#chips');
+TABS.forEach((t,idx)=>{const b=document.createElement('button');b.textContent=t.tab;b.dataset.i=idx;b.onclick=()=>openTab(idx);chips.appendChild(b);});
+function clearHalos(){document.querySelectorAll('.halo').forEach(h=>h.style.display='none');}
+function showHalos(a){clearHalos();(a||[]).forEach(n=>document.querySelectorAll(`.halo[data-h="${n}"]`).forEach(h=>h.style.display='block'));}
+function resetAll(){
+  stopDemo();CH[0]=newCh();CH[1]=newCh();
+  Object.assign(G,{ch:0,load:'HighZ',menu:'wave',page:0,param:'freq',entry:null,edit:false});
+  SCP.auto=true;
+}
+let tabIdx=0;
+function openTab(idx){
+  tabIdx=idx;
+  chips.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===idx));
+  const t=TABS[idx];
+  $('#presetCard').style.display=t.i==='free'?'':'none';
+  clearHalos();
+  if(t.i==='free'){G.mode='free';resetAll();cfg(0,{on:true,amp:2});renderFree();renderPresets();mark();}
+  else if(t.i==='quiz'){G.mode='quiz';startQuiz();}
+  else{G.mode='lesson';G.lesson=t.i;enterStep(0);}
+}
+function enterStep(n){
+  const les=LESSONS[G.lesson];G.step=n;
+  resetAll();
+  for(let i=0;i<=n;i++){const a=les.steps[i].set;if(a)a();}
+  showHalos(les.steps[n].hl);
+  renderLesson();say('');mark();
+}
+function renderLesson(){
+  const les=LESSONS[G.lesson],st=les.steps[G.step],last=G.step===les.steps.length-1;
+  $('#lessonCard').innerHTML=`<div class="stepno">${les.tab} · Adım ${G.step+1}/${les.steps.length}</div><h2>${les.title}</h2><p>${st.t}</p>
+   <div class="row"><button class="b" id="pv" ${G.step===0?'disabled':''}>◀ Önceki</button>${st.demo?'<button class="b" id="dm">▶ Göster</button>':''}<button class="b pri" id="nx">${last?(G.lesson<LESSONS.length-1?'Sonraki ders ▶':'Serbest moda geç ▶'):'Sonraki ▶'}</button></div>`;
+  $('#pv').onclick=()=>enterStep(G.step-1);
+  if(st.demo)$('#dm').onclick=()=>{enterStep(G.step);runDemo(st.demo);};
+  $('#nx').onclick=()=>{if(!last)enterStep(G.step+1);else openTab(G.lesson<LESSONS.length-1?G.lesson+1:TABS.length-2);};
+}
+function renderLessonBtns(){const b=$('#dm');if(b)b.disabled=!!G.busy;}
+function renderFree(){
+  $('#lessonCard').innerHTML=`<div class="stepno">Serbest mod</div><h2>Kendin dene</h2><p>Wave tuşuyla dalga seç, soft tuşlarla parametreyi seç, döner düğmeyle ya da sayı tuşlarıyla değer gir. CH tuşlarıyla çıkışı aç/kapat. Alttaki osiloskop sonucu gösterir.</p>
+  <p style="font-size:.88rem;color:var(--sub)">Klavye: rakamlar, <b>Enter</b> (birimi varsayılan olarak uygula), <b>Esc</b> (iptal), <b>↑ ↓</b> (düğme), <b>← →</b> (imleç).</p>`;
+}
+const PRESETS={
+ 'Şebeke 50 Hz':()=>{cfg(0,{on:true,wave:'sine',freq:50,amp:6,off:0});},
+ 'PWM 20 kHz %30':()=>{cfg(0,{on:true,wave:'square',freq:20000,amp:5,off:2.5,duty:30});},
+ 'RC testi 1 kHz kare':()=>{cfg(0,{on:true,wave:'square',freq:1000,amp:5,off:0,duty:50});},
+ 'Taşıyıcı üçgen 10 kHz':()=>{cfg(0,{on:true,wave:'ramp',freq:10000,amp:4,off:0,duty:50});},
+ '2 faz 90°':()=>{cfg(0,{on:true,wave:'sine',freq:1000,amp:2,phase:0});cfg(1,{on:true,wave:'sine',freq:1000,amp:2,phase:90});}
+};
+function renderPresets(){
+  $('#presetCard').innerHTML=`<div class="stepno">Hazır ayarlar</div><div class="row">${Object.keys(PRESETS).map(k=>`<button class="b sm" data-p="${k}">${k}</button>`).join('')}<button class="b sm" data-p="__reset">Sıfırla</button></div>`;
+  $('#presetCard').querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    resetAll();if(b.dataset.p!=='__reset')PRESETS[b.dataset.p]();else cfg(0,{on:true,amp:2});
+    G.menu='param';G.param='freq';mark();say(b.dataset.p==='__reset'?'Ayarlar sıfırlandı.':'Hazır ayar uygulandı: '+b.dataset.p,'ok');
+  });
+}
+
+/* ---------- Sınav ---------- */
+function chk(i,o){
+  const c=CH[i],f=[];
+  if(o.on!==undefined&&c.on!==o.on)f.push(`CH${i+1} çıkışı ${o.on?'açık':'kapalı'} olmalı`);
+  if(o.wave&&c.wave!==o.wave)f.push(`CH${i+1}: dalga ${WNAME[o.wave]} olmalı (şu an ${WNAME[c.wave]})`);
+  ['freq','amp','off','phase','duty'].forEach(k=>{if(o[k]!==undefined&&!near(c[k],o[k]))f.push(`CH${i+1} ${LAB[k]} = ${ptxt(k,o[k])} olmalı (şu an ${ptxt(k,c[k])})`);});
+  return f;
+}
+const TASKS=[
+ {t:'CH1: 1 kHz, 2 Vpp sinüs dalga üret ve çıkışı aç.',c:()=>chk(0,{on:true,wave:'sine',freq:1000,amp:2})},
+ {t:'CH1: 20 kHz, 5 Vpp kare dalga, %30 görev oranı, 2.5 V offset (0–5 V PWM). Çıkışı aç.',c:()=>chk(0,{on:true,wave:'square',freq:20000,amp:5,duty:30,off:2.5})},
+ {t:'CH2: 50 Hz, 6 Vpp sinüs, faz 90°. CH2 çıkışını aç.',c:()=>chk(1,{on:true,wave:'sine',freq:50,amp:6,phase:90})},
+ {t:'CH1: 100 Hz, 1 Vpp üçgen dalga (Ramp, Symm %50), offset 500 mV. Çıkışı aç.',c:()=>chk(0,{on:true,wave:'ramp',freq:100,amp:1,duty:50,off:0.5})},
+ {t:'CH1: 10 kHz, 3.3 Vpp darbe (Pulse), %20 duty, 1.65 V offset. Çıkışı aç.',c:()=>chk(0,{on:true,wave:'pulse',freq:10000,amp:3.3,duty:20,off:1.65})},
+ {t:'Çıkış yükünü 50 Ω yap (Utility) ve CH1\'de 1 kHz, 2 Vpp sinüs üretip çıkışı aç. Osiloskopta kaç Vpp görünüyor?',c:()=>chk(0,{on:true,wave:'sine',freq:1000,amp:2}).concat(G.load==='50Ω'?[]:['Yük 50 Ω olmalı'])}
+];
+const Q={order:[],i:0,score:0};
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startQuiz(){Q.order=shuffle(TASKS.map((_,i)=>i));Q.i=0;Q.score=0;loadQ();}
+function loadQ(){
+  resetAll();mark();
+  const t=TASKS[Q.order[Q.i]];
+  $('#lessonCard').innerHTML=`<div class="stepno">Sınav · Soru ${Q.i+1}/${Q.order.length} · Puan ${Q.score}</div><h2>Görev</h2><p>${t.t}</p><p style="font-size:.85rem;color:var(--sub)">Cihazı gerçek tuşlarla ayarla, sonra Kontrol et'e bas.</p>
+   <div class="row"><button class="b pri" id="ans">Kontrol et</button></div>`;
+  $('#ans').onclick=checkAns;say('Ayarları yap, sonra Kontrol et\'e bas.');
+}
+function checkAns(){
+  const t=TASKS[Q.order[Q.i]],f=t.c(),good=f.length===0;
+  if(good)Q.score++;
+  const last=Q.i===Q.order.length-1;
+  $('#lessonCard').innerHTML=`<div class="stepno">Sınav · Soru ${Q.i+1}/${Q.order.length} · Puan ${Q.score}</div><h2>${good?'✔ Doğru':'✖ Eksik/yanlış'}</h2><p>${good?'Tebrikler!':f.join('<br>')}</p><div class="row"><button class="b pri" id="nq">${last?'Sonucu gör':'Sonraki görev ▶'}</button></div>`;
+  $('#nq').onclick=()=>{if(last)endQuiz();else{Q.i++;loadQ();}};
+  say(good?'Doğru!':'Eksikler var.',good?'ok':'bad');
+}
+function endQuiz(){
+  const p=Q.score,n=Q.order.length;
+  $('#lessonCard').innerHTML=`<div class="stepno">Sınav bitti</div><h2>Puanın: ${p}/${n}</h2><p>${p===n?'Mükemmel! Üreteci rahatça kullanabilirsin.':p>=n*.7?'İyi! Eksik kalan konuları tekrar et.':'Dersleri tekrar gözden geçirip yeniden dene.'}</p><div class="row"><button class="b pri" id="rq">Tekrar dene</button></div>`;
+  $('#rq').onclick=startQuiz;say('');
+}
+
+/* ---------- Başlat ---------- */
+openTab(0);
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
