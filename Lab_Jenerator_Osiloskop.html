@@ -331,7 +331,7 @@ function measure(i){
   for(let k=0;k<N;k++){const v=b[k];if(v>mx){mx=v;imax=k;}if(v<mn){mn=v;imin=k;}sum+=v;sq+=v*v;}
   const M={vmax:mx,vmin:mn,vpp:mx-mn,vavg:sum/N,vrms:Math.sqrt(sq/N)};
   const vpp=M.vpp,mid=(mx+mn)/2;
-  const {E,period}=chStat(i);const rs=E.rs,fs=E.fs;
+  const cs=chStat(i),tiny=vpp<0.2*vdOf(S.ch[i]);const period=tiny?null:cs.period;const rs=tiny?[]:cs.E.rs,fs=tiny?[]:cs.E.fs;
   M.period=period;M.freq=period?1/period:null;
   M.pwidth=null;M.nwidth=null;
   if(period&&rs.length&&fs.length){
