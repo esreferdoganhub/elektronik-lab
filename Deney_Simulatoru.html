@@ -2092,8 +2092,8 @@ board.addEventListener('pointerdown',e=>{
   if(pn){const [id,i]=pn.dataset.pin.split(':');DRAG={kind:'pin',el:elById(id),i:+i};board.setPointerCapture(e.pointerId);return;}
   const eg=t.closest('[data-el]');
   if(eg&&!PLACE&&TOOL!=='wire'){const el=elById(eg.dataset.el);select(el);
-    if(TYPES[el.type].rigid){const c=Math.round((p.x-X0)/P),r=Math.round((p.y-Y0)/P);DRAG={kind:'move',el,off:[c-el.at[0],r-el.at[1]],moved:false,orig:el.at.slice()};}
-    else if(el.body){DRAG={kind:'body',el,dx:p.x-el.body[0],dy:p.y-el.body[1]};}
+    if(TYPES[el.type].rigid){const c=Math.round((p.x-X0)/P),r=Math.round((p.y-Y0)/P);DRAG={kind:'move',el,off:[c-el.at[0],r-el.at[1]],moved:false,orig:el.at.slice(),sx:e.clientX,sy:e.clientY};}
+    else if(el.body){DRAG={kind:'body',el,dx:p.x-el.body[0],dy:p.y-el.body[1],body0:el.body.slice(),sx:e.clientX,sy:e.clientY};}
     board.setPointerCapture(e.pointerId);return;}
   const h=holeAt(p.x,p.y,10);
   if(PLACE){if(h){const el=addEl(PLACE.type,{at:h,rot:PLACE.rot});needBuild=true;select(el);say(`${TYPES[PLACE.type].name} yerleştirildi. Yeni bir tane için tekrar tıkla; bitirmek için Esc.`,'ok');}return;}
@@ -2126,7 +2126,9 @@ board.addEventListener('pointerup',e=>{
   if(d.kind==='btn'){if(!d.el.props.latch){d.el.pressed=false;needBuild=true;VER++;}return;}
   if(d.kind==='clip'){const h=holeAt(p.x,p.y,12);if(h)CLIPS[d.k].h=h;else parkClip(d.k);VER++;needBuild=true;if(h){say(`${CLIPINFO[d.k][0]} → ${holeName(h)}`,'ok');probeHint(d.k);}hlNet(null);return;}
   if(d.kind==='pin'){const h=holeAt(p.x,p.y,12);const pp=d.el.pins[d.i];if(h)pp.h=h;VER++;needBuild=true;hlNet(null);return;}
-  if((d.kind==='move'||d.kind==='body')&&!d.moved&&VSPEC[d.el.type]&&!d.el.burnt){openPop(d.el,e.clientX,e.clientY);return;}
+  if((d.kind==='move'||d.kind==='body')&&VSPEC[d.el.type]&&!d.el.burnt&&Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<6){
+    if(d.moved){if(d.orig)d.el.at=d.orig;if(d.body0)d.el.body=d.body0;VER++;}
+    openPop(d.el,e.clientX,e.clientY);return;}
   if(d.kind==='move'){if(d.moved){const ok=pinHoles(d.el).every(h=>netOf(h));if(!ok)say('Bazı bacaklar deliğe oturmadı (kırmızı nokta): elemanı biraz kaydır.','warn');needBuild=true;VER++;}return;}
   if(d.kind==='body'||d.kind==='pot'){needBuild=true;VER++;return;}
 });
@@ -2373,12 +2375,18 @@ function openPop(el,cx,cy){
 let paused=false,lastWall=performance.now(),speedRatio=1,sigKey='',lastMeterT=0;
 function resetSim(){ELS.forEach(e=>{const keep=e.st&&e.st.body?{}:{};e.st=keep;});RING.n=0;RING.head=0;MRING.n=0;MRING.head=0;sim.t=0;needBuild=true;Scope.S.frame=null;}
 function updateSimCard(){
-  const fuse=!MM.S.fuseMA||!MM.S.fuseA;
-  $('#simCard').innerHTML=`<div class="stepno">Simülasyon</div><div class="simline"><b>${paused?'⏸ Duraklatıldı':'▶ Çalışıyor'}</b> · t = ${sim.t.toFixed(3)} s · hız ×${Math.min(1,speedRatio).toFixed(2)}${speedRatio<0.95?' (ağır çekim)':' (gerçek zaman)'} · adım ${fmtSI(sim.dt,'s',2)} · ${NNODES} düğüm</div>
-   <div class="row"><button class="b sm" id="sPause">${paused?'▶ Devam':'⏸ Duraklat'}</button><button class="b sm" id="sReset">↺ Sıfırla (kondansatörleri boşalt)</button>${fuse?'<button class="b sm pri" id="sFuse">Sigortayı değiştir</button>':''}</div>`;
-  $('#sPause').onclick=()=>{paused=!paused;lastWall=performance.now();updateSimCard();};
-  $('#sReset').onclick=()=>{resetSim();say('Simülasyon sıfırlandı.');};
-  if(fuse)$('#sFuse').onclick=()=>{MM.S.fuseMA=true;MM.S.fuseA=true;needBuild=true;say('Multimetre sigortaları yenilendi.','ok');updateSimCard();};
+  const fuse=!MM.S.fuseMA||!MM.S.fuseA,c=$('#simCard');
+  if(!c.querySelector('#sPause')||c.dataset.fuse!==String(fuse)){
+    c.dataset.fuse=String(fuse);
+    c.innerHTML=`<div class="stepno">Simülasyon</div><div class="simline" id="sLine"></div>
+     <div class="row"><button class="b sm" id="sPause"></button><button class="b sm" id="sReset">↺ Sıfırla (kondansatörleri boşalt)</button>${fuse?'<button class="b sm pri" id="sFuse">Sigortayı değiştir</button>':''}</div>`;
+    $('#sPause').onclick=()=>{paused=!paused;lastWall=performance.now();updateSimCard();};
+    $('#sReset').onclick=()=>{resetSim();say('Simülasyon sıfırlandı.');};
+    if(fuse)$('#sFuse').onclick=()=>{MM.S.fuseMA=true;MM.S.fuseA=true;needBuild=true;say('Multimetre sigortaları yenilendi.','ok');updateSimCard();};
+  }
+  const line=`<b>${paused?'⏸ Duraklatıldı':'▶ Çalışıyor'}</b> · t = ${sim.t.toFixed(3)} s · hız ×${Math.min(1,speedRatio).toFixed(2)}${speedRatio<0.95?' (ağır çekim)':' (gerçek zaman)'} · adım ${fmtSI(sim.dt,'s',2)} · ${NNODES} düğüm`;
+  const L=$('#sLine');if(L.innerHTML!==line)L.innerHTML=line;
+  const pb=$('#sPause'),pt=paused?'▶ Devam':'⏸ Duraklat';if(pb.textContent!==pt)pb.textContent=pt;
 }
 
 /* ---------- Ana döngü ---------- */
