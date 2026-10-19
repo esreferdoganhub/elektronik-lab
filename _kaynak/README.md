@@ -8,3 +8,4 @@ Yayındaki HTML sayfalarının bir kısmı buradaki parçalardan derlenir:
 
 Jeneratör ve multimetre çizimleri derleme sırasında `Fonksiyon_Jeneratoru_Egitimi.html` ve `Multimetre_Egitimi.html` dosyalarından alınır.
 `node test_solver.js` devre çözücüyü tarayıcı olmadan test eder.
+`node test_accuracy.js` entegrasyon doğruluğunu (kayıpsız LC, RC kazançları, sert devrede çınlama) ve büyük devrelerde seyrek çözücü hızını ölçer.

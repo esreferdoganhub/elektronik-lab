@@ -100,6 +100,9 @@ css = r"""
   #fb{border-radius:10px;padding:9px 12px;font-size:.88rem;border-left:5px solid var(--info);background:var(--infobg);color:var(--info);min-height:40px;}
   #fb.ok{border-color:var(--ok);background:var(--okbg);color:var(--ok);} #fb.warn{border-color:#e0a11a;background:var(--warnbg);color:var(--warn);} #fb.bad{border-color:var(--accent2);background:var(--badbg);color:var(--bad);}
   .props label{display:block;font-size:.85rem;margin:5px 0;} .props select,.props input[type=range]{margin-left:6px;vertical-align:middle;}
+  .props .vin{display:inline-flex;gap:4px;align-items:center;margin-left:6px;vertical-align:middle;} .props .vin select{margin-left:0;max-width:7.5em;}
+  .props .vtxt{width:6.5em;padding:2px 5px;font:inherit;font-family:Menlo,Consolas,monospace;font-size:.82rem;border:1px solid var(--line);border-radius:5px;}
+  .props .vtxt.bad{border-color:var(--accent2);background:var(--badbg);} .props .verr{font-size:.78rem;color:var(--bad);margin:2px 0 4px;}
   .simline{font-size:.82rem;color:var(--sub);margin-top:4px;}
   .cablab{font-size:.78rem;color:var(--sub);margin-right:2px;} .seg{display:inline-flex;gap:2px;}
   #monCard .mhead{display:flex;justify-content:space-between;align-items:center;}

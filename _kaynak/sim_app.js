@@ -21,7 +21,7 @@ const CVALS_C=[1e-9,10e-9,47e-9,100e-9,470e-9,1e-6];
 const CVALS_E=[1e-6,10e-6,47e-6,100e-6,470e-6,1000e-6];
 const LVALS=[100e-6,470e-6,1e-3,4.7e-3,10e-3];
 const LEDCOL={red:['#ff2a2a','Kırmızı'],yellow:['#ffd400','Sarı'],green:['#2bdc4a','Yeşil'],blue:['#3a7bff','Mavi'],white:['#f4f8ff','Beyaz']};
-function bands(R){const e=Math.floor(Math.log10(R))-1,v=Math.round(R/Math.pow(10,e));const d1=Math.floor(v/10)%10,d2=v%10;const mul=e>=0?BAND[e]:(e===-1?'#c9a227':'#b8b8b8');return [BAND[d1],BAND[d2],mul,'#c9a227'];}
+function bands(R){let e=Math.floor(Math.log10(R))-1,v=Math.round(R/Math.pow(10,e));if(v>=100){v=10;e++;}const d1=Math.floor(v/10)%10,d2=v%10;const mul=e>=0?BAND[e]:(e===-1?'#c9a227':'#b8b8b8');return [BAND[d1],BAND[d2],mul,'#c9a227'];}
 const TYPES={
  res:{name:'Direnç',rigid:true,pins:[[0,0],[4,0]],props:{R:1000},info:'Akımı sınırlar. Renk halkaları değeri gösterir (1. ve 2. halka rakam, 3. halka çarpan, altın %5). Gücü 0.25 W: P = I²R bunu aşarsa ısınır, çok aşarsa yanar.'},
  led:{name:'LED',rigid:true,pins:[[0,0],[1,0]],props:{color:'red'},info:'Işık yayan diyot. Uzun bacak anot (+). İleri yön gerilimi kırmızıda ≈1.9 V, mavi/beyazda ≈3 V. Akımı 5–20 mA arasında tut; seri direnç olmadan bağlarsan yanar!'},

@@ -203,25 +203,46 @@ function renderTools(){
   $('#tClr').onclick=()=>{if(confirm('Breadboard\'daki tüm elemanlar ve kablolar silinsin mi?')){clearBoard();needBuild=true;}};
 }
 function opt(list,val,fmt){return list.map(v=>`<option value="${v}" ${Math.abs(v-val)<1e-15||v===val?'selected':''}>${fmt(v)}</option>`).join('');}
+const fmtV=(v,u)=>v!==0&&Math.abs(v)<1e-9?(+(v/1e-12).toPrecision(3))+' p'+u:fmtSI(v,u);
+/* Serbest değer kutusu (SI önekli: 4.7k, 2.2µ/2.2u, 470n, 1M, 10m) + isteğe bağlı hızlı seçim listesi */
+function vin(el,k,u,lo,hi,list,fmt){
+  const v=el.props[k],inList=list&&list.some(x=>Math.abs(x-v)<=1e-9*Math.abs(x));
+  return `<span class="vin"><input type="text" class="vtxt" data-v="${k}" data-u="${u}" data-lo="${lo}" data-hi="${hi}" value="${fmtV(v,u)}" spellcheck="false" autocomplete="off" title="Değeri yazıp Enter'a bas (ör. 4.7k, 2.2µ ya da 2.2u, 470n, 1M, 10m)">`+
+    (list?`<select data-p="${k}" title="Hızlı seçim"><option value="" disabled ${inList?'':'selected'}>hızlı seçim</option>${opt(list,v,fmt||(x=>fmtV(x,u)))}</select>`:'')+`</span>`;
+}
 function renderProps(){
   const el=SEL,c=$('#propCard');
   if(!el){c.innerHTML=`<div class="stepno">Seçili eleman</div><p style="margin:4px 0;color:var(--sub);font-size:.88rem">Bir elemana tıkla: değerini değiştir, döndür, sil. Sürükleyerek taşı.</p>`;return;}
   const T=TYPES[el.type],p=el.props;let f='';
-  if(el.type==='res')f=`<label>Direnç <select data-p="R">${opt(RVALS,p.R,v=>fmtSI(v,'Ω'))}</select></label>`;
+  if(el.type==='res')f=`<label>Direnç ${vin(el,'R','Ω',0.1,100e6,RVALS)}</label>`;
   if(el.type==='led')f=`<label>Renk <select data-p="color" data-s="1">${Object.keys(LEDCOL).map(k=>`<option value="${k}" ${k===p.color?'selected':''}>${LEDCOL[k][1]}</option>`).join('')}</select></label>`;
-  if(el.type==='zener')f=`<label>Vz <select data-p="Vz">${opt([3.3,5.1,6.2,9.1,12],p.Vz,v=>v+' V')}</select></label>`;
-  if(el.type==='ccap')f=`<label>Kapasite <select data-p="C">${opt(CVALS_C,p.C,v=>fmtSI(v,'F'))}</select></label>`;
-  if(el.type==='ecap')f=`<label>Kapasite <select data-p="C">${opt(CVALS_E,p.C,v=>fmtSI(v,'F'))}</select></label><label>Gerilim sınırı <select data-p="Vmax">${opt([16,25,50],p.Vmax,v=>v+' V')}</select></label>`;
-  if(el.type==='ind')f=`<label>Endüktans <select data-p="L">${opt(LVALS,p.L,v=>fmtSI(v,'H'))}</select></label>`;
-  if(el.type==='pot')f=`<label>Değer <select data-p="R">${opt([1000,10000,100000],p.R,v=>fmtSI(v,'Ω'))}</select></label><label>Konum <input type="range" min="0" max="1" step="0.01" value="${p.pos}" data-p="pos"></label>`;
+  if(el.type==='zener')f=`<label>Vz ${vin(el,'Vz','V',1,200,[3.3,5.1,6.2,9.1,12],v=>v+' V')}</label>`;
+  if(el.type==='ccap')f=`<label>Kapasite ${vin(el,'C','F',1e-12,1,CVALS_C)}</label>`;
+  if(el.type==='ecap')f=`<label>Kapasite ${vin(el,'C','F',1e-12,1,CVALS_E)}</label><label>Gerilim sınırı <select data-p="Vmax">${opt([16,25,50],p.Vmax,v=>v+' V')}</select></label>`;
+  if(el.type==='ind')f=`<label>Endüktans ${vin(el,'L','H',1e-9,10,LVALS)}</label>`;
+  if(el.type==='pot')f=`<label>Değer ${vin(el,'R','Ω',10,10e6,[1000,10000,100000])}</label><label>Konum <input type="range" min="0" max="1" step="0.01" value="${p.pos}" data-p="pos"></label>`;
   if(el.type==='sw')f=`<label><input type="checkbox" data-p="on" ${p.on?'checked':''}> Açık (kapalı devre)</label>`;
   if(el.type==='btn')f=`<label><input type="checkbox" data-p="latch" ${p.latch?'checked':''}> Basılı kilitle</label>`;
-  if(el.type==='dcs')f=`<label>Gerilim <input type="range" min="0" max="30" step="0.1" value="${p.V}" data-p="V"> <b>${p.V.toFixed(1)} V</b></label><label>Akım sınırı <select data-p="I">${opt([0.1,0.5,1,3],p.I,v=>v+' A')}</select></label>`;
+  if(el.type==='dcs')f=`<label>Gerilim ${vin(el,'V','V',0,30)}</label><label>Ayar <input type="range" min="0" max="30" step="0.1" value="${p.V}" data-p="V"> <b>${p.V.toFixed(1)} V</b></label><label>Akım sınırı <select data-p="I">${opt([0.1,0.5,1,3],p.I,v=>v+' A')}</select></label>`;
   if(el.type==='trafo')f=`<label>Sekonder <select data-p="Vrms">${opt([6,9,12,24],p.Vrms,v=>v+'-0-'+v+' V')}</select></label>`;
   if(el.type==='wire')f=`<label>Renk <select data-p="color" data-s="1">${WIRECOLS.map(c=>`<option value="${c}" ${c===p.color?'selected':''}>${c}</option>`).join('')}</select></label>`;
-  c.innerHTML=`<div class="stepno">Seçili eleman</div><h2>${T.name}${el.burnt?' <span style="color:#c0392b">(yanmış)</span>':''}</h2><div class="props">${f}</div>
+  c.innerHTML=`<div class="stepno">Seçili eleman</div><h2>${T.name}${el.burnt?' <span style="color:#c0392b">(yanmış)</span>':''}</h2><div class="props">${f}<div class="verr" id="pErr" hidden></div></div>
    <div class="row">${T.rigid?'<button class="b sm" id="pRot">⟳ Döndür</button>':''}<button class="b sm" id="pDel">🗑 Sil</button>${el.burnt?'<button class="b sm pri" id="pFix">Yenile</button>':''}</div>`;
-  c.querySelectorAll('[data-p]').forEach(inp=>{inp.oninput=inp.onchange=()=>{const k=inp.dataset.p;let v=inp.type==='checkbox'?inp.checked:(inp.dataset.s?inp.value:+inp.value);el.props[k]=v;if(k==='latch')el.pressed=v;needBuild=true;VER++;if(inp.type!=='range')renderProps();else{const b=inp.parentNode.querySelector('b');if(b)b.textContent=(+v).toFixed(1)+' V';}};});
+  c.querySelectorAll('[data-p]').forEach(inp=>{inp.oninput=inp.onchange=()=>{const k=inp.dataset.p;let v=inp.type==='checkbox'?inp.checked:(inp.dataset.s?inp.value:+inp.value);el.props[k]=v;if(k==='latch')el.pressed=v;needBuild=true;VER++;if(inp.type!=='range')renderProps();else{const b=inp.parentNode.querySelector('b');if(b)b.textContent=(+v).toFixed(1)+' V';const t=c.querySelector('.vtxt[data-v="'+k+'"]');if(t)t.value=fmtV(+v,'V');}};});
+  c.querySelectorAll('.vtxt').forEach(inp=>{
+    const k=inp.dataset.v,u=inp.dataset.u,lo=+inp.dataset.lo,hi=+inp.dataset.hi,err=$('#pErr');
+    const fail=m=>{inp.classList.add('bad');err.hidden=false;err.textContent=m;};
+    const apply=()=>{
+      const v=Solver.parseSI(inp.value,u);
+      if(!isFinite(v))return fail('"'+inp.value.trim()+'" anlaşılamadı. Örnek: 4.7k, 2.2µ (ya da 2.2u), 470n, 1M, 10m');
+      if(v<lo||v>hi)return fail('Değer '+fmtV(lo,u)+' ile '+fmtV(hi,u)+' arasında olmalı (girilen: '+fmtV(v,u)+').');
+      if(Math.abs(v-el.props[k])>1e-12*Math.abs(v)){el.props[k]=v;needBuild=true;VER++;}
+      renderProps();
+    };
+    inp.onchange=apply;
+    inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();apply();}else if(e.key==='Escape'){inp.value=fmtV(el.props[k],u);inp.classList.remove('bad');err.hidden=true;inp.blur();}};
+    inp.oninput=()=>{if(inp.classList.contains('bad')){inp.classList.remove('bad');err.hidden=true;}};
+  });
   if($('#pRot'))$('#pRot').onclick=()=>{el.rot=(el.rot+1)&3;needBuild=true;VER++;};
   $('#pDel').onclick=()=>{delEl(el);needBuild=true;};
   if($('#pFix'))$('#pFix').onclick=()=>{el.burnt=false;el._f=0;el.st={};needBuild=true;VER++;renderProps();say('Eleman yenilendi.','ok');};
