@@ -74,7 +74,7 @@
   .props label{display:block;font-size:.85rem;margin:5px 0;} .props select,.props input[type=range]{margin-left:6px;vertical-align:middle;}
   .props .vin{display:inline-flex;gap:4px;align-items:center;margin-left:6px;vertical-align:middle;} .props .vin select{margin-left:0;max-width:7.5em;}
   .props .vtxt{width:6.5em;padding:2px 5px;font:inherit;font-family:Menlo,Consolas,monospace;font-size:.82rem;border:1px solid var(--line);border-radius:5px;}
-  .vpop{position:fixed;z-index:60;width:248px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px 7px;
+  .vpop{position:fixed;z-index:60;width:258px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px 7px;
     box-shadow:0 10px 30px rgba(15,30,50,.22),0 2px 6px rgba(15,30,50,.12);font-size:.84rem;color:var(--ink);animation:vpIn .26s cubic-bezier(.34,1.56,.64,1) both;}
   .vpop.out{animation:vpOut .16s ease-in both;pointer-events:none;}
   .vpop .vparr{position:absolute;left:var(--ax);bottom:-7px;width:12px;height:12px;margin-left:-6px;background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg);}
@@ -94,11 +94,27 @@
   .vpop.shake{animation:vpShake .32s ease;}
   .vpop.done .vpi{border-color:var(--ok);background:var(--okbg);} .vpop.done .vpok{background:var(--ok);}
   .vpop .vpi.tick{animation:vpTick .18s ease;}
+  .vpop .vps{margin-top:8px;} .vpop .vps>.vpl{display:block;margin-bottom:3px;}
+  .vpop .vps .vpc{margin-top:0;}
+  .vpop .vsw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);}
+  .vpop .vpc button.on .vsw{box-shadow:0 0 0 2px #fff,inset 0 0 0 1px rgba(0,0,0,.25);}
+  .vpop .vprg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;} .vpop .vprg>.vpl{display:inline;margin:0;} .vpop .vprg input{flex:1;min-width:100px;accent-color:var(--accent);} .vpop .vprg b{font-family:Menlo,Consolas,monospace;font-size:.8rem;min-width:4.2em;text-align:right;}
+  .vpop .vtg{display:inline-flex;align-items:center;gap:8px;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--ink);}
+  .vpop .vtg i{position:relative;width:34px;height:19px;border-radius:999px;background:#c9d2dc;transition:background .2s;flex:none;}
+  .vpop .vtg i::after{content:'';position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .22s cubic-bezier(.34,1.56,.64,1);}
+  .vpop .vtg.on i{background:var(--ok);} .vpop .vtg.on i::after{transform:translateX(15px);}
+  .vpop .vpinfo{margin-top:7px;color:var(--sub);font-size:.78rem;line-height:1.45;}
+  .vpop .vplive{margin-top:7px;padding:4px 7px;border-radius:6px;background:#eef5fb;color:var(--info);font-family:Menlo,Consolas,monospace;font-size:.74rem;}
+  .vpop .vplive[hidden]{display:none;}
+  .vpop .vpburn{margin:2px 0 4px;padding:5px 7px;border-radius:6px;background:var(--badbg);color:var(--bad);font-size:.8rem;}
+  .vpop .vpburn button{margin-left:6px;border:0;border-radius:6px;background:var(--accent2);color:#fff;padding:2px 9px;cursor:pointer;}
+  .vpop .pulse{animation:vpPulse .3s ease;}
+  @keyframes vpPulse{40%{transform:scale(1.12);}}
   @keyframes vpIn{from{opacity:0;transform:scale(.6) translateY(6px);}to{opacity:1;transform:none;}}
   @keyframes vpOut{to{opacity:0;transform:scale(.85) translateY(4px);}}
   @keyframes vpShake{0%,100%{transform:none;}20%{transform:translateX(-6px);}40%{transform:translateX(5px);}60%{transform:translateX(-3px);}80%{transform:translateX(2px);}}
   @keyframes vpTick{50%{transform:scale(1.05);}}
-  @media (prefers-reduced-motion:reduce){.vpop,.vpop.out,.vpop.shake,.vpop .vpi.tick{animation-duration:1ms;}}
+  @media (prefers-reduced-motion:reduce){.vpop,.vpop.out,.vpop.shake,.vpop .vpi.tick,.vpop .pulse{animation-duration:1ms;} .vpop .vtg i,.vpop .vtg i::after{transition:none;}}
   .props .vtxt.bad{border-color:var(--accent2);background:var(--badbg);} .props .verr{font-size:.78rem;color:var(--bad);margin:2px 0 4px;}
   .simline{font-size:.82rem;color:var(--sub);margin-top:4px;}
   .cablab{font-size:.78rem;color:var(--sub);margin-right:2px;} .seg{display:inline-flex;gap:2px;}
@@ -2094,6 +2110,7 @@ board.addEventListener('pointerdown',e=>{
   const eg=t.closest('[data-el]');
   if(eg&&!PLACE&&TOOL!=='wire'){const el=elById(eg.dataset.el);select(el);
     if(TYPES[el.type].rigid){const c=Math.round((p.x-X0)/P),r=Math.round((p.y-Y0)/P);DRAG={kind:'move',el,off:[c-el.at[0],r-el.at[1]],moved:false,orig:el.at.slice(),sx:e.clientX,sy:e.clientY};}
+    else if(!el.body){DRAG={kind:'tap',el,sx:e.clientX,sy:e.clientY};}
     else if(el.body){DRAG={kind:'body',el,dx:p.x-el.body[0],dy:p.y-el.body[1],body0:el.body.slice(),sx:e.clientX,sy:e.clientY};}
     board.setPointerCapture(e.pointerId);return;}
   const h=holeAt(p.x,p.y,10);
@@ -2127,7 +2144,7 @@ board.addEventListener('pointerup',e=>{
   if(d.kind==='btn'){if(!d.el.props.latch){d.el.pressed=false;needBuild=true;VER++;}return;}
   if(d.kind==='clip'){const h=holeAt(p.x,p.y,12);if(h)CLIPS[d.k].h=h;else parkClip(d.k);VER++;needBuild=true;if(h){say(`${CLIPINFO[d.k][0]} → ${holeName(h)}`,'ok');probeHint(d.k);}hlNet(null);return;}
   if(d.kind==='pin'){const h=holeAt(p.x,p.y,12);const pp=d.el.pins[d.i];if(h)pp.h=h;VER++;needBuild=true;hlNet(null);return;}
-  if((d.kind==='move'||d.kind==='body')&&VSPEC[d.el.type]&&!d.el.burnt&&Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<6){
+  if((d.kind==='move'||d.kind==='body'||d.kind==='tap')&&Math.hypot(e.clientX-d.sx,e.clientY-d.sy)<6){
     if(d.moved){if(d.orig)d.el.at=d.orig;if(d.body0)d.el.body=d.body0;VER++;}
     openPop(d.el,e.clientX,e.clientY);return;}
   if(d.kind==='move'){if(d.moved){const ok=pinHoles(d.el).every(h=>netOf(h));if(!ok)say('Bazı bacaklar deliğe oturmadı (kırmızı nokta): elemanı biraz kaydır.','warn');needBuild=true;VER++;}return;}
@@ -2333,43 +2350,122 @@ function e12Step(v,dir){ // bir sonraki/önceki E12 değeri
 }
 let POP=null;
 function closePop(now){
-  const P=POP;if(!P)return;POP=null;document.removeEventListener('pointerdown',P.outside,true);window.removeEventListener('scroll',P.onScroll,true);
+  const P=POP;if(!P)return;POP=null;clearInterval(P.tick);document.removeEventListener('pointerdown',P.outside,true);window.removeEventListener('scroll',P.onScroll,true);
   if(now){P.box.remove();return;}
   P.box.classList.add('out');P.box.addEventListener('animationend',()=>P.box.remove(),{once:true});setTimeout(()=>P.box.remove(),400);
 }
+/* Her tür için balondaki alanlar: num (SI değer), chips (seçenek), range (kaydırıcı), toggle, info (salt okunur) */
+const COLNAME={'#e63946':'Kırmızı','#1d4ed8':'Mavi','#111':'Siyah','#2a9d3a':'Yeşil','#f4a300':'Turuncu','#ffffff':'Beyaz','#8338ec':'Mor'};
+function popFields(el){
+  const p=el.props,F=[];
+  if(VSPEC[el.type])F.push({t:'num',S:VSPEC[el.type]});
+  switch(el.type){
+    case 'led':F.push({t:'chips',k:'color',lab:'Renk',sw:true,opts:Object.keys(LEDCOL).map(k=>[k,LEDCOL[k][1],LEDCOL[k][0]])},{t:'info',lines:['İleri gerilim ≈ '+Solver.LEDV[p.color].toFixed(1)+' V · en çok ≈ 20 mA (60 mA\'de yanar)']});break;
+    case 'ecap':F.push({t:'chips',k:'Vmax',lab:'Gerilim sınırı',opts:[16,25,50].map(v=>[v,v+' V'])});break;
+    case 'pot':F.push({t:'range',k:'pos',lab:'Sürgü',min:0,max:1,step:0.01,fmt:v=>Math.round(v*100)+' %'});break;
+    case 'dcs':F.push({t:'range',k:'V',lab:'Ayar',min:0,max:30,step:0.1,fmt:v=>(+v).toFixed(1)+' V'},{t:'chips',k:'I',lab:'Akım sınırı',opts:[0.1,0.5,1,3].map(v=>[v,v+' A'])});break;
+    case 'trafo':F.push({t:'chips',k:'Vrms',lab:'Sekonder',opts:[6,9,12,24].map(v=>[v,v+'-0-'+v+' V'])});break;
+    case 'sw':F.push({t:'toggle',k:'on',lab:'Konum',on:'Kapalı devre (iletir)',off:'Açık devre'});break;
+    case 'btn':F.push({t:'toggle',k:'latch',lab:'Basılı kilit',on:'Kilitli (iletir)',off:'Serbest (anlık)'});break;
+    case 'wire':F.push({t:'chips',k:'color',lab:'Renk',sw:true,opts:WIRECOLS.map(c=>[c,COLNAME[c]||c,c])});break;
+    case 'diode':F.push({t:'info',lines:['1N4007 · 1 A, 1000 V','İleri düşüm ≈ 0.7 V · gümüş halka katot']});break;
+    case 'schottky':F.push({t:'info',lines:['1N5819 · 1 A, 40 V','İleri düşüm ≈ 0.3–0.4 V · çok hızlı']});break;
+    case 'mos':F.push({t:'info',lines:['IRFZ44N · N kanal, Vth ≈ 3 V','Bacaklar: G (kapı) · D (savak) · S (kaynak)']});break;
+    case 'bat':F.push({t:'info',lines:['9 V · iç direnç ≈ 1.5 Ω']});break;
+  }
+  return F;
+}
+/* Canlı ölçüm: uçlar arası gerilim ve (biliniyorsa) akım */
+function liveText(el){
+  if(el.burnt)return 'Eleman yanmış: devrede değil.';
+  if(!MODEL.node||el.type==='wire')return '';
+  const nv=h=>{if(!h)return null;const n=netOf(h);if(!n)return null;const i=MODEL.node(n);return i<sim.x.length?sim.x[i]:null;};
+  const V=pinHoles(el).map(nv),x=sim.x;
+  // 3 anlamlı haneye yuvarla, gürültü düzeyindeki değerleri 0 göster
+  const f3=(v,u,eps)=>Math.abs(v)<eps?'0 '+u:fmtSI(+v.toPrecision(3),u),fv=v=>f3(v,'V',1e-5),fi=i=>f3(i,'A',1e-9);
+  if(el.type==='trafo'){const pr=[];if(V[0]!==null&&V[1]!==null)pr.push('A–CT '+fv(V[0]-V[1]));if(V[1]!==null&&V[2]!==null)pr.push('CT–B '+fv(V[1]-V[2]));if(V[0]!==null&&V[2]!==null)pr.push('A–B '+fv(V[0]-V[2]));return pr.length?pr.join(' · ')+' (anlık)':'Uçları devreye takılı değil.';}
+  if(V.some(v=>v===null))return 'Bacakları devreye takılı değil.';
+  if(el.type==='mos')return `V<sub>GS</sub> = ${fv(V[0]-V[2])} · V<sub>DS</sub> = ${fv(V[1]-V[2])}`;
+  if(el.type==='pot')return `Uçlar ${fv(V[0]-V[2])} · sürgü ${fv(V[1]-V[2])}`;
+  const v=V[0]-V[1];let i=null;
+  if(el.type==='res')i=v/el.props.R;
+  else if(el.type==='led'){const L=MODEL.leds.find(m=>m.el===el);if(L)i=L.d.i;}
+  else if(el.type==='diode'||el.type==='schottky'||el.type==='zener'){const D=MODEL.diodes.find(m=>m.el===el);if(D)i=D.d.i;}
+  else if(el.type==='ccap'||el.type==='ecap'||el.type==='ind')i=el.st.i;
+  else if(el.type==='dcs')i=el.st.dc&&el.st.dc.i;
+  else if(el.type==='bat'){const B=MODEL.srcs.find(m=>m.el===el);if(B)i=B.v.cur(x);}
+  return `Gerilim ${fv(v)}`+(i!=null&&isFinite(i)?` · akım ${fi(i)}`:'')+(el.type==='dcs'&&el.st.dc?` · <b>${el.st.dc.mode==='cc'?'CC (akım sınırında)':'CV'}</b>`:'');
+}
 function openPop(el,cx,cy){
-  const S=VSPEC[el.type];if(!S)return;closePop(true);
-  // hızlı seçim: mevcut değere en yakın en fazla 8 değer
-  const cur=el.props[S.k];let ci=0;S.list.forEach((v,i)=>{if(Math.abs(Math.log(v/cur))<Math.abs(Math.log(S.list[ci]/cur)))ci=i;});
-  const c0=Math.max(0,Math.min(S.list.length-8,ci-3)),chips=S.list.slice(c0,c0+8);
-  const box=document.createElement('div');box.className='vpop';
-  box.innerHTML=`<div class="vph"><span>${TYPES[el.type].name}</span><button class="vpx" title="Kapat (Esc)">✕</button></div>
-   <div class="vpr">${S.lab===TYPES[el.type].name?'':`<span class="vpl">${S.lab}</span>`}<input class="vpi" type="text" spellcheck="false" autocomplete="off" value="${fmtV(el.props[S.k],S.u)}"><button class="vpok" title="Uygula (Enter)">✓</button></div>
-   <div class="vpc">${chips.map(v=>`<button data-v="${v}" class="${Math.abs(v-el.props[S.k])<=1e-9*v?'on':''}">${fmtV(v,S.u)}</button>`).join('')}</div>
-   <div class="vpe"></div><div class="vpt">Enter: uygula · ${S.k==='V'||S.k==='Vz'?'':'↑↓: E12 serisi · '}Esc: kapat</div><i class="vparr"></i>`;
-  document.body.appendChild(box);
+  const F=popFields(el);if(!F.length&&!el.burnt)return;closePop(true);
+  const p=el.props,box=document.createElement('div');box.className='vpop';
+  const num=F.find(f=>f.t==='num'),S=num&&num.S;
+  let h=`<div class="vph"><span>${TYPES[el.type].name}</span><button class="vpx" title="Kapat (Esc)">✕</button></div>`;
+  if(el.burnt)h+=`<div class="vpburn">Bu eleman yanmış. <button class="vpfix">Yenile</button></div>`;
+  F.forEach((f,fi)=>{
+    if(f.t==='num'){
+      // hızlı seçim: mevcut değere en yakın en fazla 8 değer
+      const cur=p[S.k];let ci=0;S.list.forEach((v,i)=>{if(Math.abs(Math.log(v/cur))<Math.abs(Math.log(S.list[ci]/cur)))ci=i;});
+      const c0=Math.max(0,Math.min(S.list.length-8,ci-3)),chips=S.list.slice(c0,c0+8);
+      h+=`<div class="vpr">${S.lab===TYPES[el.type].name?'':`<span class="vpl">${S.lab}</span>`}<input class="vpi" type="text" spellcheck="false" autocomplete="off" value="${fmtV(p[S.k],S.u)}"><button class="vpok" title="Uygula (Enter)">✓</button></div>
+       <div class="vpc" data-num="1">${chips.map(v=>`<button data-v="${v}" class="${Math.abs(v-p[S.k])<=1e-9*v?'on':''}">${fmtV(v,S.u)}</button>`).join('')}</div><div class="vpe"></div>`;
+    }else if(f.t==='chips'){
+      h+=`<div class="vps"><span class="vpl">${f.lab}</span><div class="vpc" data-f="${fi}">${f.opts.map(([v,lab,col])=>`<button data-v="${v}" class="${String(v)===String(p[f.k])?'on':''}" title="${lab}">${f.sw?`<i class="vsw" style="background:${col}"></i>`:''}${f.sw&&el.type==='wire'?'':lab}</button>`).join('')}</div></div>`;
+    }else if(f.t==='range'){
+      h+=`<div class="vps vprg"><span class="vpl">${f.lab}</span><input type="range" data-f="${fi}" min="${f.min}" max="${f.max}" step="${f.step}" value="${p[f.k]}"><b>${f.fmt(p[f.k])}</b></div>`;
+    }else if(f.t==='toggle'){
+      h+=`<div class="vps"><span class="vpl">${f.lab}</span><button class="vtg${p[f.k]?' on':''}" data-f="${fi}" role="switch" aria-checked="${!!p[f.k]}"><i></i><span>${p[f.k]?f.on:f.off}</span></button></div>`;
+    }else if(f.t==='info'){
+      h+=`<div class="vpinfo">${f.lines.map(l=>`<div>${l}</div>`).join('')}</div>`;
+    }
+  });
+  h+=`<div class="vplive"></div>`;
+  if(S)h+=`<div class="vpt">Enter: uygula · ${S.k==='V'||S.k==='Vz'?'':'↑↓: E12 serisi · '}Esc: kapat</div>`;
+  h+=`<i class="vparr"></i>`;
+  box.innerHTML=h;document.body.appendChild(box);
   // konum: tıklanan noktanın üstünde; yer yoksa altında, ekran kenarına kıstır
   const W=box.offsetWidth,H=box.offsetHeight,vw=innerWidth,vh=innerHeight;
   let x=Math.max(8,Math.min(vw-W-8,cx-W/2)),y=cy-H-16,below=false;if(y<8){y=cy+16;below=true;}y=Math.min(y,vh-H-8);
   box.style.left=x+'px';box.style.top=y+'px';box.classList.toggle('below',below);
   box.style.setProperty('--ax',Math.max(14,Math.min(W-14,cx-x))+'px');box.style.transformOrigin=`${cx-x}px ${below?0:H}px`;
-  const inp=box.querySelector('.vpi'),err=box.querySelector('.vpe');
-  const ok=()=>{box.classList.remove('shake');void box.offsetWidth;box.classList.add('done');renderProps();if(SEL===el)info(TYPES[el.type].name+valueText(el),TYPES[el.type].info);setTimeout(()=>{if(POP&&POP.box===box)closePop();},260);};
-  const apply=()=>{const m=setVal(el,inp.value);if(m){err.textContent=m;box.classList.remove('shake');void box.offsetWidth;box.classList.add('shake','bad');inp.focus();inp.select();return;}ok();};
-  inp.onkeydown=e=>{
-    if(e.key==='Enter'){e.preventDefault();apply();}
-    else if(e.key==='Escape'){e.preventDefault();closePop();}
-    else if((e.key==='ArrowUp'||e.key==='ArrowDown')&&S.k!=='V'&&S.k!=='Vz'){e.preventDefault();const cur=Solver.parseSI(inp.value,S.u);const b=isFinite(cur)&&cur>0?cur:el.props[S.k];
-      const n=e12Step(b,e.key==='ArrowUp'?1:-1);if(n>=S.lo&&n<=S.hi){inp.value=fmtV(n,S.u);box.classList.remove('bad');err.textContent='';inp.classList.remove('tick');void inp.offsetWidth;inp.classList.add('tick');}}
-  };
-  inp.oninput=()=>{box.classList.remove('bad');err.textContent='';};
-  box.querySelector('.vpok').onclick=apply;box.querySelector('.vpx').onclick=()=>closePop();
-  box.querySelectorAll('.vpc button').forEach(b=>b.onclick=()=>{inp.value=fmtV(+b.dataset.v,S.u);apply();});
+  const changed=()=>{needBuild=true;VER++;renderProps();if(SEL===el)info(TYPES[el.type].name+valueText(el),TYPES[el.type].info);};
+  const pulse=n=>{n.classList.remove('pulse');void n.offsetWidth;n.classList.add('pulse');};
+  // SI değer alanı
+  if(S){
+    const inp=box.querySelector('.vpi'),err=box.querySelector('.vpe');
+    const ok=()=>{box.classList.remove('shake');void box.offsetWidth;box.classList.add('done');changed();
+      if(F.length===1)setTimeout(()=>{if(POP&&POP.box===box)closePop();},260);
+      else{inp.value=fmtV(p[S.k],S.u);box.querySelectorAll('[data-num] button').forEach(b=>b.classList.toggle('on',Math.abs(+b.dataset.v-p[S.k])<=1e-9*b.dataset.v));setTimeout(()=>box.classList.remove('done'),450);}};
+    const apply=()=>{const m=setVal(el,inp.value);if(m){err.textContent=m;box.classList.remove('shake');void box.offsetWidth;box.classList.add('shake','bad');inp.focus();inp.select();return;}ok();};
+    inp.onkeydown=e=>{
+      if(e.key==='Enter'){e.preventDefault();apply();}
+      else if(e.key==='Escape'){e.preventDefault();closePop();}
+      else if((e.key==='ArrowUp'||e.key==='ArrowDown')&&S.k!=='V'&&S.k!=='Vz'){e.preventDefault();const cur=Solver.parseSI(inp.value,S.u);const b=isFinite(cur)&&cur>0?cur:p[S.k];
+        const n=e12Step(b,e.key==='ArrowUp'?1:-1);if(n>=S.lo&&n<=S.hi){inp.value=fmtV(n,S.u);box.classList.remove('bad');err.textContent='';inp.classList.remove('tick');void inp.offsetWidth;inp.classList.add('tick');}}
+    };
+    inp.oninput=()=>{box.classList.remove('bad');err.textContent='';};
+    box.querySelector('.vpok').onclick=apply;
+    box.querySelectorAll('[data-num] button').forEach(b=>b.onclick=()=>{inp.value=fmtV(+b.dataset.v,S.u);apply();});
+  }
+  // seçenek, kaydırıcı, anahtar alanları: anında uygulanır, balon açık kalır
+  box.querySelectorAll('.vpc[data-f]').forEach(c=>{const f=F[+c.dataset.f];c.querySelectorAll('button').forEach(b=>b.onclick=()=>{
+    const v=typeof f.opts[0][0]==='number'?+b.dataset.v:b.dataset.v;p[f.k]=v;c.querySelectorAll('button').forEach(o=>o.classList.toggle('on',o===b));pulse(b);
+    if(el.type==='led'){const inf=box.querySelector('.vpinfo div');if(inf)inf.textContent='İleri gerilim ≈ '+Solver.LEDV[v].toFixed(1)+' V · en çok ≈ 20 mA (60 mA\'de yanar)';}
+    changed();});});
+  box.querySelectorAll('input[type=range][data-f]').forEach(r=>{const f=F[+r.dataset.f],lab=r.nextElementSibling;r.oninput=()=>{p[f.k]=+r.value;lab.textContent=f.fmt(+r.value);if(S&&f.k===S.k)box.querySelector('.vpi').value=fmtV(+r.value,S.u);changed();};});
+  box.querySelectorAll('.vtg[data-f]').forEach(t=>{const f=F[+t.dataset.f];t.onclick=()=>{
+    const v=!p[f.k];p[f.k]=v;if(f.k==='latch')el.pressed=v;t.classList.toggle('on',v);t.setAttribute('aria-checked',v);t.querySelector('span').textContent=v?f.on:f.off;changed();};});
+  const fx=box.querySelector('.vpfix');if(fx)fx.onclick=()=>{el.burnt=false;el._f=0;el.st={};changed();say('Eleman yenilendi.','ok');closePop();};
+  box.querySelector('.vpx').onclick=()=>closePop();
+  box.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();closePop();}});
+  // canlı ölçüm satırı
+  const live=box.querySelector('.vplive');const upd=()=>{const t=liveText(el);live.innerHTML=t;live.hidden=!t;};upd();
   const outside=e=>{if(!box.contains(e.target))closePop();};
   const onScroll=e=>{if(!box.contains(e.target))closePop();};
-  POP={box,el,outside,onScroll};
+  POP={box,el,outside,onScroll,tick:setInterval(upd,300)};
   setTimeout(()=>{if(POP&&POP.box===box){document.addEventListener('pointerdown',outside,true);window.addEventListener('scroll',onScroll,true);}},0);
-  inp.focus();inp.select();
+  const fi=box.querySelector('.vpi')||box.querySelector('button.vtg,.vpc button.on,.vpc button,input[type=range],.vpfix');
+  if(fi){fi.focus({preventScroll:true});if(fi.select)fi.select();}
 }
 
 /* ---------- Simülasyon kartı ---------- */

@@ -102,7 +102,7 @@ css = r"""
   .props label{display:block;font-size:.85rem;margin:5px 0;} .props select,.props input[type=range]{margin-left:6px;vertical-align:middle;}
   .props .vin{display:inline-flex;gap:4px;align-items:center;margin-left:6px;vertical-align:middle;} .props .vin select{margin-left:0;max-width:7.5em;}
   .props .vtxt{width:6.5em;padding:2px 5px;font:inherit;font-family:Menlo,Consolas,monospace;font-size:.82rem;border:1px solid var(--line);border-radius:5px;}
-  .vpop{position:fixed;z-index:60;width:248px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px 7px;
+  .vpop{position:fixed;z-index:60;width:258px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px 7px;
     box-shadow:0 10px 30px rgba(15,30,50,.22),0 2px 6px rgba(15,30,50,.12);font-size:.84rem;color:var(--ink);animation:vpIn .26s cubic-bezier(.34,1.56,.64,1) both;}
   .vpop.out{animation:vpOut .16s ease-in both;pointer-events:none;}
   .vpop .vparr{position:absolute;left:var(--ax);bottom:-7px;width:12px;height:12px;margin-left:-6px;background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg);}
@@ -122,11 +122,27 @@ css = r"""
   .vpop.shake{animation:vpShake .32s ease;}
   .vpop.done .vpi{border-color:var(--ok);background:var(--okbg);} .vpop.done .vpok{background:var(--ok);}
   .vpop .vpi.tick{animation:vpTick .18s ease;}
+  .vpop .vps{margin-top:8px;} .vpop .vps>.vpl{display:block;margin-bottom:3px;}
+  .vpop .vps .vpc{margin-top:0;}
+  .vpop .vsw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:4px;vertical-align:-1px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25);}
+  .vpop .vpc button.on .vsw{box-shadow:0 0 0 2px #fff,inset 0 0 0 1px rgba(0,0,0,.25);}
+  .vpop .vprg{display:flex;align-items:center;gap:8px;flex-wrap:wrap;} .vpop .vprg>.vpl{display:inline;margin:0;} .vpop .vprg input{flex:1;min-width:100px;accent-color:var(--accent);} .vpop .vprg b{font-family:Menlo,Consolas,monospace;font-size:.8rem;min-width:4.2em;text-align:right;}
+  .vpop .vtg{display:inline-flex;align-items:center;gap:8px;border:0;background:none;padding:0;cursor:pointer;font:inherit;color:var(--ink);}
+  .vpop .vtg i{position:relative;width:34px;height:19px;border-radius:999px;background:#c9d2dc;transition:background .2s;flex:none;}
+  .vpop .vtg i::after{content:'';position:absolute;left:2px;top:2px;width:15px;height:15px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:transform .22s cubic-bezier(.34,1.56,.64,1);}
+  .vpop .vtg.on i{background:var(--ok);} .vpop .vtg.on i::after{transform:translateX(15px);}
+  .vpop .vpinfo{margin-top:7px;color:var(--sub);font-size:.78rem;line-height:1.45;}
+  .vpop .vplive{margin-top:7px;padding:4px 7px;border-radius:6px;background:#eef5fb;color:var(--info);font-family:Menlo,Consolas,monospace;font-size:.74rem;}
+  .vpop .vplive[hidden]{display:none;}
+  .vpop .vpburn{margin:2px 0 4px;padding:5px 7px;border-radius:6px;background:var(--badbg);color:var(--bad);font-size:.8rem;}
+  .vpop .vpburn button{margin-left:6px;border:0;border-radius:6px;background:var(--accent2);color:#fff;padding:2px 9px;cursor:pointer;}
+  .vpop .pulse{animation:vpPulse .3s ease;}
+  @keyframes vpPulse{40%{transform:scale(1.12);}}
   @keyframes vpIn{from{opacity:0;transform:scale(.6) translateY(6px);}to{opacity:1;transform:none;}}
   @keyframes vpOut{to{opacity:0;transform:scale(.85) translateY(4px);}}
   @keyframes vpShake{0%,100%{transform:none;}20%{transform:translateX(-6px);}40%{transform:translateX(5px);}60%{transform:translateX(-3px);}80%{transform:translateX(2px);}}
   @keyframes vpTick{50%{transform:scale(1.05);}}
-  @media (prefers-reduced-motion:reduce){.vpop,.vpop.out,.vpop.shake,.vpop .vpi.tick{animation-duration:1ms;}}
+  @media (prefers-reduced-motion:reduce){.vpop,.vpop.out,.vpop.shake,.vpop .vpi.tick,.vpop .pulse{animation-duration:1ms;} .vpop .vtg i,.vpop .vtg i::after{transition:none;}}
   .props .vtxt.bad{border-color:var(--accent2);background:var(--badbg);} .props .verr{font-size:.78rem;color:var(--bad);margin:2px 0 4px;}
   .simline{font-size:.82rem;color:var(--sub);margin-top:4px;}
   .cablab{font-size:.78rem;color:var(--sub);margin-right:2px;} .seg{display:inline-flex;gap:2px;}
