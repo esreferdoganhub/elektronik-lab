@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Osiloskop Eğitimi - DS1202Z-E</title>
+<style>
+  :root{
+    --bg:#f4f6f9; --panel:#ffffff; --ink:#1f2933; --sub:#52606d;
+    --accent:#1d6fa5; --accent2:#c0392b; --line:#d9e2ec;
+    --ok:#1f7a45; --okbg:#eaf7ec; --warn:#8a5a00; --warnbg:#fff6e5; --bad:#9b1c1c; --badbg:#fdeaea; --info:#1d4e75; --infobg:#eaf2f8;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:"Segoe UI","Helvetica Neue",Arial,sans-serif;line-height:1.55;}
+  .app{max-width:1360px;margin:0 auto;padding:22px 20px 60px;}
+  header.cover{background:linear-gradient(135deg,#1d6fa5,#0d3b57);color:#fff;border-radius:14px;padding:22px 28px;margin-bottom:16px;box-shadow:0 8px 24px rgba(13,59,87,.22);}
+  header.cover h1{margin:0 0 4px;font-size:1.55rem;}
+  header.cover p{margin:0;opacity:.9;font-size:.95rem;}
+  nav#chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+  nav#chips button{border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 13px;border-radius:20px;cursor:pointer;font-size:.88rem;}
+  nav#chips button:hover{border-color:var(--accent);}
+  nav#chips button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  main{display:grid;grid-template-columns:minmax(0,2fr) minmax(300px,1fr);gap:18px;align-items:start;}
+  .stage-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 2px 6px rgba(15,35,55,.05);}
+  svg#stage{width:100%;height:auto;display:block;user-select:none;touch-action:none;}
+  .side{display:flex;flex-direction:column;gap:14px;}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:0 2px 6px rgba(15,35,55,.05);}
+  .card h2{margin:0 0 4px;font-size:1.1rem;color:var(--accent);}
+  .card .stepno{font-size:.78rem;color:var(--sub);text-transform:uppercase;letter-spacing:.04em;}
+  .card p{margin:8px 0;font-size:.95rem;}
+  .row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;align-items:center;}
+  button.b{border:1px solid var(--line);background:#fff;color:var(--ink);padding:8px 13px;border-radius:8px;cursor:pointer;font-size:.9rem;}
+  button.b:hover{border-color:var(--accent);}
+  button.b.pri{background:var(--accent);color:#fff;border-color:var(--accent);}
+  button.b.sm{padding:5px 10px;font-size:.82rem;}
+  button.b:disabled{opacity:.45;cursor:default;}
+  #infoCard h2{font-size:1rem;}
+  #infoCard .dyn{margin-top:8px;font-size:.84rem;color:var(--sub);border-top:1px dashed var(--line);padding-top:8px;}
+  #fb{border-radius:10px;padding:11px 14px;font-size:.92rem;border-left:5px solid var(--info);background:var(--infobg);color:var(--info);min-height:48px;}
+  #fb.ok{border-color:var(--ok);background:var(--okbg);color:var(--ok);}
+  #fb.warn{border-color:#e0a11a;background:var(--warnbg);color:var(--warn);}
+  #fb.bad{border-color:var(--accent2);background:var(--badbg);color:var(--bad);}
+  .halo{fill:none;stroke:#ff8c00;stroke-width:4;display:none;animation:pulse 1s infinite;pointer-events:none;}
+  @keyframes pulse{50%{stroke-opacity:.2}}
+  .scb{cursor:pointer;transition:transform .08s,filter .08s;}
+  .scb.scp{transform:translate(0,2px);filter:brightness(.8);}
+  .scknob{cursor:grab;}
+  .srcrow{margin:8px 0;font-size:.88rem;}
+  .srcrow select,.srcrow input{border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:.85rem;max-width:100%;}
+  .srcrow input{width:78px;}
+  .cust{display:none;margin-top:6px;flex-wrap:wrap;gap:6px;align-items:center;font-size:.8rem;color:var(--sub);}
+  .cust.on{display:flex;}
+  @media (max-width:900px){main{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="cover">
+    <h1>Osiloskop Kullanımı – Animasyonlu Eğitim Seti</h1>
+    <p>RIGOL DS1202Z-E (2 kanal, 200 MHz, 1 GSa/s) üzerinde: ilk görüntü ve AUTO, dikey/yatay ölçek, tetikleme, ölçüm ve imleçler. Düğmelere basabilir, büyük düğmeleri sürükleyebilirsin; imleci bir parçanın üzerine getirince sağda açıklaması çıkar.</p>
+  </header>
+  <nav id="chips"></nav>
+  <main>
+    <div class="stage-wrap">
+      <svg id="stage" viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg"><g id="scopeRoot"></g></svg>
+    </div>
+    <aside class="side">
+      <div class="card" id="lessonCard"></div>
+      <div class="card" id="infoCard"></div>
+      <div id="fb"></div>
+      <div class="card" id="srcCard"></div>
+    </aside>
+  </main>
+</div>
+<script>
+/*__SCOPE__*/
+</script>
+<script>
+const $=s=>document.querySelector(s);
+const NAMES={sine:'Sine',square:'Square',pulse:'Pulse',ramp:'Ramp',arb:'Arb',noise:'Noise',dc:'DC'};
+const PRE={
+ comp:{wave:'square',freq:1000,amp:3,off:1.5,duty:50,phase:0},
+ sine1k:{wave:'sine',freq:1000,amp:2,off:0,duty:50,phase:0},
+ mains:{wave:'sine',freq:50,amp:6,off:0,duty:50,phase:0},
+ pwm:{wave:'square',freq:20000,amp:5,off:2.5,duty:30,phase:0},
+ tri:{wave:'ramp',freq:2000,amp:4,off:0,duty:50,phase:0},
+ noise:{wave:'noise',freq:1000,amp:1,off:0,duty:50,phase:0}
+};
+const SRCOPT=[['none','Bağlı değil'],['comp','Prob kompanzasyon (1 kHz, 0–3 V kare)'],['sine1k','Sinüs 1 kHz, 2 Vpp'],['mains','Şebeke benzeri 50 Hz, 6 Vpp'],['pwm','PWM 20 kHz, %30, 0–5 V'],['tri','Üçgen 2 kHz, 4 Vpp'],['noise','Gürültü'],['custom','Özel…']];
+const SRC=[{kind:'comp',c:Object.assign({},PRE.sine1k)},{kind:'none',c:Object.assign({},PRE.sine1k)}];
+function getSignals(){return SRC.map(s=>{if(s.kind==='none')return null;const p=s.kind==='custom'?s.c:PRE[s.kind];return Object.assign({on:true,factor:1},p);});}
+function buildSrc(){
+  $('#srcCard').innerHTML=`<div class="stepno">Sinyal kaynakları</div><p style="margin:2px 0 0;font-size:.85rem;color:var(--sub)">Osiloskop girişlerine bağlı sinyali seç (gerçek laboratuvarda bu bir üreteç ya da devre olur).</p>`+[0,1].map(i=>`<div class="srcrow"><b style="color:${i?'#0f87b3':'#b98a00'}">CH${i+1}:</b> <select id="sel${i}">${SRCOPT.map(o=>`<option value="${o[0]}">${o[1]}</option>`).join('')}</select>
+   <div class="cust" id="cust${i}"><select id="cw${i}">${Object.keys(NAMES).map(k=>`<option value="${k}">${NAMES[k]}</option>`).join('')}</select> f<input id="cf${i}" type="number" step="any"> Hz · Vpp<input id="ca${i}" type="number" step="any"> · ofs<input id="co${i}" type="number" step="any"> V · duty<input id="cd${i}" type="number" step="any"> % · faz<input id="cp${i}" type="number" step="any"> °</div></div>`).join('');
+  [0,1].forEach(i=>{
+    $('#sel'+i).onchange=()=>{SRC[i].kind=$('#sel'+i).value;syncSrc();Scope.mark();};
+    ['w','f','a','o','d','p'].forEach(k=>{$('#c'+k+i).onchange=readCustom.bind(null,i);});
+  });
+  syncSrc();
+}
+function readCustom(i){
+  const c=SRC[i].c;c.wave=$('#cw'+i).value;c.freq=Math.max(1e-3,+$('#cf'+i).value||1000);c.amp=Math.max(0,+$('#ca'+i).value||0);c.off=+$('#co'+i).value||0;c.duty=Math.min(99,Math.max(1,+$('#cd'+i).value||50));c.phase=+$('#cp'+i).value||0;Scope.mark();
+}
+function syncSrc(){
+  [0,1].forEach(i=>{
+    $('#sel'+i).value=SRC[i].kind;
+    const c=SRC[i].c;$('#cw'+i).value=c.wave;$('#cf'+i).value=c.freq;$('#ca'+i).value=c.amp;$('#co'+i).value=c.off;$('#cd'+i).value=c.duty;$('#cp'+i).value=c.phase;
+    $('#cust'+i).classList.toggle('on',SRC[i].kind==='custom');
+  });
+}
+function setSrc(i,kind,c){SRC[i].kind=kind;if(c)Object.assign(SRC[i].c,c);syncSrc();}
+function say(m,t='info'){const f=$('#fb');f.className=t==='info'?'':t;f.textContent=m;}
+let infoT=null;
+function renderInfo(t,b){
+  if(t)infoT=[t,b];
+  const S=Scope.S,c=S.ch[S.sel],i=infoT||Scope.INFO.screen;
+  $('#infoCard').innerHTML=`<div class="stepno">Bilgi · imleci bir parçanın üzerine getir</div><h2>${i[0]}</h2><p style="margin:2px 0 0">${i[1]}</p>
+  <div class="dyn"><b>Seçili: CH${S.sel+1}</b> · ${Scope.siFmt(Scope.vdOf(c),'V')}/div · ${Scope.siFmt(Scope.TD[S.ti],'s')}/div · Kuplaj ${c.coup} · Tetik: CH${S.trig.src+1} ${S.trig.slope==='rise'?'↑':'↓'} ${S.mode==='auto'?'Auto':S.mode==='normal'?'Normal':'Single'}</div>`;
+}
+Scope.init({root:$('#scopeRoot'),getSignals,onComp:()=>{setSrc(0,'comp');Scope.mark();say('Prob kompanzasyon çıkışı CH1 girişine bağlandı (1 kHz, 0–3 V kare dalga). AUTO\'ya bas.','ok');},say,info:(t,b)=>{renderInfo(t,b);}});
+renderInfo();
+setInterval(()=>renderInfo(),700);
+
+/* ---------- Demo ---------- */
+let demoId=0,busy=0;
+function runDemo(seq){
+  const id=++demoId;let i=0;busy=1;setBtns();
+  const next=()=>{
+    if(id!==demoId)return;
+    if(i>=seq.length){busy=0;setBtns();return;}
+    const tk=seq[i++];
+    if(tk.startsWith('kn:')){const [,k,d]=tk.split(':');Scope.knobStep(k,+d);}
+    else if(tk.startsWith('kp:'))Scope.knobPress(tk.slice(3));
+    else if(tk.startsWith('sc:'))Scope.press(tk.slice(3));
+    setTimeout(next,tk.startsWith('kn:')?430:800);
+  };
+  setTimeout(next,300);
+}
+function stopDemo(){demoId++;busy=0;}
+function setBtns(){const b=$('#dm');if(b)b.disabled=!!busy;}
+
+/* ---------- Dersler ---------- */
+const S=Scope.S,TD=Scope.TD,VD=Scope.VD;
+const ti=v=>TD.indexOf(v),vi=v=>VD.indexOf(v);
+const LESSONS=[
+ {tab:'0 Tanıtım',title:'Cihazı tanıyalım',steps:[
+  {t:'Bu bir RIGOL DS1202Z-E: 2 kanallı, 200 MHz bant genişlikli, 1 GSa/s örnekleme hızlı dijital osiloskop. Kanal 1\'de prob kompanzasyon sinyali (1 kHz kare dalga) bağlı.',hl:['screen'],set:()=>{Scope.autoset();}},
+  {t:'Ekran 12×8 bölmelidir (12 yatay div, 8 dikey div). Üstte durum (RUN/STOP/AUTO/WAIT), zaman tabanı (H), tetikleme (T) bilgisi; altta ölçümler ve kanal çubuğu (V/div) bulunur.',hl:['screen']},
+  {t:'Dikey (VERTICAL) bölüm: CH1/CH2 tuşları kanalı açar ve seçer (kanal renginde yanar). Dikey POSITION dalgayı kaydırır, dikey SCALE V/div ayarlar.',hl:['chs','vpos','vscale']},
+  {t:'Yatay (HORIZONTAL) bölüm: SCALE zaman tabanını (s/div), POSITION tetikleme noktasının yatay konumunu ayarlar.',hl:['hpos','hscale']},
+  {t:'Tetikleme (TRIGGER): LEVEL seviyeyi, MODE çalışma modunu (Auto/Normal/Single), MENU kaynağı ve kenarı, FORCE zorlamalı yakalamayı ayarlar.',hl:['tlevel','tmode','tmenu','force']},
+  {t:'Üstte: AUTO sinyale göre otomatik ayar, RUN/STOP ekranı durdur/devam ettir, SINGLE tek yakalama, CLEAR temizleme.',hl:['runbtns']},
+  {t:'MENU grubu: Measure (otomatik ölçüm), Cursor (imleçler), Display, Acquire... Soldaki ve sağdaki mavi tuşlar ekrandaki menüleri kullanır. Çok işlevli düğme (Intensity) imleçleri ve parlaklığı ayarlar.',hl:['menugrp','multi','left','right']},
+  {t:'Girişler: CH1 (sarı), CH2 (camgöbeği) BNC konnektörleri. Prob anahtarı (1X/10X) altlarındadır; osiloskop menüsündeki Probe ayarıyla eşleşmelidir.',hl:['bnc1','bnc2','probe1','probe2']}
+ ]},
+ {tab:'1 İlk görüntü / AUTO',title:'İlk görüntü ve AUTO',steps:[
+  {t:'Prob kompanzasyon sinyali CH1\'e bağlı ama ölçekler uygun değil: sinyal ya çok küçük ya da ekran dışında. Bu, ilk bağladığında sık gördüğün durumdur.',hl:['screen'],set:()=>{S.ch[0].vi=vi(5);S.ti=ti(1e-1);S.mode='auto';}},
+  {t:'AUTO tuşuna bas: osiloskop sinyale göre V/div, s/div ve tetiklemeyi kendi ayarlar. "▶ Göster" ile animasyonu izle ya da kendin bas.',hl:['auto'],set:()=>{},demo:['sc:auto']},
+  {t:'Şimdi dalga düzgün görünüyor. Kanal çubuğunda V/div, üstte s/div yazar. Kare dalga yaklaşık 3 V tepeden tepeye ve 1 kHz\'dir.',hl:['screen'],set:()=>{Scope.autoset();}},
+  {t:'Gerilimi ekrandan okumak için: yükseklik (div) × V/div. Zamanı okumak için: genişlik (div) × s/div. Örnek: 1 ms periyot ve 500 μs/div ise bir periyot 2 div tutar.',hl:['screen']}
+ ]},
+ {tab:'2 Dikey',title:'Dikey ayarlar',steps:[
+  {t:'Dikey SCALE düğmesini saat yönünde çevir: V/div azalır, dalga büyür. Ters yönde V/div artar, dalga küçülür. Kanal çubuğundaki değeri izle.',hl:['vscale'],set:()=>{Scope.autoset();},demo:['kn:vscale:1','kn:vscale:1','kn:vscale:-1','kn:vscale:-1','kn:vscale:-1']},
+  {t:'Dikey POSITION düğmesi dalgayı yukarı/aşağı kaydırır; soldaki renkli işaret (1▶) o kanalın sıfır seviyesidir. Düğmeye basarsan sıfıra döner.',hl:['vpos'],set:()=>{Scope.autoset();},demo:['kn:vpos:1','kn:vpos:1','kn:vpos:1','kp:vpos']},
+  {t:'Kuplaj: CH1 tuşuna basınca sağ menüde Coupling çıkar. DC: sinyalin DC bileşeni görünür (bu sinyal 0–3 V; ortalama 1.5 V). AC: DC bileşen süzülür, sinyal sıfır etrafında görünür.',hl:['chs','right'],set:()=>{Scope.autoset();S.menu='ch';},demo:['sc:r0']},
+  {t:'GND kuplaj: giriş topraklanır; sıfır seviyesini (referans çizgisini) görürsün. Kuplaj tuşu DC → AC → GND sırayla döner.',hl:['right'],set:()=>{Scope.autoset();S.menu='ch';S.ch[0].coup='AC';},demo:['sc:r0']},
+  {t:'Prob uyumu: osiloskopun varsayılan prob ayarı 10X ve probun anahtarı da 10X olmalı. Prob anahtarı 1X\'e alınırsa ama osiloskop ayarı 10X kalırsa gerilim 10 kat BÜYÜK okunur. Kırmızı etiket eşleşmemeyi gösterir.',hl:['probe1','right'],set:()=>{Scope.autoset();S.menu='ch';},demo:['sc:probe1']},
+  {t:'Düzeltme: CH1 menüsünde Probe\'u (3. sağ tuş) 1X yap. Şimdi gerçek anahtar ve ayar eşleşir; Vpp yine ≈ 3 V okunur. Gerçek ölçümde bu eşleşmeyi her zaman kontrol et.',hl:['right','probe1'],set:()=>{Scope.autoset();S.menu='ch';S.phys[0]=1;},demo:['sc:r2']}
+ ]},
+ {tab:'3 Yatay',title:'Yatay ayarlar',steps:[
+  {t:'Yatay SCALE düğmesi zaman tabanını ayarlar. Saat yönünde: s/div azalır, ekranda daha az zaman görünür (dalga genişler). Üstteki "H" değerini izle.',hl:['hscale'],set:()=>{Scope.autoset();},demo:['kn:hscale:1','kn:hscale:1','kn:hscale:-1','kn:hscale:-1','kn:hscale:-1','kn:hscale:-1']},
+  {t:'Çok yavaş zaman tabanında (örn. 100 μs/div → 10 ms/div) ekranda onlarca periyot görünür ve dalga yoğun bir banda dönüşür; çok hızlıda yalnızca küçük bir parçası görünür.',hl:['screen'],set:()=>{Scope.autoset();S.ti=ti(2e-3);}},
+  {t:'Üstteki örnekleme hızı ve bellek derinliği zaman tabanına göre değişir: yavaş tarama = daha düşük örnekleme hızı. Yüksek frekanslı sinyalde yeterli örnek olması için hızlı tarama gerekir.',hl:['screen'],set:()=>{Scope.autoset();S.ti=ti(2e-3);}},
+  {t:'Yatay POSITION düğmesi tetikleme noktasını (üstteki turuncu ▼) sağa/sola kaydırır. Böylece tetikleme anından önceki ya da sonraki kısmı incelersin. Basınca sıfıra döner.',hl:['hpos'],set:()=>{Scope.autoset();},demo:['kn:hpos:1','kn:hpos:1','kn:hpos:1','kn:hpos:-1','kn:hpos:-1','kn:hpos:-1','kp:hpos']}
+ ]},
+ {tab:'4 Tetikleme',title:'Tetikleme (Trigger)',steps:[
+  {t:'Tetikleme, her taramanın aynı noktadan başlamasını sağlar; böylece periyodik dalga ekranda durağan görünür. Turuncu "T" oku tetikleme seviyesidir; sağ üstte seviye ve kenar yazar.',hl:['screen'],set:()=>{Scope.autoset();}},
+  {t:'Tetikleme seviyesi LEVEL düğmesiyle ayarlanır. Düğmeyi çevir, kesikli çizgi seviyeyi gösterir. Seviye sinyalin içinde kaldığı sürece dalga durağandır. Basarsan seviye sıfıra (0 V) döner.',hl:['tlevel'],set:()=>{Scope.autoset();},demo:['kn:tlevel:1','kn:tlevel:1','kn:tlevel:-1','kn:tlevel:-1','kp:tlevel']},
+  {t:'Seviyeyi sinyalin genlik aralığının DIŞINA çıkarırsan tetikleme olmaz. Auto modunda ekran yine de güncellenir ama dalga başlangıç noktası rastgele olduğundan titrer/kayar. Duran görüntü yoksa ilk bakılacak yer burasıdır.',hl:['tlevel','screen'],set:()=>{Scope.autoset();S.trig.level=5;}},
+  {t:'MODE tuşuyla Normal moda geç: tetikleme yoksa ekran güncellenmez, üstte WAIT yazar (son iz donuk kalır). Auto\'da ise AUTO yazar.',hl:['tmode'],set:()=>{Scope.autoset();S.trig.level=5;},demo:['sc:tmode']},
+  {t:'Kenar (Slope): MENU\'ye bas, 3. sağ tuş ↑ yükselen ↔ ↓ düşen kenarı seçer. Kare dalgada tetik noktası yükselen ya da düşen kenara gelir; dalga ekranda buna göre kayar.',hl:['tmenu','right'],set:()=>{Scope.autoset();S.menu='trig';},demo:['sc:r2']},
+  {t:'Tetikleme kaynağı: MENU\'de 2. sağ tuş CH1/CH2 seçer. İki kanallı ölçümde, referans aldığın kanalı kaynak yap.',hl:['tmenu','right'],set:()=>{Scope.autoset();S.menu='trig';}}
+ ]},
+ {tab:'5 Ölçüm / imleç',title:'Otomatik ölçüm ve imleçler',steps:[
+  {t:'Measure tuşuna bas: soldaki 6 tuş ölçüm listesidir (Period, Freq, Rise Time, Fall Time, +Width, −Width). Seçili olanlar sarı çerçeveli ve ekranın altında değerleri görünür.',hl:['measure','left'],set:()=>{Scope.autoset();S.meas=['freq','period','vpp','vmax','vmin'];},demo:['sc:measure']},
+  {t:'Sağ menüde AllMeasure\'ı açarsan tüm ölçümler ızgaranın üstüne tablo olarak gelir: Vmax, Vmin, Vpp, Vtop, Vbase, Vamp, Vavg, Vrms, Freq, Period, +Duty, −Duty...',hl:['right'],set:()=>{Scope.autoset();S.menu='meas';S.left=0;},demo:['sc:r1']},
+  {t:'Ölçümlerin güvenilir olması için ekranda en az bir kaç periyot görünmeli. Zaman tabanı çok hızlıysa Freq ve Period "*****" olur. Doğru ölçüm için AUTO ya da uygun s/div kullan.',hl:['screen'],set:()=>{Scope.autoset();S.ti=ti(1e-4);S.meas=['freq','period','pwidth','pduty','vpp'];S.left=0;S.menu='meas';}},
+  {t:'Cursor tuşuna bir kez bas: zaman (X) imleçleri çıkar. Çok işlevli düğmeyle imleci hareket ettir; ΔX ve 1/ΔX (frekans) ekranda görünür. Sağ menüden CurA, CurB ya da CurAB seç.',hl:['cursor','multi'],set:()=>{Scope.autoset();},demo:['sc:cursor','kn:multi:1','kn:multi:1','kn:multi:1']},
+  {t:'Cursor\'a ikinci basışta gerilim (Y) imleçleri çıkar: ΔY ile tepeden tepeye gerilimi bölme saymadan okursun. Üçüncü basışta imleçler kapanır.',hl:['cursor','multi'],set:()=>{Scope.autoset();S.cur=1;S.menu='cursor';},demo:['sc:cursor','kn:multi:1','kn:multi:1']}
+ ]},
+ {tab:'6 İki kanal / faz',title:'İki kanal ve faz farkı',steps:[
+  {t:'CH1 ve CH2\'ye aynı frekansta (1 kHz) iki sinüs bağlı: CH2, CH1\'e göre 90° ilerde. CH2 tuşuna basarak ikinci kanalı aç.',hl:['ch2'],set:()=>{setSrc(0,'custom',{wave:'sine',freq:1000,amp:2,off:0,duty:50,phase:0});setSrc(1,'custom',{wave:'sine',freq:1000,amp:2,off:0,duty:50,phase:90});},demo:['sc:ch2']},
+  {t:'İki kanal açık. Kanal çubuğunda 1 ve 2 görünür; seçili olan renkli dolu kutudur. Dikey düğmeler seçili kanala etki eder. Tetikleme kaynağı CH1 olduğundan CH1 sabit, CH2 ona göre kayık görünür.',hl:['chs','screen'],set:()=>{setSrc(0,'custom',{wave:'sine',freq:1000,amp:2,off:0,duty:50,phase:0});setSrc(1,'custom',{wave:'sine',freq:1000,amp:2,off:0,duty:50,phase:90});S.ch[1].on=true;Scope.autoset();}},
+  {t:'Faz farkı ölçümü: Cursor ile CH1\'in sıfır geçişi ile CH2\'ninkini işaretle, ΔX\'i oku. Faz = ΔX / T × 360°. T = 1 ms, ΔX ≈ 250 μs ise 90° bulunur.',hl:['cursor','multi'],set:()=>{setSrc(0,'custom',{wave:'sine',freq:1000,amp:2,off:0,duty:50,phase:0});setSrc(1,'custom',{wave:'sine',freq:1000,amp:2,off:0,duty:50,phase:90});S.ch[1].on=true;Scope.autoset();S.cur=1;S.curA=0;S.curB=1.5;S.menu='cursor';}},
+  {t:'Faz farkı 180° ise iki sinyal birbirinin tersidir; 0° ise üst üste biner. Güç elektroniğinde 3 faz (120°) ve yarım köprü kapı sinyalleri (180°) için faz ölçümü gerekir.',hl:['screen'],set:()=>{setSrc(0,'custom',{wave:'sine',freq:1000,amp:2,off:0,duty:50,phase:0});setSrc(1,'custom',{wave:'sine',freq:1000,amp:2,off:0,duty:50,phase:180});S.ch[1].on=true;Scope.autoset();}}
+ ]},
+ {tab:'7 SINGLE / STOP',title:'Tek yakalama ve durdurma',steps:[
+  {t:'RUN/STOP tuşuna bas: ekran donar (STOP, kırmızı). Dikey ölçek ve imleçler artık donmuş iz üzerinde incelenebilir. Tekrar basınca çalışmaya devam eder.',hl:['runstop'],set:()=>{Scope.autoset();},demo:['sc:runstop']},
+  {t:'SINGLE: tetikleme gelince ekranı bir kez yakalar ve durur. Geçici olayları (anahtarlama, tek darbe) yakalamak için kullanılır. Tuş sarı yanar ve WAIT görünür.',hl:['single'],set:()=>{Scope.autoset();S.trig.level=5;},demo:['sc:single']},
+  {t:'Tetikleme seviyesini sinyalin içine getirirsen yakalama gerçekleşir ve STOP olur. FORCE tuşu da koşul olmasa bile bir yakalama zorlar.',hl:['tlevel','force'],set:()=>{Scope.autoset();S.trig.level=5;S.mode='single';S.armed=true;S.status='WAIT';},demo:['kn:tlevel:-1','kn:tlevel:-1','kn:tlevel:-1','kn:tlevel:-1','kn:tlevel:-1','kn:tlevel:-1','kn:tlevel:-1']}
+ ]}
+];
+const TABS=[...LESSONS.map((l,i)=>({tab:l.tab,i})),{tab:'Serbest mod',i:'free'},{tab:'Sınav',i:'quiz'}];
+const chips=$('#chips');
+TABS.forEach((t,idx)=>{const b=document.createElement('button');b.textContent=t.tab;b.dataset.i=idx;b.onclick=()=>openTab(idx);chips.appendChild(b);});
+const G={mode:'lesson',lesson:0,step:0};
+function resetAll(){
+  stopDemo();Scope.reset();
+  SRC[0].kind='comp';SRC[1].kind='none';
+  Object.assign(SRC[0].c,PRE.sine1k);Object.assign(SRC[1].c,PRE.sine1k);syncSrc();
+}
+function openTab(idx){
+  chips.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===idx));
+  const t=TABS[idx];Scope.halo([]);
+  if(t.i==='free'){G.mode='free';resetAll();Scope.autoset();renderFree();}
+  else if(t.i==='quiz'){G.mode='quiz';startQuiz();}
+  else{G.mode='lesson';G.lesson=t.i;enterStep(0);}
+}
+function enterStep(n){
+  const les=LESSONS[G.lesson];G.step=n;resetAll();
+  Scope.refresh();
+  for(let i=0;i<=n;i++){const a=les.steps[i].set;if(a)a();}
+  Scope.halo(les.steps[n].hl);Scope.mark();
+  renderLesson();say('');
+}
+function renderLesson(){
+  const les=LESSONS[G.lesson],st=les.steps[G.step],last=G.step===les.steps.length-1;
+  $('#lessonCard').innerHTML=`<div class="stepno">${les.tab} · Adım ${G.step+1}/${les.steps.length}</div><h2>${les.title}</h2><p>${st.t}</p>
+   <div class="row"><button class="b" id="pv" ${G.step===0?'disabled':''}>◀ Önceki</button>${st.demo?'<button class="b" id="dm">▶ Göster</button>':''}<button class="b pri" id="nx">${last?(G.lesson<LESSONS.length-1?'Sonraki ders ▶':'Serbest moda geç ▶'):'Sonraki ▶'}</button></div>`;
+  $('#pv').onclick=()=>enterStep(G.step-1);
+  if(st.demo)$('#dm').onclick=()=>{enterStep(G.step);runDemo(st.demo);};
+  $('#nx').onclick=()=>{if(!last)enterStep(G.step+1);else openTab(G.lesson<LESSONS.length-1?G.lesson+1:TABS.length-2);};
+}
+function renderFree(){
+  $('#lessonCard').innerHTML=`<div class="stepno">Serbest mod</div><h2>Kendin dene</h2><p>Sağdaki "Sinyal kaynakları" kartından CH1/CH2 girişlerine bir sinyal bağla (Özel… ile kendi frekans, genlik, offset ve görev oranını gir). Sonra AUTO'ya bas ve ölçek, tetikleme, ölçüm ve imleçlerle çalış.</p>
+  <p style="font-size:.88rem;color:var(--sub)">İpucu: büyük düğmeleri sürükleyerek ya da fare tekerleğiyle çevir, düğmenin ortasına basınca sıfırlanır/ortalanır.</p>`;
+}
+
+/* ---------- Sınav ---------- */
+const near=(a,b,t=0.03)=>Math.abs(a-b)<=Math.abs(b)*t;
+const TASKS=[
+ {t:'Prob kompanzasyon sinyali CH1\'e bağlı. AUTO ile görüntüle ve Measure\'dan Freq ölçümünü ekranda göster.',set:()=>{S.ch[0].vi=vi(5);S.ti=ti(1e-1);},c:()=>{const f=[];if(Scope.sigs()[0]&&TD[S.ti]>1e-3*1.01)f.push('Zaman tabanı hâlâ çok yavaş: AUTO\'ya bas');if(!S.meas.includes('freq'))f.push('Freq ölçümü eklenmeli (Measure → soldaki tuş)');const M=Scope.measure(0);if(!M||M.freq==null)f.push('Freq okunamıyor (*****): zaman tabanını ayarla');return f;}},
+ {t:'Zaman tabanını 500 μs/div yap.',set:()=>{Scope.autoset();},c:()=>TD[S.ti]===5e-4?[]:['Şu an '+Scope.siFmt(TD[S.ti],'s')+'/div; hedef 500 μs/div']},
+ {t:'CH1 dikey ölçeğini 1 V/div yap.',set:()=>{Scope.autoset();},c:()=>Scope.vdOf(S.ch[0])===1?[]:['Şu an '+Scope.siFmt(Scope.vdOf(S.ch[0]),'V')+'/div; hedef 1 V/div']},
+ {t:'CH1 kuplajını AC yap (DC bileşen süzülsün).',set:()=>{Scope.autoset();},c:()=>S.ch[0].coup==='AC'?[]:['CH1 kuplajı AC olmalı (CH1 tuşu → Coupling)']},
+ {t:'Tetikleme kenarını düşen (↓) yap ve Normal moda geç.',set:()=>{Scope.autoset();},c:()=>{const f=[];if(S.trig.slope!=='fall')f.push('Kenar ↓ (Fall) olmalı');if(S.mode!=='normal')f.push('Mod Normal olmalı (MODE tuşu)');return f;}},
+ {t:'Single moduna al ve bir yakalama yap (osiloskop STOP durumunda kalsın).',set:()=>{Scope.autoset();},c:()=>{const f=[];if(S.mode!=='single')f.push('Mod Single olmalı');if(S.run)f.push('Henüz yakalama olmadı (hâlâ RUN). Tetik seviyesini sinyal içine getir ya da FORCE\'a bas');return f;}},
+ {t:'Cursor ile X imleçlerini aç ve ΔX ≈ 1 ms (kare dalganın periyodu) olacak şekilde ayarla.',set:()=>{Scope.autoset();},c:()=>{const f=[];if(S.cur!==1)f.push('X imleçleri açık olmalı (Cursor tuşu bir kez)');else{const dx=Math.abs(S.curB-S.curA)*TD[S.ti];if(!near(dx,1e-3,0.06))f.push('ΔX = '+Scope.siFmt(dx,'s')+'; hedef ≈ 1 ms');}return f;}},
+ {t:'CH1 probunun fiziksel anahtarını 1X yap ve osiloskop Probe ayarını da 1X yaparak eşleştir; ölçülen Vpp ≈ 3 V kalsın.',set:()=>{Scope.autoset();},c:()=>{const f=[];if(S.phys[0]!==1)f.push('Prob anahtarı 1X olmalı (CH1 altındaki etiket)');if(S.ch[0].probe!==1)f.push('Probe ayarı 1X olmalı (CH1 menüsü)');const M=Scope.measure(0);if(!M||!near(M.vpp,3,0.05))f.push('Vpp ≈ 3 V okunmuyor'+(M?' (şimdi '+Scope.siFmt(M.vpp,'V')+')':''));return f;}}
+];
+const Q={order:[],i:0,score:0};
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startQuiz(){Q.order=shuffle(TASKS.map((_,i)=>i)).slice(0,6);Q.i=0;Q.score=0;loadQ();}
+function loadQ(){
+  resetAll();Scope.refresh();const t=TASKS[Q.order[Q.i]];t.set();Scope.mark();
+  $('#lessonCard').innerHTML=`<div class="stepno">Sınav · Soru ${Q.i+1}/${Q.order.length} · Puan ${Q.score}</div><h2>Görev</h2><p>${t.t}</p><div class="row"><button class="b pri" id="ans">Kontrol et</button></div>`;
+  $('#ans').onclick=checkAns;say('Osiloskobu gerçek tuşlarla ayarla, sonra Kontrol et\'e bas.');
+}
+function checkAns(){
+  const t=TASKS[Q.order[Q.i]],f=t.c(),good=f.length===0;if(good)Q.score++;
+  const last=Q.i===Q.order.length-1;
+  $('#lessonCard').innerHTML=`<div class="stepno">Sınav · Soru ${Q.i+1}/${Q.order.length} · Puan ${Q.score}</div><h2>${good?'✔ Doğru':'✖ Eksik/yanlış'}</h2><p>${good?'Tebrikler!':f.join('<br>')}</p><div class="row"><button class="b pri" id="nq">${last?'Sonucu gör':'Sonraki görev ▶'}</button></div>`;
+  $('#nq').onclick=()=>{if(last)endQuiz();else{Q.i++;loadQ();}};
+  say(good?'Doğru!':'Eksikler var.',good?'ok':'bad');
+}
+function endQuiz(){
+  const p=Q.score,n=Q.order.length;
+  $('#lessonCard').innerHTML=`<div class="stepno">Sınav bitti</div><h2>Puanın: ${p}/${n}</h2><p>${p===n?'Mükemmel! Osiloskobu rahatça kullanabilirsin.':p>=n*.7?'İyi! Eksik kalan konuları tekrar et.':'Dersleri tekrar gözden geçirip yeniden dene.'}</p><div class="row"><button class="b pri" id="rq">Tekrar dene</button></div>`;
+  $('#rq').onclick=startQuiz;say('');
+}
+buildSrc();
+openTab(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,616 @@
+/* ================= RIGOL DS1202Z-E osiloskop çekirdeği ================= */
+const Scope=(function(){
+'use strict';
+const COL=['#ffe14a','#35d6ff'];
+const TD=[],VD=[];
+[-9,-8,-7,-6,-5,-4,-3,-2,-1,0,1].forEach(e=>[1,2,5].forEach(m=>{const v=+(m*Math.pow(10,e)).toPrecision(3);if(v>=5e-9&&v<=50.01)TD.push(v);}));
+[-3,-2,-1,0,1].forEach(e=>[1,2,5].forEach(m=>VD.push(+(m*Math.pow(10,e)).toPrecision(3))));VD.push(100);
+const clamp=(x,a,b)=>Math.max(a,Math.min(b,x));
+function siFmt(x,u){
+  const a=Math.abs(x);let sc=1,p='';
+  if(a>=1e9){sc=1e9;p='G';}else if(a>=1e6){sc=1e6;p='M';}else if(a>=1e3){sc=1e3;p='k';}else if(a>=1||a===0){sc=1;}else if(a>=1e-3){sc=1e-3;p='m';}else if(a>=1e-6){sc=1e-6;p='μ';}else{sc=1e-9;p='n';}
+  return (+(x/sc).toPrecision(3))+p+u;
+}
+function shape(w,p,d){
+  switch(w){
+    case 'sine':return Math.sin(2*Math.PI*p);
+    case 'square':case 'pulse':return p<d?1:-1;
+    case 'ramp':return p<d?-1+2*p/d:1-2*(p-d)/(1-d);
+    case 'arb':return 2*(1-Math.exp(-5*p))/(1-Math.exp(-5))-1;
+    case 'noise':return Math.random()*2-1;
+    default:return 0;
+  }
+}
+let ARBAVG=0;{const N=1000;for(let i=0;i<N;i++)ARBAVG+=shape('arb',i/N,.5);ARBAVG/=N;}
+const avgShape=(w,d)=>w==='square'||w==='pulse'?2*d-1:w==='arb'?ARBAVG:0;
+const RISE_ARB=(()=>{const f=p=>2*(1-Math.exp(-5*p))/(1-Math.exp(-5))-1;let a=0,b=0;for(let i=0;i<=1000;i++){const p=i/1000,v=f(p);if(!a&&v>=-0.6)a=p;if(!b&&v>=0.6){b=p;}}return b-a;})();
+
+/* ---------- Durum ---------- */
+const vdOf=c=>c.fine?c.vv:VD[c.vi];
+const newCh=()=>({on:false,fine:false,vv:1,vi:VD.indexOf(1),pos:0,coup:'DC',probe:10,inv:false,bw:false});
+const defaults=()=>({power:true,run:true,mode:'auto',armed:false,status:'AUTO',sel:0,
+  ch:[Object.assign(newCh(),{on:true}),newCh()],ti:TD.indexOf(1e-3),hpos:0,trig:{src:0,slope:'rise',level:0},
+  menu:'ch',left:null,leftPage:0,cur:0,curA:-2,curB:2,curSel:'A',meas:['period','freq','rise','fall','pwidth'],allMeas:false,
+  grid:'full',dots:false,bright:60,acq:'normal',phys:[10,10],lvlT:0,frame:null,forced:false,boot:0});
+const S=defaults();
+let host={getSignals:()=>[null,null],say:()=>{},info:()=>{}};
+let root=null,svg=null,sigs=[null,null],dirty=true,lastDraw=0;
+const say=(m,t)=>host.say(m,t||'info');
+const mark=()=>{dirty=true;};
+
+/* ---------- Konum sabitleri ---------- */
+const GX0=44,GY0=18,GW=372,GH=224,DX=GW/12,DY=GH/8,GCX=GX0+GW/2,GCY=GY0+GH/2;
+const KN={vpos:[721,177,15],vscale:[722,298,32],hpos:[826,178,15],hscale:[826,298,32],tlevel:[903,230,18],multi:[672,107,18]};
+const KSTEP=18;
+const kstate={};Object.keys(KN).forEach(k=>kstate[k]={t:0,a:0,v:0});
+const BNCX=[633,735,836],BNCY=390;
+
+/* ---------- Bilgi ---------- */
+const INFO={
+ screen:['Ekran','Üstte durum çubuğu (RUN/STOP, zaman tabanı, tetikleme), ortada 12×8 bölmeli ızgara, altta ölçüm kutuları ve kanal çubuğu (V/div). Sağda menü etiketleri.'],
+ clear:['CLEAR','Ekrandaki ölçüm istatistiklerini ve izleri temizler.'],
+ auto:['AUTO (Autoset)','Sinyale göre dikey ölçek, zaman tabanı ve tetiklemeyi otomatik ayarlar. İlk bakış için en hızlı yol; sonra elle ince ayar yapılır.'],
+ runstop:['RUN/STOP','Yeşil = çalışıyor (RUN), kırmızı = durdurulmuş (STOP). STOP\'ta ekran dondurulur, dikey ölçek hâlâ değiştirilebilir.'],
+ single:['SINGLE','Tek seferlik yakalama: tetikleme gelince ekranı bir kez yakalar ve durur. Geçici olayları yakalamak için kullanılır.'],
+ ch1:['CH1 tuşu','Kanalı açar ve seçer; seçiliyken menüsünü açar (kuplaj, prob, ters çevirme). Kanal açık ve seçiliyken tekrar basarsan kapanır. Işığı kanal renginde yanar.'],
+ ch2:['CH2 tuşu','İkinci kanalı açar/seçer. Dikey ölçek ve pozisyon düğmeleri hep seçili kanala etki eder.'],
+ math:['MATH','Matematik işlemleri (A+B, A−B, FFT...). Bu eğitimde kullanılmıyor.'],
+ ref:['REF','Referans dalga şekli saklama. Bu eğitimde kullanılmıyor.'],
+ hmenu:['Yatay MENU','Gecikmeli tarama (zoom) menüsü. Bu eğitimde kullanılmıyor.'],
+ tmode:['Tetikleme MODE','Auto → Normal → Single arasında geçiş yapar. Auto: tetikleme olmasa da ekran güncellenir (görüntü kayabilir). Normal: sadece tetikleme olunca günceller (yoksa WAIT). Single: bir kez yakalar.'],
+ tmenu:['Tetikleme MENU','Tetikleme kaynağı (CH1/CH2), kenar (yükselen ↑/düşen ↓) ve çalışma modu menüsünü açar.'],
+ force:['FORCE','Tetikleme koşulu olmasa bile bir yakalama zorlar (Normal/Single modda yararlı).'],
+ measure:['Measure','Otomatik ölçüm menüsü. Soldaki 6 tuşla ölçüm (Period, Freq, Rise Time...) ekle/çıkar; sağdaki menüden tüm ölçümleri (AllMeasure) aç.'],
+ acquire:['Acquire','Örnekleme modu (Normal, Average, Peak, High Res). Average gürültüyü azaltır.'],
+ storage:['Storage','Ekran görüntüsü ve dosya saklama. Bu eğitimde sadeleştirilmiştir.'],
+ cursor:['Cursor','Manuel imleçler: bir kez bas = zaman (X) imleçleri, iki kez = gerilim (Y) imleçleri, üçüncüde kapanır. İmleçleri çok işlevli düğmeyle hareket ettir; ΔX, 1/ΔX, ΔY ekranda görünür.'],
+ display:['Display','Görüntü tipi (vektör/nokta), ızgara tipi ve parlaklık.'],
+ utility:['Utility','Sistem ayarları. Bu eğitimde sadeleştirilmiştir.'],
+ help:['Help','Yardım. Bu eğitimde kullanılmıyor.'],print:['Print','Ekranı yazdırma/kaydetme. Bu eğitimde kullanılmıyor.'],
+ vpos:['Dikey POSITION','Seçili kanalın dalgasını yukarı/aşağı kaydırır (sıfır seviyesi işareti kaymaz değil, o da hareket eder). Düğmeye basarsan sıfıra döner.'],
+ vscale:['Dikey SCALE','Seçili kanalın V/div ayarı. Saat yönü: bölme başına gerilim azalır (yakınlaştırma), sinyal büyür. Düğmeye basarsan Kaba (1-2-5 adım) ↔ İnce (küçük adım) ayar arasında geçilir; ince ayarda kanal çubuğunda * görünür.'],
+ hpos:['Yatay POSITION','Tetikleme noktasını sağa/sola kaydırır (zaman ofseti). Düğmeye basarsan sıfıra döner.'],
+ hscale:['Yatay SCALE','Zaman tabanı (s/div). Saat yönü: daha hızlı tarama (daha az zaman, dalga genişler). Üstte "H" yanında değer görünür.'],
+ tlevel:['Tetikleme LEVEL','Tetikleme seviyesini ayarlar (turuncu T oku). Seviye sinyalin genlik aralığının dışındaysa tetikleme olmaz. Basarsan seviye sıfıra (0 V) döner.'],
+ multi:['Çok işlevli düğme (Intensity)','İmleç modunda seçili imleci hareket ettirir. Aksi halde dalga parlaklığını (Intensity) ayarlar.'],
+ bnc1:['CH1 girişi (BNC)','Prob veya BNC kabloyla gelen sinyalin girdiği konnektör. Sarı etiket kanal rengidir.'],
+ bnc2:['CH2 girişi (BNC)','İkinci kanal girişi, camgöbeği etiket.'],
+ ext:['EXT TRIG','Harici tetikleme girişi. Bu eğitimde kullanılmıyor.'],
+ probe1:['CH1 prob anahtarı','Probun üzerindeki 1X/10X anahtarı (genelde 10X). 10X konumunda sinyal 10 kat zayıflar; osiloskop menüsündeki Probe ayarı (varsayılan 10X) anahtarla aynı olmalı, yoksa ölçüm 10 kat hatalı olur. Tıklayarak değiştir.'],
+ probe2:['CH2 prob anahtarı','CH2 probunun 1X/10X anahtarı. Osiloskop Probe ayarıyla eşleşmeli.'],
+ comp:['Prob kompanzasyon çıkışı','Ön panelin sağ alt köşesindeki çıkış (üst: sinyal, alt: toprak). Yaklaşık 3 V\'luk 1 kHz kare dalga verir. Yeni probu bağlayıp kompanze etmek ve prob/kanal testi için kullanılır; kalibrasyon için KULLANILMAZ. Probun ucunu bu çıkışa, timsah klipsini toprağa bağlarsın.'],
+ power:['Güç düğmesi','Osiloskobu açar/kapatır.'],
+ lmenu:['Sol MENU','Soldaki ölçüm menüsü sayfaları arasında geçer: Horizontal, Vertical, Other.'],
+ lsoft:['Sol menü tuşları','Ekranın solundaki 6 tuş: Measure açıkken bir ölçümü ekler veya çıkarır.'],
+ rsoft:['Sağ menü tuşları','Ekranın sağındaki 6 tuş ekrandaki menü seçeneklerini değiştirir (ör. kanal menüsünde Coupling, Probe).'],
+ arrow:['Ok tuşları','Menü sayfalarını gezmek içindir. Bu eğitimde etkisizdir.']
+};
+
+/* ---------- SVG kurulum ---------- */
+const btn=(id,x,y,w,h,lab,o={})=>{
+  const L=Array.isArray(lab)?lab:[lab],fs=o.fs||8.5,cy=y+h/2-(L.length-1)*fs*.55+fs*.35;
+  return `<g data-sc="${id}" data-si="${id}" class="scb"><rect x="${x}" y="${y}" width="${w}" height="${h}" rx="${o.rx||6}" fill="${o.fill||'#f5f3ec'}" stroke="${o.stroke||'#9c9a90'}" stroke-width="${o.sw||1.6}"/>${L.map((t,i)=>`<text x="${x+w/2}" y="${cy+i*fs*1.1}" font-size="${fs}" font-weight="700" fill="${o.ink||'#444'}" text-anchor="middle" pointer-events="none">${t}</text>`).join('')}</g>`;
+};
+const soft=(id,x,y)=>`<g data-sc="${id}" data-si="${id[0]==='l'?'lsoft':'rsoft'}" class="scb"><rect x="${x}" y="${y}" width="46" height="22" rx="9" fill="#a9bfdc" stroke="#6f87a8" stroke-width="1.6"/><rect x="${x+4}" y="${y+3}" width="38" height="7" rx="3" fill="#cfe0f4" pointer-events="none"/></g>`;
+function knobSvg(id){
+  const [cx,cy,r]=KN[id];
+  let t='';if(r>20)for(let k=0;k<20;k++)t+=`<line x1="${cx}" y1="${cy-r+2}" x2="${cx}" y2="${cy-r+6}" stroke="#bdbab0" stroke-width="2" transform="rotate(${k*18} ${cx} ${cy})"/>`;
+  return `<g data-knob="${id}" data-si="${id}" class="scknob"><circle cx="${cx+1.5}" cy="${cy+2.5}" r="${r+2}" fill="#00000026"/><g id="kr-${id}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#scKnob)" stroke="#a7a499" stroke-width="2"/>${t}<circle cx="${cx}" cy="${cy-r+5}" r="2.2" fill="#d7263d"/><circle data-kpress="${id}" cx="${cx}" cy="${cy}" r="${r*.52}" fill="#f2f0e9" stroke="#b6b3a8" stroke-width="1.5"/></g></g>`;
+}
+function build(){
+  let s=`<defs><clipPath id="scClip"><rect x="${GX0}" y="${GY0}" width="${GW}" height="${GH}"/></clipPath>
+  <radialGradient id="scKnob" cx="45%" cy="38%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#d3d0c6"/></radialGradient></defs>
+  <rect x="12" y="0" width="936" height="495" rx="26" fill="#ebe8df" stroke="#c4c0b4" stroke-width="3"/>
+  <rect x="12" y="372" width="936" height="123" rx="26" fill="#e1ded4"/><rect x="12" y="372" width="936" height="20" fill="#e1ded4"/>
+  <text x="112" y="16" font-size="15" font-weight="800" fill="#c1121f">RIGOL</text><text x="180" y="16" font-size="12" font-weight="800" fill="#333">DS1202Z-E</text><text x="250" y="16" font-size="7.5" fill="#444">OSCILLOSCOPE   2 Channel  200MHz  1GSa/s</text>
+  <rect x="70" y="34" width="493" height="306" rx="6" fill="#1b1b1d"/>
+  <g transform="translate(78 42)" data-si="screen"><g id="scScr"></g></g>
+  ${btn('lmenu',16,46,44,24,'MENU',{fill:'#a9bfdc',stroke:'#6f87a8',fs:8,rx:8})}
+  ${[88,130,165,200,240,277].map((y,i)=>soft('l'+i,14,y-11)).join('')}
+  ${[90,132,166,202,240,275].map((y,i)=>soft('r'+i,584,y-11)).join('')}
+  ${btn('lup',14,302,46,20,'▼',{fill:'#a9bfdc',stroke:'#6f87a8',fs:9,rx:8})}
+  ${btn('rup',584,46,46,20,'▲',{fill:'#a9bfdc',stroke:'#6f87a8',fs:9,rx:8})}${btn('rdown',584,302,46,20,'▼',{fill:'#a9bfdc',stroke:'#6f87a8',fs:9,rx:8})}
+  ${btn('clear',668,30,54,24,'CLEAR',{fs:8})}${btn('auto',727,30,54,24,'AUTO',{fs:8})}${btn('runstop',788,30,54,24,['RUN','STOP'],{fs:7.5})}${btn('single',849,30,54,24,'SINGLE',{fs:8})}
+  <rect x="712" y="64" width="148" height="82" rx="12" fill="none" stroke="#a9a69b" stroke-width="2"/><text x="866" y="108" font-size="7" fill="#777" transform="rotate(90 866 108)">MENU</text>
+  ${btn('measure',720,70,40,24,'Measure',{fs:7})}${btn('acquire',765,70,40,24,'Acquire',{fs:7})}${btn('storage',810,70,40,24,'Storage',{fs:7})}
+  ${btn('cursor',720,106,40,24,'Cursor',{fs:7})}${btn('display',765,106,40,24,'Display',{fs:7})}${btn('utility',810,106,40,24,'Utility',{fs:7})}
+  ${btn('help',878,70,40,24,'Help',{fill:'#8fe08f',stroke:'#4a9a4a',fs:8})}${btn('print',878,106,40,24,'⎙',{fill:'#8fe08f',stroke:'#4a9a4a',fs:11})}
+  <text x="650" y="76" font-size="7" fill="#666" text-anchor="middle">Intensity</text>
+  <rect x="632" y="140" width="144" height="198" rx="14" fill="none" stroke="#a9a69b" stroke-width="2"/><text x="704" y="332" font-size="7" font-weight="700" fill="#777" text-anchor="middle">VERTICAL</text>
+  <rect x="782" y="140" width="90" height="198" rx="14" fill="none" stroke="#a9a69b" stroke-width="2"/><text x="827" y="152" font-size="7" font-weight="700" fill="#777" text-anchor="middle">HORIZONTAL</text>
+  <rect x="878" y="140" width="68" height="198" rx="14" fill="none" stroke="#a9a69b" stroke-width="2"/><text x="912" y="152" font-size="7" font-weight="700" fill="#777" text-anchor="middle">TRIGGER</text>
+  <g data-sc="ch1" data-si="ch1" class="scb" id="chb1"><rect x="640" y="150" width="46" height="26" rx="7" fill="#f5f3ec" stroke="${COL[0]}" stroke-width="3"/><text x="663" y="167" font-size="9" font-weight="800" fill="#444" text-anchor="middle" pointer-events="none">CH1</text></g>
+  <g data-sc="ch2" data-si="ch2" class="scb" id="chb2"><rect x="640" y="184" width="46" height="26" rx="7" fill="#f5f3ec" stroke="${COL[1]}" stroke-width="3"/><text x="663" y="201" font-size="9" font-weight="800" fill="#444" text-anchor="middle" pointer-events="none">CH2</text></g>
+  ${btn('math',690,222,40,22,'MATH',{fill:'#cfcdc5',fs:7.5})}${btn('ref',736,222,36,22,'REF',{fill:'#cfcdc5',fs:7.5})}
+  ${btn('hmenu',806,222,40,22,'MENU',{fs:7.5})}
+  ${btn('tmode',886,172,52,22,'MODE',{fs:8})}${btn('tmenu',886,262,52,22,'MENU',{fs:8})}${btn('force',886,296,52,22,'FORCE',{fs:8})}
+  <text x="903" y="205" font-size="6.5" fill="#777" text-anchor="middle">LEVEL</text>
+  <text x="721" y="199" font-size="6.5" fill="#777" text-anchor="middle">POSITION</text><text x="722" y="270" font-size="6.5" fill="#777" text-anchor="middle">SCALE</text>
+  <text x="826" y="199" font-size="6.5" fill="#777" text-anchor="middle">POSITION</text><text x="826" y="270" font-size="6.5" fill="#777" text-anchor="middle">SCALE</text>
+  ${Object.keys(KN).map(knobSvg).join('')}
+  <g data-sc="power" data-si="power" class="scb"><rect x="60" y="402" width="52" height="38" rx="8" fill="#dcdad1" stroke="#9c9a90" stroke-width="2"/><circle id="pwLed" cx="86" cy="421" r="8" fill="none" stroke="#555" stroke-width="2.5"/><line x1="86" y1="411" x2="86" y2="420" stroke="#555" stroke-width="2.5"/></g>
+  <rect x="124" y="404" width="26" height="36" rx="3" fill="#cfcdc5" stroke="#8e8b80" stroke-width="2"/><rect x="130" y="410" width="14" height="14" fill="#444"/>
+  ${[0,1,2].map(i=>`<g data-si="${['bnc1','bnc2','ext'][i]}"><circle cx="${BNCX[i]}" cy="${BNCY}" r="25" fill="#d6d3c9" stroke="#8e8b80" stroke-width="2"/><circle cx="${BNCX[i]}" cy="${BNCY}" r="17" fill="#c2c0b8" stroke="#6e6b62" stroke-width="3"/><circle cx="${BNCX[i]}" cy="${BNCY}" r="6" fill="#222"/><text x="${BNCX[i]}" y="${BNCY-30}" font-size="9" font-weight="800" fill="${i<2?COL[i]:'#777'}" text-anchor="middle" stroke="#00000030" stroke-width=".5">${['CH1','CH2','EXT'][i]}</text></g>`).join('')}
+  ${[0,1].map(i=>`<g data-sc="probe${i+1}" data-si="probe${i+1}" class="scb"><rect x="${BNCX[i]-22}" y="428" width="44" height="18" rx="9" fill="#fff" stroke="#8e8b80" stroke-width="1.5"/><text id="pbt${i}" x="${BNCX[i]}" y="441" font-size="9" font-weight="800" fill="#444" text-anchor="middle" pointer-events="none">1X</text></g>`).join('')}
+  <text x="780" y="476" font-size="7" fill="#777">CAT I</text>
+  <g data-sc="comp" data-si="comp" class="scb"><circle cx="918" cy="352" r="9" fill="#d6d3c9" stroke="#8e8b80" stroke-width="2"/><circle cx="918" cy="352" r="3" fill="#222"/><path d="M906 336 h5 v-7 h6 v7 h6" fill="none" stroke="#666" stroke-width="1.4"/><circle cx="918" cy="400" r="9" fill="#d6d3c9" stroke="#8e8b80" stroke-width="2"/><circle cx="918" cy="400" r="3" fill="#222"/><path d="M910 416 h16 M913 420 h10 M916 424 h4" stroke="#666" stroke-width="1.4"/></g>
+  <g id="halos" fill="none">
+   <rect class="halo" data-h="screen" x="68" y="32" width="497" height="310" rx="8"/>
+   <rect class="halo" data-h="left" x="8" y="38" width="58" height="290" rx="8"/><rect class="halo" data-h="right" x="578" y="38" width="58" height="290" rx="8"/>
+   <rect class="halo" data-h="runbtns" x="662" y="24" width="248" height="36" rx="8"/>
+   <rect class="halo" data-h="auto" x="722" y="24" width="64" height="36" rx="8"/><rect class="halo" data-h="runstop" x="783" y="24" width="64" height="36" rx="8"/><rect class="halo" data-h="single" x="844" y="24" width="64" height="36" rx="8"/>
+   <rect class="halo" data-h="menugrp" x="710" y="62" width="152" height="86" rx="12"/><rect class="halo" data-h="measure" x="716" y="64" width="48" height="34" rx="8"/><rect class="halo" data-h="cursor" x="716" y="100" width="48" height="34" rx="8"/>
+   <circle class="halo" data-h="multi" cx="672" cy="107" r="30"/>
+   <rect class="halo" data-h="ch1" x="636" y="146" width="54" height="34" rx="8"/><rect class="halo" data-h="ch2" x="636" y="180" width="54" height="34" rx="8"/><rect class="halo" data-h="chs" x="634" y="144" width="58" height="72" rx="8"/>
+   <circle class="halo" data-h="vpos" cx="721" cy="177" r="26"/><circle class="halo" data-h="vscale" cx="722" cy="298" r="44"/>
+   <circle class="halo" data-h="hpos" cx="826" cy="178" r="26"/><circle class="halo" data-h="hscale" cx="826" cy="298" r="44"/>
+   <circle class="halo" data-h="tlevel" cx="903" cy="230" r="28"/>
+   <rect class="halo" data-h="tmode" x="882" y="168" width="60" height="30" rx="8"/><rect class="halo" data-h="tmenu" x="882" y="258" width="60" height="30" rx="8"/><rect class="halo" data-h="force" x="882" y="292" width="60" height="30" rx="8"/>
+   <circle class="halo" data-h="bnc1" cx="633" cy="390" r="36"/><circle class="halo" data-h="bnc2" cx="735" cy="390" r="36"/>
+   <rect class="halo" data-h="probe1" x="607" y="424" width="52" height="26" rx="10"/><rect class="halo" data-h="probe2" x="709" y="424" width="52" height="26" rx="10"/>
+   <rect class="halo" data-h="comp" x="900" y="322" width="36" height="112" rx="10"/>
+   <rect class="halo" data-h="power" x="56" y="398" width="60" height="46" rx="10"/>
+  </g>`;
+  return s;
+}
+
+/* ---------- Sinyal zinciri ---------- */
+function meanOf(s){return s.factor*(s.off+(s.wave==='dc'?0:s.amp/2*avgShape(s.wave,s.duty/100)));}
+function gainOf(i){return (S.phys[i]===10?0.1:1)*(S.ch[i].probe===10?10:1);}
+function chainV(i,t){
+  if(host.sample){const c=S.ch[i];let v=0;if(c.coup!=='GND'){v=host.sample(i,t);if(c.coup==='AC')v-=host.mean(i);}v*=gainOf(i);return c.inv?-v:v;}
+  const s=sigs[i],c=S.ch[i];
+  let v=0;
+  if(s&&s.on&&c.coup!=='GND'){
+    const p=(((s.freq*t+s.phase/360)%1)+1)%1;
+    if(s.wave==='noise'&&S.acq==='average'){let a=0;for(let k=0;k<16;k++)a+=Math.random()*2-1;v=(s.off+s.amp/2*a/16)*s.factor;}
+    else v=(s.off+(s.wave==='dc'?0:s.amp/2*shape(s.wave,p,s.duty/100)))*s.factor;
+    if(c.coup==='AC')v-=meanOf(s);
+  }
+  v*=gainOf(i);
+  return c.inv?-v:v;
+}
+function findTrig(){
+  if(host.sample){
+    const src=S.trig.src,c=S.ch[src];if(!c.on||c.coup==='GND')return null;
+    const g=gainOf(src)*(c.inv?-1:1);let L=S.trig.level/g;if(c.coup==='AC')L+=host.mean(src);
+    const rise=(S.trig.slope==='rise')!==c.inv,td=TD[S.ti],tEnd=host.now(),tMax=tEnd-(6-S.hpos)*td;
+    let tMin=Math.max(host.tStart()+(6+S.hpos)*td,tMax-Math.max(24*td,0.004));
+    if(S.mode==='single'&&S.armed)tMin=Math.max(tMin,S.armT||0);
+    if(tMax<=tMin)return null;
+    return host.findCross(src,L,rise,tMin,tMax);
+  }
+  const src=S.trig.src,s=sigs[src];
+  if(!S.ch[src].on||!s||!s.on||S.ch[src].coup==='GND')return null;
+  const L=S.trig.level,rise=S.trig.slope==='rise';
+  if(s.wave==='dc')return null;
+  if(s.wave==='noise'){const g=gainOf(src),h=s.amp/2*s.factor*g;return Math.abs(L-(s.off*s.factor*g))<h?Math.random()*0.01:null;}
+  const T=1/s.freq,N=1600;let pv=chainV(src,0)-L;
+  for(let k=1;k<=N;k++){
+    const t=k*T/N,v=chainV(src,t)-L;
+    if(rise?(pv<0&&v>=0):(pv>0&&v<=0)){const f=pv/(pv-v);return (k-1+f)*T/N;}
+    pv=v;
+  }
+  return null;
+}
+function acquire(){
+  const td=TD[S.ti],N=745,dt=12*td/(N-1);
+  const tc=findTrig(),forced=S.forced;S.forced=false;
+  let t0=null,st=S.status;
+  const rnd=()=>host.sample?host.now()-12*td:Math.random()*0.1;
+  if(S.mode==='auto'){if(tc!==null){t0=tc-(6+S.hpos)*td;st="T'D";}else{t0=rnd();st='AUTO';}}
+  else if(S.mode==='normal'){if(tc!==null){t0=tc-(6+S.hpos)*td;st="T'D";}else if(forced){t0=rnd();st="T'D";}else st='WAIT';}
+  else{ // single
+    if(S.armed){if(tc!==null||forced){t0=(tc!==null?tc:rnd())-(6+S.hpos)*td;S.armed=false;S.run=false;st='STOP';}else st='WAIT';}
+    else st='STOP';
+  }
+  S.status=st;
+  if(t0===null)return;
+  const buf=[new Float32Array(N),new Float32Array(N)];
+  [0,1].forEach(i=>{if(!S.ch[i].on)return;for(let k=0;k<N;k++)buf[i][k]=chainV(i,t0+k*dt);});
+  S.frame={t0,td,dt,buf};
+}
+/* ---------- Ölçümler ---------- */
+function edgesOf(b,mid,t0,dt,vpp){
+  const rs=[],fs=[];
+  if(vpp>1e-9)for(let k=1;k<b.length;k++){
+    if(b[k-1]<mid&&b[k]>=mid)rs.push(t0+(k-1+(mid-b[k-1])/(b[k]-b[k-1]))*dt);
+    else if(b[k-1]>mid&&b[k]<=mid)fs.push(t0+(k-1+(b[k-1]-mid)/(b[k-1]-b[k]))*dt);
+  }
+  return {rs,fs};
+}
+function chStat(i){
+  const fr=S.frame;if(!fr||!S.ch[i].on)return null;
+  const b=fr.buf[i];let mx=-1e18,mn=1e18;
+  for(let k=0;k<b.length;k++){if(b[k]>mx)mx=b[k];if(b[k]<mn)mn=b[k];}
+  const mid=(mx+mn)/2,E=edgesOf(b,mid,fr.t0,fr.dt,mx-mn);
+  let period=null;if(E.rs.length>=2){period=(E.rs[E.rs.length-1]-E.rs[0])/(E.rs.length-1);if(period/fr.dt<4)period=null;}
+  return {E,period,mid};
+}
+function measure(i){
+  const fr=S.frame;if(!fr||!S.ch[i].on)return null;
+  const b=fr.buf[i],N=b.length,dt=fr.dt,s=sigs[i];
+  let mx=-1e18,mn=1e18,sum=0,sq=0,imax=0,imin=0;
+  for(let k=0;k<N;k++){const v=b[k];if(v>mx){mx=v;imax=k;}if(v<mn){mn=v;imin=k;}sum+=v;sq+=v*v;}
+  const M={vmax:mx,vmin:mn,vpp:mx-mn,vavg:sum/N,vrms:Math.sqrt(sq/N)};
+  const vpp=M.vpp,mid=(mx+mn)/2;
+  const cs=chStat(i),tiny=vpp<0.2*vdOf(S.ch[i]);const period=tiny?null:cs.period;const rs=tiny?[]:cs.E.rs,fs=tiny?[]:cs.E.fs;
+  M.period=period;M.freq=period?1/period:null;
+  M.pwidth=null;M.nwidth=null;
+  if(period&&rs.length&&fs.length){
+    const r0=rs[0],f=fs.find(x=>x>r0);if(f)M.pwidth=f-r0;
+    const f0=fs[0],r=rs.find(x=>x>f0);if(r)M.nwidth=r-f0;
+    if(M.pwidth==null&&M.nwidth!=null)M.pwidth=period-M.nwidth;
+    if(M.nwidth==null&&M.pwidth!=null)M.nwidth=period-M.pwidth;
+  }
+  M.pduty=M.pwidth!=null&&period?M.pwidth/period*100:null;M.nduty=M.nwidth!=null&&period?M.nwidth/period*100:null;
+  let top=mx,base=mn;
+  if(s&&(s.wave==='square'||s.wave==='pulse')){let a=0,an=0,c=0,cn=0;for(let k=0;k<N;k++){if(b[k]>=mid){a+=b[k];an++;}else{c+=b[k];cn++;}}if(an)top=a/an;if(cn)base=c/cn;}
+  else if(!s&&vpp>1e-6){const NB=64,h=new Array(NB).fill(0);for(let k=0;k<N;k++)h[Math.min(NB-1,Math.floor((b[k]-mn)/vpp*NB))]++;let bt=NB/2,bb=0;for(let q=NB/2;q<NB;q++)if(h[q]>=h[bt])bt=q;for(let q=0;q<NB/2;q++)if(h[q]>h[bb])bb=q;if(h[bt]>N*0.08)top=mn+(bt+0.5)/NB*vpp;if(h[bb]>N*0.08)base=mn+(bb+0.5)/NB*vpp;}
+  M.vtop=top;M.vbase=base;M.vamp=top-base;
+  M.vupper=base+0.9*M.vamp;M.vmid=base+0.5*M.vamp;M.vlower=base+0.1*M.vamp;
+  M.overshoot=M.vamp>1e-12?(mx-top)/M.vamp*100:null;M.preshoot=M.vamp>1e-12?(base-mn)/M.vamp*100:null;
+  M.rise=null;M.fall=null;
+  if(period&&s){
+    const d=s.duty/100;
+    if(s.wave==='square'||s.wave==='pulse'){M.rise=10.2e-9;M.fall=10.2e-9;}
+    else if(s.wave==='sine'){M.rise=0.2048*period;M.fall=0.2048*period;}
+    else if(s.wave==='ramp'){M.rise=0.8*d*period;M.fall=0.8*(1-d)*period;}
+    else if(s.wave==='arb'){M.rise=RISE_ARB*period;M.fall=10.2e-9;}
+  }
+  if(!s&&period&&M.vamp>1e-6){const lo=base+0.1*M.vamp,hi=base+0.9*M.vamp;const cr=(th,up)=>{for(let k=1;k<N;k++){if(up?(b[k-1]<th&&b[k]>=th):(b[k-1]>th&&b[k]<=th))return (k-1+(th-b[k-1])/(b[k]-b[k-1]))*dt;}return null;};
+    const r1=cr(lo,true);if(r1!=null){let r2=null;for(let k=Math.floor(r1/dt)+1;k<N;k++){if(b[k-1]<hi&&b[k]>=hi){r2=(k-1+(hi-b[k-1])/(b[k]-b[k-1]))*dt;break;}}if(r2!=null)M.rise=Math.max(r2-r1,1.75e-9);}
+    const f1=cr(hi,false);if(f1!=null){let f2=null;for(let k=Math.floor(f1/dt)+1;k<N;k++){if(b[k-1]>lo&&b[k]<=lo){f2=(k-1+(b[k-1]-lo)/(b[k-1]-b[k]))*dt;break;}}if(f2!=null)M.fall=Math.max(f2-f1,1.75e-9);}}
+  M.prate=M.rise?0.8*M.vamp/M.rise:null;M.nrate=M.fall?-0.8*M.vamp/M.fall:null;
+  M.area=sum*dt;
+  let ps=0,pq=0,pn=0;
+  if(period&&rs.length){const k0=Math.max(0,Math.round((rs[0]-fr.t0)/dt)),k1=Math.min(N-1,Math.round((rs[0]+period-fr.t0)/dt));for(let k=k0;k<=k1;k++){ps+=b[k];pq+=b[k]*b[k];pn++;}}
+  M.perarea=pn?ps*dt:null;M.pervrms=pn?Math.sqrt(pq/pn):null;
+  let vr=0;for(let k=0;k<N;k++){const d=b[k]-M.vavg;vr+=d*d;}M.variance=vr/N;
+  const trig=fr.t0+(6+S.hpos)*fr.td;
+  M.tvmax=fr.t0+imax*dt-trig;M.tvmin=fr.t0+imin*dt-trig;
+  M.pedges=rs.length;M.nedges=fs.length;
+  let pp=0,np=0;rs.forEach(r=>{if(fs.some(f=>f>r&&!rs.some(r2=>r2>r&&r2<f)))pp++;});fs.forEach(f=>{if(rs.some(r=>r>f&&!fs.some(f2=>f2>f&&f2<r)))np++;});
+  M.ppulses=pp;M.npulses=np;
+  M.dlyr=M.dlyf=M.phar=M.phaf=null;
+  const A=chStat(0),B=chStat(1);
+  if(A&&B&&A.period){
+    const dl=(x,y)=>{if(!x.length||!y.length)return null;const r1=x[0];let best=null;y.forEach(r2=>{if(best===null||Math.abs(r2-r1)<Math.abs(best-r1))best=r2;});const P=A.period;let d=best-r1;d=((d+P/2)%P+P)%P-P/2;return d;};
+    M.dlyr=dl(A.E.rs,B.E.rs);M.dlyf=dl(A.E.fs,B.E.fs);
+    if(M.dlyr!=null)M.phar=M.dlyr/A.period*360;if(M.dlyf!=null)M.phaf=M.dlyf/A.period*360;
+  }
+  return M;
+}
+const MN={period:'Period',freq:'Freq',rise:'Rise Time',fall:'Fall Time',pwidth:'+Width',nwidth:'-Width',pduty:'+Duty',nduty:'-Duty',dlyr:'Delay1→2↑',dlyf:'Delay1→2↓',phar:'Phase1→2↑',phaf:'Phase1→2↓',pedges:'+Edges',nedges:'-Edges',ppulses:'+Pulses',npulses:'-Pulses',tvmax:'tVmax',tvmin:'tVmin',prate:'+Rate',nrate:'-Rate',
+ vmax:'Vmax',vmin:'Vmin',vpp:'Vpp',vtop:'Vtop',vbase:'Vbase',vamp:'Vamp',vupper:'Vupper',vmid:'Vmid',vlower:'Vlower',vavg:'Vavg',vrms:'Vrms',pervrms:'Per.Vrms',overshoot:'Overshoot',preshoot:'Preshoot',area:'Area',perarea:'Per.Area',variance:'Variance'};
+const MU={period:'s',freq:'Hz',rise:'s',fall:'s',pwidth:'s',nwidth:'s',pduty:'%',nduty:'%',dlyr:'s',dlyf:'s',phar:'°',phaf:'°',pedges:'',nedges:'',ppulses:'',npulses:'',tvmax:'s',tvmin:'s',prate:'V/s',nrate:'V/s',
+ vmax:'V',vmin:'V',vpp:'V',vtop:'V',vbase:'V',vamp:'V',vupper:'V',vmid:'V',vlower:'V',vavg:'V',vrms:'V',pervrms:'V',overshoot:'%',preshoot:'%',area:'Vs',perarea:'Vs',variance:'V²'};
+const mfmt=(M,k)=>{if(!M)return '*****';const v=M[k];if(v==null||!isFinite(v))return '*****';const u=MU[k];if(u==='%')return v.toFixed(2)+'%';if(u==='°')return v.toFixed(1)+'°';if(u==='')return String(v);return siFmt(v,u);};
+const HORIZ=['period','freq','rise','fall','pwidth','nwidth','pduty','nduty','dlyr','dlyf','phar','phaf','pedges','nedges','ppulses','npulses','tvmax','tvmin','prate','nrate'];
+const VERT=['vmax','vmin','vpp','vtop','vbase','vamp','vupper','vmid','vlower','vavg','vrms','pervrms','overshoot','preshoot','area','perarea','variance'];
+const LEFTPAGES=[];
+[['Horizontal',HORIZ],['Vertical',VERT]].forEach(([t,a])=>{for(let k=0;k<a.length;k+=6){const it=a.slice(k,k+6);while(it.length<6)it.push(null);LEFTPAGES.push([t+' '+(k/6+1)+'/'+Math.ceil(a.length/6),it]);}});
+
+/* ---------- Menüler ---------- */
+function cyc(arr,v){return arr[(arr.indexOf(v)+1)%arr.length];}
+function menuItems(){
+  const c=S.ch[S.sel];
+  const noop={l:'',v:()=>'',a:()=>{}};
+  if(S.menu==='ch')return[
+    {l:'Coupling',v:()=>c.coup,a:()=>{c.coup=cyc(['DC','AC','GND'],c.coup);say(c.coup==='DC'?'DC kuplaj: sinyalin DC bileşeni görünür.':c.coup==='AC'?'AC kuplaj: DC bileşen süzülür, sinyal sıfır etrafında görünür.':'GND: giriş topraklanır, sıfır seviyesini gösterir.');}},
+    {l:'BW Limit',v:()=>c.bw?'20MHz':'Off',a:()=>{c.bw=!c.bw;say('Bant genişliği sınırı: yüksek frekanslı gürültüyü süzer.');}},
+    {l:'Probe',v:()=>c.probe+'X',a:()=>{c.probe=c.probe===1?10:1;say(`Probe ayarı ${c.probe}X. Gerçek prob anahtarı ${S.phys[S.sel]}X: `+(c.probe===S.phys[S.sel]?'eşleşiyor, ölçümler doğru.':'EŞLEŞMİYOR: gerilim '+(c.probe>S.phys[S.sel]?'10 kat büyük':'10 kat küçük')+' okunur!'),c.probe===S.phys[S.sel]?'ok':'warn');}},
+    {l:'Invert',v:()=>c.inv?'On':'Off',a:()=>{c.inv=!c.inv;say(c.inv?'Dalga ters çevrildi (ekranda).':'Ters çevirme kapalı.');}},
+    {l:'Unit',v:()=>'V',a:()=>{}},noop];
+  if(S.menu==='trig')return[
+    {l:'Type',v:()=>'Edge',a:()=>say('Bu eğitimde yalnızca kenar (Edge) tetikleme var.')},
+    {l:'Source',v:()=>'CH'+(S.trig.src+1),a:()=>{S.trig.src=1-S.trig.src;say(`Tetikleme kaynağı CH${S.trig.src+1}.`);}},
+    {l:'Slope',v:()=>S.trig.slope==='rise'?'↑ Rise':'↓ Fall',a:()=>{S.trig.slope=S.trig.slope==='rise'?'fall':'rise';say('Tetikleme kenarı: '+(S.trig.slope==='rise'?'yükselen':'düşen')+'.');}},
+    {l:'Sweep',v:()=>S.mode==='auto'?'Auto':S.mode==='normal'?'Normal':'Single',a:()=>setMode(cyc(['auto','normal','single'],S.mode))},
+    {l:'Coupling',v:()=>'DC',a:()=>{}},noop];
+  if(S.menu==='cursor')return[
+    {l:'Mode',v:()=>['Off','Manual X','Manual Y'][S.cur],a:()=>{S.cur=(S.cur+1)%3;if(S.cur===1){S.curA=-2;S.curB=2;}if(S.cur===2){S.curA=-1.5;S.curB=1.5;}say(['İmleçler kapalı.','Zaman (X) imleçleri: çok işlevli düğmeyle hareket ettir.','Gerilim (Y) imleçleri: çok işlevli düğmeyle hareket ettir.'][S.cur]);}},
+    {l:'Source',v:()=>'CH'+(S.sel+1),a:()=>{S.sel=1-S.sel;}},
+    {l:'CurA',v:()=>S.curSel==='A'?'●':'',a:()=>{S.curSel='A';}},
+    {l:'CurB',v:()=>S.curSel==='B'?'●':'',a:()=>{S.curSel='B';}},
+    {l:'CurAB',v:()=>S.curSel==='AB'?'●':'',a:()=>{S.curSel='AB';}},
+    {l:'Clear',v:()=>'',a:()=>{S.cur=0;}}];
+  if(S.menu==='meas')return[
+    {l:'Source',v:()=>'CH'+(S.sel+1),a:()=>{S.sel=1-S.sel;}},
+    {l:'AllMeasure',v:()=>S.allMeas?'On':'Off',a:()=>{S.allMeas=!S.allMeas;}},
+    {l:'Clear All',v:()=>'',a:()=>{S.meas=[];}},
+    {l:'Statistic',v:()=>'Off',a:()=>{}},{l:'Threshold',v:()=>'10%-90%',a:()=>{}},noop];
+  if(S.menu==='disp')return[
+    {l:'Type',v:()=>S.dots?'Dots':'Vectors',a:()=>{S.dots=!S.dots;}},
+    {l:'Persist',v:()=>'Min',a:()=>{}},
+    {l:'Grid',v:()=>({full:'Full',grid:'Grid',cross:'Cross',none:'None'})[S.grid],a:()=>{S.grid=cyc(['full','grid','cross','none'],S.grid);}},
+    {l:'Intensity',v:()=>S.bright+'%',a:()=>{S.bright=S.bright>=100?20:S.bright+20;}},
+    {l:'Grid Br.',v:()=>'50%',a:()=>{}},{l:'Screen',v:()=>'Normal',a:()=>{}}];
+  if(S.menu==='acq')return[
+    {l:'Mode',v:()=>({normal:'Normal',average:'Average',peak:'Peak',hires:'High Res'})[S.acq],a:()=>{S.acq=cyc(['normal','average','peak','hires'],S.acq);say(S.acq==='average'?'Average: ortalama alma gürültüyü azaltır (Noise dalgasında görülür).':'Örnekleme modu: '+S.acq+'.');}},
+    {l:'Averages',v:()=>'16',a:()=>{}},{l:'Sinc',v:()=>'On',a:()=>{}},{l:'Mem Depth',v:()=>'Auto',a:()=>{}},noop,noop];
+  if(S.menu==='auto')return[
+    {l:'Single-period',v:()=>'',a:()=>autoMode('single')},{l:'Multi-period',v:()=>'',a:()=>autoMode('multi')},
+    {l:'Rise Time',v:()=>'',a:()=>autoMode('rise')},{l:'Fall Time',v:()=>'',a:()=>autoMode('fall')},
+    {l:'Back',v:()=>'',a:()=>{S.menu='ch';}},{l:'Undo',v:()=>'',a:()=>undoAuto()}];
+  if(S.menu==='gen')return[{l:'Bu menü',v:()=>'',a:()=>{}},{l:'eğitimde',v:()=>'',a:()=>{}},{l:'sadeleşti-',v:()=>'',a:()=>{}},{l:'rildi.',v:()=>'',a:()=>{}},noop,noop];
+  return[noop,noop,noop,noop,noop,noop];
+}
+function setMode(m){
+  S.mode=m;S.run=true;S.armed=m==='single';S.armT=host.now?host.now():0;
+  if(m==='auto')S.status='AUTO';
+  say({auto:'Auto: tetikleme olmasa da ekran güncellenir (tetiksiz görüntü kayar).',normal:'Normal: yalnızca tetikleme olunca güncellenir; olmazsa WAIT görünür.',single:'Single: tetikleme gelince bir kez yakalar ve durur.'}[m]);
+}
+function snapshot(){S.undo=JSON.parse(JSON.stringify({ch:S.ch,ti:S.ti,hpos:S.hpos,trig:S.trig,mode:S.mode,meas:S.meas}));}
+function undoAuto(){if(!S.undo){say('Geri alınacak ayar yok.','warn');return;}const u=JSON.parse(JSON.stringify(S.undo));S.ch=u.ch;S.ti=u.ti;S.hpos=u.hpos;S.trig=u.trig;S.mode=u.mode;S.meas=u.meas;say('Autoset geri alındı: önceki ayarlar yüklendi.','ok');}
+function chInfo(i){
+  if(host.stats)return host.stats(i);
+  const s=sigs[i];if(!s||!s.on)return null;
+  const f=s.factor,amp=s.wave==='dc'?0:s.amp*f,mean=meanOf(s),mid=s.off*f;
+  return {vmax:mid+amp/2,vmin:mid-amp/2,mean,freq:(s.wave==='dc'||s.wave==='noise')?null:s.freq,wave:s.wave,duty:s.duty};
+}
+function autoMode(kind){
+  const ref=S.trig.src,q=chInfo(ref);
+  if(!q||!q.freq){say('Bu seçenek periyodik bir sinyal gerektirir.','warn');return;}
+  const T=1/q.freq;S.hpos=0;S.mode='auto';S.run=true;S.armed=false;
+  if(kind==='single'){S.ti=nearest(TD,T/10);S.meas=['period','freq'];say('Tek periyot gösteriliyor; Period ve Freq ölçümü ekranın altında.','ok');}
+  else if(kind==='multi'){S.ti=nearest(TD,T*4/12);S.meas=['period','freq'];say('Birkaç periyot gösteriliyor; Period ve Freq ölçümü ekranın altında.','ok');}
+  else{S.meas=[kind];acquire();const M=measure(ref),t=M&&M[kind];if(!t){say('Bu sinyalde '+(kind==='rise'?'yükselme':'düşme')+' süresi ölçülemiyor.','warn');return;}S.ti=nearest(TD,Math.max(5e-9,t/2));S.meas=[kind];say((kind==='rise'?'Yükselme':'Düşme')+' kenarı genişletildi; süre ölçümü ekranın altında.','ok');}
+}
+function autoset(){
+  snapshot();
+  let on=[0,1].filter(i=>{if(!S.ch[i].on)return false;const q=chInfo(i);return q&&(q.vmax-q.vmin>0.004||Math.abs(q.mean)>0.004);});
+  if(!on.length){say('Girişte sinyal yok. Probu devreye bağla ve kanalın açık olduğundan emin ol.','warn');return;}
+  const isSq=q=>q.wave==='square'||q.wave==='pulse';
+  const bad=on.filter(i=>{const q=chInfo(i);return (q.freq&&q.freq<41&&!isSq(q))||(isSq(q)&&((q.vmax-q.vmin)*gainOf(i)<0.02||q.duty<=1||q.duty>=99));});
+  if(bad.length===on.length){say('Autoset başarısız: sinüs frekansı en az 41 Hz, kare dalgada genlik en az 20 mVpp ve görev oranı %1\'den büyük olmalı.','warn');return;}
+  on=on.filter(i=>!bad.includes(i));
+  on.forEach(i=>{
+    const q=chInfo(i),g=gainOf(i),c=S.ch[i];
+    const vpp=(q.vmax-q.vmin)*g,mid=(c.coup==='AC'?((q.vmax+q.vmin)/2-q.mean):(q.vmax+q.vmin)/2)*g;
+    const span=vpp>0.002?vpp:Math.max(Math.abs(mid)*2,0.05);
+    const lo=c.probe===10?VD.indexOf(0.01):0,hi=c.probe===10?VD.length-1:VD.indexOf(10);
+    c.vi=clamp(nearest(VD,Math.max(span/5,0.001),true),lo,hi);
+    c.fine=false;c.pos=-mid/vdOf(c);if(c.inv)c.pos=-c.pos;
+    c.pos=clamp(Math.round(c.pos*4)/4,-8,8);
+  });
+  const ref=on[0],q0=chInfo(ref),g=gainOf(ref),c0=S.ch[ref];
+  S.ti=q0.freq?nearest(TD,(1/q0.freq)*3/12):TD.indexOf(1e-3);
+  S.trig.src=ref;S.trig.slope='rise';S.mode='auto';S.run=true;S.armed=false;S.hpos=0;S.sel=ref;
+  S.trig.level=(c0.coup==='AC'?((q0.vmax+q0.vmin)/2-q0.mean):(q0.vmax+q0.vmin)/2)*g*(c0.inv?-1:1);
+  say('Autoset tamamlandı: dikey ölçek, zaman tabanı ve tetikleme sinyale göre ayarlandı.','ok');
+}
+function nearest(arr,x,up){
+  if(up){for(let i=0;i<arr.length;i++)if(arr[i]>=x*0.999)return i;return arr.length-1;}
+  let b=0,bd=1e18;arr.forEach((v,i)=>{const d=Math.abs(Math.log(v/x));if(d<bd){bd=d;b=i;}});return b;
+}
+
+/* ---------- Tuşlar ---------- */
+function flash(id){const e=root.querySelector(`[data-sc="${id}"]`);if(!e)return;e.classList.add('scp');setTimeout(()=>e.classList.remove('scp'),140);}
+function press(id){
+  flash(id);
+  if(id==='power'){S.power=!S.power;S.boot=S.power?Date.now():0;mark();say(S.power?'Osiloskop açıldı.':'Osiloskop kapatıldı.');return;}
+  if(!S.power){say('Osiloskop kapalı. Güç düğmesine bas.','warn');return;}
+  if(id==='runstop'){
+    if(S.run){S.run=false;S.armed=false;S.status='STOP';say('STOP: ekran donduruldu.');}
+    else{S.run=true;S.armed=S.mode==='single';S.armT=host.now?host.now():0;S.status=S.mode==='auto'?'AUTO':'WAIT';say('RUN: çalışıyor.');}
+  }else if(id==='single'){S.mode='single';S.run=true;S.armed=true;S.armT=host.now?host.now():0;S.status='WAIT';say('Single: tetikleme bekleniyor (WAIT). Tetikleme gelince bir kez yakalar ve durur.');}
+  else if(id==='auto'){autoset();if(S.undo){S.menu='auto';S.left=null;}}
+  else if(id==='clear'){S.frame=null;say('Ekran temizlendi.');}
+  else if(id==='ch1'||id==='ch2'){
+    const i=id==='ch1'?0:1,c=S.ch[i];
+    if(!c.on){c.on=true;S.sel=i;S.menu='ch';S.left=null;say(`CH${i+1} açıldı ve seçildi.`,'ok');}
+    else if(S.sel!==i){S.sel=i;S.menu='ch';say(`CH${i+1} seçildi: dikey düğmeler artık bu kanala etki eder.`);}
+    else{c.on=false;if(S.trig.src===i&&S.ch[1-i].on)S.trig.src=1-i;S.sel=S.ch[1-i].on?1-i:i;say(`CH${i+1} kapatıldı.`);}
+  }
+  else if(id==='tmode')setMode(cyc(['auto','normal','single'],S.mode));
+  else if(id==='tmenu'){S.menu='trig';S.left=null;say('Tetikleme menüsü: sağdaki tuşlarla kaynak ve kenarı seç.');}
+  else if(id==='force'){S.forced=true;S.run=true;say('FORCE: tek bir yakalama zorlandı.');}
+  else if(id==='measure'){if(S.left!==null&&S.menu==='meas'){S.left=null;S.menu=null;}else{S.left=0;S.leftPage=0;S.menu='meas';say('Measure: soldaki tuşlarla ölçüm ekle/çıkar (en fazla 5).');}}
+  else if(id==='cursor'){S.cur=(S.cur+1)%3;if(S.cur===1){S.curA=-2;S.curB=2;}if(S.cur===2){S.curA=-1.5;S.curB=1.5;}S.menu=S.cur?'cursor':null;S.left=null;say(['İmleçler kapalı.','Zaman (X) imleçleri: çok işlevli düğmeyle hareket ettir (CurA/CurB sağ menüden).','Gerilim (Y) imleçleri: çok işlevli düğmeyle hareket ettir.'][S.cur]);}
+  else if(id==='display'){S.menu='disp';S.left=null;}
+  else if(id==='acquire'){S.menu='acq';S.left=null;}
+  else if(id==='utility'||id==='storage'||id==='help'||id==='print'||id==='math'||id==='ref'||id==='hmenu'){S.menu='gen';S.left=null;say('Bu işlev eğitimde sadeleştirilmiştir; gerçek cihazda '+({utility:'sistem ayarları',storage:'dosya saklama',help:'yardım',print:'çıktı alma',math:'matematik işlemleri',ref:'referans dalga',hmenu:'gecikmeli tarama'})[id]+' için kullanılır.');}
+  else if(id==='lmenu'){if(S.left===null){S.left=0;S.menu='meas';}else S.leftPage=(S.leftPage+1)%LEFTPAGES.length;}
+  else if(/^l\d$/.test(id)){
+    const i=+id[1];
+    if(S.left!==null){const k=LEFTPAGES[S.leftPage][1][i];if(k){const ix=S.meas.indexOf(k);if(ix>=0)S.meas.splice(ix,1);else{S.meas.push(k);if(S.meas.length>5)S.meas.shift();}say(ix>=0?`${MN[k]} ölçümü kaldırıldı.`:`${MN[k]} ölçümü eklendi (CH${S.sel+1}).`);}}
+    else say('Önce Measure tuşuna bas: sol tuşlar ölçüm menüsüdür.');
+  }
+  else if(/^r\d$/.test(id)){const it=menuItems()[+id[1]];if(it&&it.l)it.a();}
+  else if(id==='comp'){if(host.onComp)host.onComp();else say(INFO.comp[1]);}
+  else if(id==='probe1'||id==='probe2'){const i=id==='probe1'?0:1;S.phys[i]=S.phys[i]===1?10:1;say(`CH${i+1} prob anahtarı ${S.phys[i]}X. Osiloskop menüsündeki Probe ayarı ${S.ch[i].probe}X: `+(S.phys[i]===S.ch[i].probe?'eşleşiyor.':'EŞLEŞMİYOR, ölçümler hatalı olur!'),S.phys[i]===S.ch[i].probe?'ok':'warn');}
+  mark();
+}
+function knobAct(id,dir){
+  if(!S.power)return false;
+  const c=S.ch[S.sel];
+  if(id==='vpos'){c.pos=clamp(c.pos+dir*0.25,-8,8);say(`CH${S.sel+1} dikey pozisyon: ${c.pos.toFixed(2)} div`);}
+  else if(id==='vscale'){const lo=c.probe===10?VD.indexOf(0.01):0,hi=c.probe===10?VD.length-1:VD.indexOf(10);
+    if(c.fine){c.vv=+clamp(c.vv*Math.pow(1.05,-dir),VD[lo],VD[hi]).toPrecision(3);}else c.vi=clamp(c.vi-dir,lo,hi);
+    say(`CH${S.sel+1}: ${siFmt(vdOf(c),'V')}/div (${c.fine?'ince':'kaba'} ayar)`);}
+  else if(id==='hpos'){if(!S.run){say('STOP durumunda yatay konum değişmez; RUN\'a bas.','warn');return false;}S.hpos=clamp(S.hpos+dir*0.5,-50,50);say(`Yatay konum: ${S.hpos.toFixed(1)} div`);}
+  else if(id==='hscale'){if(!S.run){say('STOP durumunda zaman tabanı değişmez; RUN\'a bas.','warn');return false;}S.ti=clamp(S.ti-dir,0,TD.length-1);say(`Zaman tabanı: ${siFmt(TD[S.ti],'s')}/div`);}
+  else if(id==='tlevel'){const g=S.ch[S.trig.src];S.trig.level+=dir*vdOf(g)*0.1;S.lvlT=Date.now();say(`Tetikleme seviyesi: ${siFmt(S.trig.level,'V')}`);}
+  else if(id==='multi'){
+    if(S.cur){const d=dir*0.1,lim=S.cur===1?6:4;if(S.curSel!=='B')S.curA=clamp(S.curA+d,-lim,lim);if(S.curSel!=='A')S.curB=clamp(S.curB+d,-lim,lim);}
+    else{S.bright=clamp(S.bright+dir*5,10,100);say('Dalga parlaklığı: %'+S.bright);}
+  }
+  mark();return true;
+}
+function knobPress(id){
+  if(!S.power)return;
+  const c=S.ch[S.sel];
+  if(id==='vpos'){c.pos=0;say('Dikey pozisyon sıfırlandı.');}
+  else if(id==='hpos'){S.hpos=0;say('Yatay konum sıfırlandı.');}
+  else if(id==='tlevel'){S.trig.level=0;S.lvlT=Date.now();say('Tetikleme seviyesi sıfıra (0 V) döndü.','ok');}
+  else if(id==='multi'){S.bright=60;S.curA=S.cur===2?-1.5:-2;S.curB=S.cur===2?1.5:2;say('Parlaklık %60\'a, imleçler başlangıca döndü.');}
+  else if(id==='vscale'){if(!c.fine){c.fine=true;c.vv=VD[c.vi];say('İnce (Fine) ayar: V/div küçük adımlarla değişir; dalgayı ekrana tam sığdırmak için kullanılır.','ok');}else{c.fine=false;c.vi=nearest(VD,c.vv);say('Kaba (Coarse) ayar: 1-2-5 adımlarıyla.');}}
+  else say('Yatay SCALE\'e basmak gecikmeli taramayı (zoom) açar; bu eğitimde kullanılmıyor.');
+  mark();
+}
+function knobStep(id,dir){const ok=knobAct(id,dir);if(ok)kstate[id].t+=KSTEP*dir;return ok;}
+
+/* ---------- Çizim ---------- */
+function chY(i,v){const c=S.ch[i];return GCY-(v/vdOf(c)+c.pos)*DY;}
+function chYs(i,v){return clamp(chY(i,v),GY0+0.8,GY0+GH-0.8);}
+function gridSvg(){
+  const g=S.grid;let o='';
+  if(g==='none')return `<rect x="${GX0}" y="${GY0}" width="${GW}" height="${GH}" fill="none" stroke="#444"/>`;
+  if(g==='full')for(let i=1;i<12;i++)o+=`<line x1="${GX0+i*DX}" y1="${GY0}" x2="${GX0+i*DX}" y2="${GY0+GH}" stroke="#4a4a4a" stroke-width=".6" stroke-dasharray="1 3"/>`;
+  if(g==='full')for(let j=1;j<8;j++)o+=`<line x1="${GX0}" y1="${GY0+j*DY}" x2="${GX0+GW}" y2="${GY0+j*DY}" stroke="#4a4a4a" stroke-width=".6" stroke-dasharray="1 3"/>`;
+  if(g==='grid'){for(let i=1;i<12;i++)o+=`<line x1="${GX0+i*DX}" y1="${GY0}" x2="${GX0+i*DX}" y2="${GY0+GH}" stroke="#3a3a3a" stroke-width=".5"/>`;for(let j=1;j<8;j++)o+=`<line x1="${GX0}" y1="${GY0+j*DY}" x2="${GX0+GW}" y2="${GY0+j*DY}" stroke="#3a3a3a" stroke-width=".5"/>`;}
+  o+=`<rect x="${GX0}" y="${GY0}" width="${GW}" height="${GH}" fill="none" stroke="#6a6a6a"/>`;
+  o+=`<line x1="${GCX}" y1="${GY0}" x2="${GCX}" y2="${GY0+GH}" stroke="#7a7a7a" stroke-width=".8"/><line x1="${GX0}" y1="${GCY}" x2="${GX0+GW}" y2="${GCY}" stroke="#7a7a7a" stroke-width=".8"/>`;
+  for(let i=0;i<60;i++){const x=GX0+i*GW/60;o+=`<line x1="${x}" y1="${GCY-2}" x2="${x}" y2="${GCY+2}" stroke="#8a8a8a" stroke-width=".6"/>`;}
+  for(let j=0;j<40;j++){const y=GY0+j*GH/40;o+=`<line x1="${GCX-2}" y1="${y}" x2="${GCX+2}" y2="${y}" stroke="#8a8a8a" stroke-width=".6"/>`;}
+  return o;
+}
+function render(){
+  const el=root.querySelector('#scScr');if(!el)return;
+  const pw=root.querySelector('#pwLed');if(pw)pw.setAttribute('stroke',S.power?'#2fbf4f':'#555');
+  [0,1].forEach(i=>{const r=root.querySelector(`#chb${i+1} rect`);if(r){r.setAttribute('fill',S.ch[i].on?(i?'#c9f2ff':'#fff3a6'):'#f5f3ec');r.setAttribute('stroke-width',S.ch[i].on&&S.sel===i?5:3);r.style.filter=S.ch[i].on?`drop-shadow(0 0 4px ${COL[i]})`:'';}root.querySelector('#pbt'+i).textContent=S.phys[i]+'X';root.querySelector('#pbt'+i).setAttribute('fill',S.phys[i]===S.ch[i].probe?'#444':'#c0392b');});
+  const rsb=root.querySelector('[data-sc="runstop"] rect');if(rsb){rsb.setAttribute('fill',!S.power?'#f5f3ec':S.run?'#9ee59e':'#f19b9b');}
+  const sgb=root.querySelector('[data-sc="single"] rect');if(sgb)sgb.setAttribute('fill',S.power&&S.armed?'#ffd78a':'#f5f3ec');
+  if(!S.power){el.innerHTML='<rect width="477" height="290" fill="#050505"/>';return;}
+  if(S.boot&&Date.now()-S.boot<1200){el.innerHTML='<rect width="477" height="290" fill="#05080f"/><text x="238" y="150" font-size="34" font-weight="800" fill="#e03a3a" text-anchor="middle">RIGOL</text><text x="238" y="175" font-size="11" fill="#9aa8c0" text-anchor="middle">DS1202Z-E  başlatılıyor...</text>';return;}
+  const td=TD[S.ti],fr=S.frame,nOn=(S.ch[0].on?1:0)+(S.ch[1].on?1:0);
+  let o='<rect width="477" height="290" fill="#000"/>';
+  // üst çubuk
+  const stc={"T'D":'#2ecc71',AUTO:'#2ecc71',WAIT:'#f1c40f',STOP:'#e74c3c'}[S.status]||'#2ecc71';
+  const rate=Math.min(nOn>1?5e8:1e9,6e6/(td*12)),mem=rate*td*12;
+  const tp=200+50+S.hpos/12*50;
+  o+=`<rect x="3" y="2" width="38" height="12" fill="#b3122a"/><text x="22" y="11.3" font-size="8" font-weight="800" fill="#fff" text-anchor="middle">RIGOL</text>
+   <rect x="46" y="2" width="30" height="12" fill="${stc}"/><text x="61" y="11.3" font-size="8" font-weight="800" fill="#000" text-anchor="middle">${S.status}</text>
+   <text x="84" y="11.3" font-size="8.5" font-weight="700" fill="#fff">H</text><text x="94" y="11.3" font-size="8.5" fill="#fff">${siFmt(td,'s')}</text>
+   <text x="140" y="8" font-size="6" fill="#bbb">${siFmt(rate,'Sa/s')}</text><text x="140" y="14" font-size="6" fill="#bbb">${siFmt(mem,'pts')}</text>
+   <rect x="200" y="5" width="100" height="6" fill="none" stroke="#777"/><path d="M${clamp(tp,200,300)} 3 l-3 -0 l3 7 l3 -7z" fill="#ff9d2e"/>
+   <text x="318" y="11.3" font-size="8" fill="#fff">D ${siFmt(-S.hpos*td,'s')}</text>
+   <rect x="376" y="2" width="12" height="12" fill="#ff9d2e"/><text x="382" y="11.3" font-size="8" font-weight="800" fill="#000" text-anchor="middle">T</text>
+   <text x="392" y="11.3" font-size="8" fill="#ffb347">${S.trig.slope==='rise'?'↑':'↓'}</text><text x="401" y="11.3" font-size="7.5" fill="#fff">${siFmt(S.trig.level,'V')}</text>`;
+  o+=gridSvg();
+  // izler
+  let tr='';
+  const dense=[0,1].map(i=>{const s=sigs[i];return S.ch[i].on&&s&&s.on&&s.wave!=='dc'&&s.freq*td*12>150;});
+  if(fr)[0,1].forEach(i=>{
+    if(!S.ch[i].on)return;
+    const b=fr.buf[i],N=b.length,col=COL[i],op=S.bright/100;
+    if(dense[i]){
+      let mx=-1e18,mn=1e18;for(const v of b){if(v>mx)mx=v;if(v<mn)mn=v;}
+      const y1=chY(i,mx),y2=chY(i,mn);
+      tr+=`<rect x="${GX0}" y="${Math.min(y1,y2)}" width="${GW}" height="${Math.abs(y2-y1)||1}" fill="${col}" opacity="${.45*op}"/><line x1="${GX0}" y1="${y1}" x2="${GX0+GW}" y2="${y1}" stroke="${col}" opacity="${op}"/><line x1="${GX0}" y1="${y2}" x2="${GX0+GW}" y2="${y2}" stroke="${col}" opacity="${op}"/>`;
+      return;
+    }
+    let d='';
+    if(S.dots){for(let k=0;k<N;k+=2)d+=`M${(GX0+k*GW/(N-1)).toFixed(1)} ${chYs(i,b[k]).toFixed(1)}h.1`;tr+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linecap="round" opacity="${op}"/>`;}
+    else{for(let k=0;k<N;k++)d+=(k?'L':'M')+(GX0+k*GW/(N-1)).toFixed(1)+' '+chYs(i,b[k]).toFixed(1);tr+=`<path d="${d}" fill="none" stroke="${col}" stroke-width="1.2" stroke-linejoin="round" opacity="${op}"/>`;}
+  });
+  o+=`<g clip-path="url(#scClip)">${tr}</g>`;
+  // yatay ofset işareti
+  if(S.run||fr)o+=`<path d="M${clamp(GCX+S.hpos*DX,GX0,GX0+GW)} ${GY0} l-4 -0 l4 6 l4 -6z" fill="#ff9d2e"/>`;
+  // sıfır işaretleri + tetik işareti
+  [0,1].forEach(i=>{if(!S.ch[i].on)return;const y=clamp(GCY-S.ch[i].pos*DY,GY0,GY0+GH);o+=`<path d="M${GX0} ${y} l-8 -5 v10z" fill="${COL[i]}"/><text x="${GX0-6}" y="${y+2.7}" font-size="6.5" font-weight="800" fill="#000" text-anchor="middle">${i+1}</text>`;});
+  {const ts=S.trig.src,y=clamp(chY(ts,S.trig.level),GY0,GY0+GH);o+=`<path d="M${GX0+GW} ${y} l8 -5 v10z" fill="#ff9d2e"/><text x="${GX0+GW+5}" y="${y+2.5}" font-size="6.5" font-weight="800" fill="#000" text-anchor="middle">T</text>`;
+   if(Date.now()-S.lvlT<1600)o+=`<line x1="${GX0}" y1="${y}" x2="${GX0+GW}" y2="${y}" stroke="#ff9d2e" stroke-width=".9" stroke-dasharray="4 3"/>`;}
+  // imleçler
+  if(S.cur&&fr){
+    const sc=S.ch[S.sel]?S.sel:0,c=S.ch[sc],vd=vdOf(c);let t='';
+    if(S.cur===1){
+      const xa=GCX+S.curA*DX,xb=GCX+S.curB*DX;
+      o+=`<line x1="${xa}" y1="${GY0}" x2="${xa}" y2="${GY0+GH}" stroke="#ff7ad9" stroke-dasharray="4 2"/><line x1="${xb}" y1="${GY0}" x2="${xb}" y2="${GY0+GH}" stroke="#ff7ad9" stroke-dasharray="4 2"/><text x="${xa+2}" y="${GY0+9}" font-size="7" fill="#ff7ad9">A</text><text x="${xb+2}" y="${GY0+9}" font-size="7" fill="#ff7ad9">B</text>`;
+      const dxv=Math.abs(S.curB-S.curA)*td,ia=clamp(Math.round((S.curA+6)/12*744),0,744),ib=clamp(Math.round((S.curB+6)/12*744),0,744);
+      const va=fr.buf[sc][ia],vb=fr.buf[sc][ib];
+      t=[`ΔX: ${siFmt(dxv,'s')}`,`1/ΔX: ${dxv>0?siFmt(1/dxv,'Hz'):'---'}`,`A Y: ${siFmt(va,'V')}   B Y: ${siFmt(vb,'V')}`,`ΔY: ${siFmt(vb-va,'V')}`];
+    }else{
+      const ya=GCY-S.curA*DY,yb=GCY-S.curB*DY;
+      o+=`<line x1="${GX0}" y1="${ya}" x2="${GX0+GW}" y2="${ya}" stroke="#ff7ad9" stroke-dasharray="4 2"/><line x1="${GX0}" y1="${yb}" x2="${GX0+GW}" y2="${yb}" stroke="#ff7ad9" stroke-dasharray="4 2"/><text x="${GX0+3}" y="${ya-2}" font-size="7" fill="#ff7ad9">A</text><text x="${GX0+3}" y="${yb-2}" font-size="7" fill="#ff7ad9">B</text>`;
+      const va=(S.curA-c.pos)*vd,vb=(S.curB-c.pos)*vd;
+      t=[`A Y: ${siFmt(va,'V')}`,`B Y: ${siFmt(vb,'V')}`,`ΔY: ${siFmt(vb-va,'V')}`];
+    }
+    o+=`<rect x="${GX0+4}" y="${GY0+12}" width="108" height="${t.length*10+6}" fill="#000" fill-opacity=".72" stroke="#ff7ad9" stroke-width=".6"/>`+t.map((x,i)=>`<text x="${GX0+8}" y="${GY0+23+i*10}" font-size="7.5" fill="#ffd3f3" font-family="Menlo,Consolas,monospace">${x}</text>`).join('');
+  }
+  // tüm ölçümler tablosu
+  const mc=S.ch[S.sel].on?S.sel:(S.ch[0].on?0:1),M=measure(mc);
+  if(S.allMeas){
+    const rows=[['vmax','vmin','vpp','vtop','vbase','vamp','vavg','vrms','area','perarea'],['freq','period','pduty','nduty','pwidth','nwidth','prate','nrate','overshoot','preshoot'],['rise','fall','tvmax','tvmin','variance','vupper','vmid','vlower','pervrms','dlyr']];
+    o+=`<rect x="${GX0+2}" y="${GY0+2}" width="${GW-4}" height="${rows.length*21+6}" fill="#000" fill-opacity=".8"/>`;
+    rows.forEach((r,ri)=>r.forEach((k,ci)=>{const x=GX0+6+ci*36.5;o+=`<text x="${x}" y="${GY0+12+ri*21}" font-size="5.8" fill="#fff">${MN[k].replace('Overshoot','Over').replace('Preshoot','Pre').replace('Variance','Vari').replace('Per.Area','AreaP').replace('Per.Vrms','VrmsP').replace('Delay1→2↑','Dly↑')}</text><text x="${x}" y="${GY0+20+ri*21}" font-size="5.8" font-weight="700" fill="${COL[mc]}">${mfmt(M,k)}</text>`;}));
+  }
+  // sol menü
+  if(S.left!==null){
+    const [title,items]=LEFTPAGES[S.leftPage];
+    o+=`<text x="2" y="24" font-size="6.5" fill="#cfd8e8">${title}</text>`;
+    [46,88,123,158,198,235].forEach((cy,i)=>{const k=items[i];if(!k)return;const on=S.meas.includes(k);
+      o+=`<rect x="2" y="${cy-16}" width="40" height="32" rx="2" fill="#10151f" stroke="${on?'#ffd23f':'#5a6a85'}" stroke-width="${on?1.6:.8}"/><text x="22" y="${cy+9}" font-size="6.3" fill="#e8eeff" text-anchor="middle">${MN[k]}</text><text x="22" y="${cy-3}" font-size="9" fill="${on?'#ffd23f':'#8fb4ff'}" text-anchor="middle">${on?'✔':'□'}</text>`;});
+  }
+  // sağ menü
+  if(S.menu){
+    const items=menuItems();
+    [48,90,124,160,198,233].forEach((cy,i)=>{const it=items[i];if(!it||!it.l)return;
+      o+=`<rect x="420" y="${cy-16}" width="56" height="32" rx="2" fill="#10151f" stroke="#5a6a85" stroke-width=".8"/><text x="448" y="${cy-3}" font-size="6.8" fill="#9fb8e8" text-anchor="middle">${it.l}</text><text x="448" y="${cy+9}" font-size="8" font-weight="700" fill="#fff" text-anchor="middle">${it.v()}</text>`;});
+  }
+  // alt ölçüm kutuları
+  S.meas.forEach((k,i)=>{const x=GX0+i*74.4;
+    o+=`<rect x="${x}" y="244" width="72" height="23" fill="#0a0e16" stroke="#445" stroke-width=".6"/><text x="${x+3}" y="253" font-size="6.5" fill="${COL[mc]}">${mc+1}</text><text x="${x+10}" y="253" font-size="6.8" fill="#fff">${MN[k]}</text><text x="${x+36}" y="263" font-size="7.5" font-weight="700" fill="#fff" text-anchor="middle">${mfmt(M,k)}</text>`;});
+  // kanal çubuğu
+  [0,1].forEach(i=>{const c=S.ch[i],x=2+i*86,on=c.on,sel=S.sel===i;
+    o+=`<rect x="${x}" y="270" width="82" height="18" fill="${on?(sel?COL[i]:'#111'):'#111'}" stroke="${COL[i]}" stroke-width="${on?1.4:.6}" opacity="${on?1:.45}"/><text x="${x+9}" y="283" font-size="10" font-weight="800" fill="${on&&sel?'#000':COL[i]}" text-anchor="middle">${i+1}</text><text x="${x+18}" y="283" font-size="9" font-weight="700" fill="${on&&sel?'#000':'#fff'}">${siFmt(vdOf(c),'V')}${c.fine?'*':''}</text><text x="${x+62}" y="283" font-size="7" fill="${on&&sel?'#000':'#cfd8e8'}">${c.coup==='DC'?'':c.coup} ${c.probe===10?'10X':''}${c.inv?' ⇅':''}</text>`;});
+  if(S.mode!=='auto'||S.armed)o+=`<text x="380" y="282" font-size="7" fill="#ffb347">${S.mode==='normal'?'Normal':'Single'}</text>`;
+  el.innerHTML=o;
+}
+
+/* ---------- Etkileşim ---------- */
+const infoShow=id=>{const i=INFO[id];if(i)host.info(i[0],i[1]);};
+let kdrag=null;
+function kAng(e,id){const m=root.getScreenCTM().inverse(),pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;const p=pt.matrixTransform(m);const [cx,cy]=KN[id];return Math.atan2(p.y-cy,p.x-cx)*180/Math.PI;}
+function attach(){
+  root.addEventListener('pointerdown',e=>{
+    const t=e.target;
+    const kp=t.closest('[data-kpress]');
+    if(kp){const id=kp.dataset.kpress;kdrag={id,a:kAng(e,id),acc:0,inner:true,moved:false,x:e.clientX,y:e.clientY};kp.setPointerCapture&&kp.setPointerCapture(e.pointerId);infoShow(id);return;}
+    const kn=t.closest('[data-knob]');
+    if(kn){const id=kn.dataset.knob;kdrag={id,a:kAng(e,id),acc:0,inner:false,moved:true};kn.setPointerCapture&&kn.setPointerCapture(e.pointerId);infoShow(id);return;}
+    const b=t.closest('[data-sc]');if(b){press(b.dataset.sc);infoShow(b.dataset.si);}
+  });
+  root.addEventListener('pointermove',e=>{
+    if(kdrag){
+      const k=kdrag;const a=kAng(e,k.id);let d=a-k.a;if(d>180)d-=360;if(d<-180)d+=360;k.a=a;k.acc+=d;
+      if(k.inner&&!k.moved){if(Math.abs(k.acc)<10&&Math.hypot(e.clientX-k.x,e.clientY-k.y)<8)return;k.moved=true;}
+      while(Math.abs(k.acc)>=KSTEP){const dir=k.acc>0?1:-1;k.acc-=KSTEP*dir;knobStep(k.id,dir);}
+      return;
+    }
+    const el=e.target.closest&&e.target.closest('[data-si]');if(el&&el.dataset.si!==attach.last){attach.last=el.dataset.si;infoShow(el.dataset.si);}
+  });
+  const up=()=>{if(kdrag&&kdrag.inner&&!kdrag.moved){knobPress(kdrag.id);}kdrag=null;};
+  root.addEventListener('pointerup',up);root.addEventListener('pointercancel',()=>{kdrag=null;});
+  root.addEventListener('wheel',e=>{const kn=e.target.closest('[data-knob]');if(kn){e.preventDefault();knobStep(kn.dataset.knob,e.deltaY<0?1:-1);}},{passive:false});
+}
+function loop(now){
+  Object.keys(kstate).forEach(id=>{
+    const k=kstate[id];k.v=(k.v+(k.t-k.a)*0.18)*0.78;k.a+=k.v;if(Math.abs(k.t-k.a)<0.05&&Math.abs(k.v)<0.05){k.a=k.t;k.v=0;}
+    const g=root.querySelector('#kr-'+id);if(g)g.setAttribute('transform',`rotate(${k.a} ${KN[id][0]} ${KN[id][1]})`);
+  });
+  if(S.power&&now-lastDraw>45){
+    lastDraw=now;sigs=host.getSignals();
+    if(S.run)acquire();
+    render();dirty=false;
+  }else if(dirty||!S.power){sigs=host.getSignals();render();dirty=false;}
+  requestAnimationFrame(loop);
+}
+function init(h){
+  host=Object.assign(host,h);root=h.root;svg=root.ownerSVGElement;
+  root.innerHTML=build();attach();
+  requestAnimationFrame(loop);
+}
+function reset(){
+  const d=defaults();Object.keys(d).forEach(k=>{S[k]=d[k];});
+  Object.keys(kstate).forEach(k=>{kstate[k].t=0;});
+  sigs=host.getSignals();mark();
+}
+function halo(list){
+  root.querySelectorAll('.halo').forEach(h=>h.style.display='none');
+  (list||[]).forEach(n=>root.querySelectorAll(`.halo[data-h="${n}"]`).forEach(h=>h.style.display='block'));
+}
+return {init,S,TD,VD,vdOf,chInfo,gainOf,press,knobStep,knobPress,autoset,reset,halo,mark,measure,siFmt,shape,setMode,COL,mfmt,INFO,
+  sigs:()=>sigs,refresh:()=>{sigs=host.getSignals();acquire();render();}};
+})();

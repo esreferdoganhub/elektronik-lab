@@ -24,7 +24,7 @@
   #overlay{position:absolute;left:0;top:0;pointer-events:none;z-index:5;}
   #tools{display:flex;flex-wrap:wrap;gap:4px;padding:4px 4px 8px;align-items:center;}
   .tb{border:1px solid var(--line);background:#f8fafc;border-radius:6px;padding:4px 8px;font-size:.78rem;cursor:pointer;}
-  .tb:hover{border-color:var(--accent);} .tb.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .tb:hover{border-color:var(--accent);} .tb.on{background:var(--accent);color:#fff;border-color:var(--accent);} .tb:disabled{opacity:.4;cursor:default;}
   #tools select{font-size:.78rem;padding:3px;border-radius:6px;border:1px solid var(--line);}
   .sep{width:1px;height:20px;background:var(--line);margin:0 4px;}
   .side{display:flex;flex-direction:column;gap:10px;}
@@ -1523,7 +1523,8 @@ function addEl(type,o={}){
   }
   ELS.push(el);VER++;return el;
 }
-function delEl(el){ELS=ELS.filter(e=>e!==el);if(SEL===el)SEL=null;VER++;renderProps();}
+const GRAVE=new Map();
+function delEl(el){GRAVE.set(el.id,el);ELS=ELS.filter(e=>e!==el);if(SEL===el)SEL=null;VER++;renderProps();}
 function parkClip(k){const i=CLIP_ORDER.indexOf(k),pair=Math.floor(i/2);CLIPS[k].h=null;CLIPS[k].px=208+i*64+pair*10;CLIPS[k].py=62;}
 function clearBoard(){ELS=[];SEL=null;CLIP_ORDER.forEach(parkClip);VER++;renderProps();}
 function wire(a,b,color){return addEl('wire',{pins:[H(a),H(b)],props:{color:color||'#e63946'}});}
@@ -1894,16 +1895,47 @@ board.addEventListener('dblclick',e=>{const a=e.target.closest('[data-act="btn"]
 board.addEventListener('pointerleave',()=>{hlNet(null);});
 document.addEventListener('keydown',e=>{
   if(e.target.tagName==='INPUT'||e.target.tagName==='SELECT')return;
+  const mod=e.metaKey||e.ctrlKey,k=e.key.toLowerCase();
+  if(mod&&k==='z'){e.preventDefault();if(e.shiftKey)redo();else undo();return;}
+  if(mod&&k==='y'){e.preventDefault();redo();return;}
   if(e.key==='Escape'){PLACE=null;WIRE0=null;TOOL=null;ghost('');renderTools();}
   if((e.key==='Delete'||e.key==='Backspace')&&SEL&&GEN.G.entry===null){delEl(SEL);needBuild=true;e.preventDefault();}
   if((e.key==='r'||e.key==='R')){if(PLACE){PLACE.rot=(PLACE.rot+1)&3;}else if(SEL&&TYPES[SEL.type].rigid){SEL.rot=(SEL.rot+1)&3;needBuild=true;VER++;}}
 });
+
+/* ---------- Geri al / ileri al ---------- */
+const HIST={undo:[],redo:[],cur:null,lastVer:-1,max:150};
+function snapState(){return JSON.stringify({els:ELS.map(e=>({id:e.id,type:e.type,props:e.props,rot:e.rot,at:e.at,pins:e.pins?e.pins.map(p=>p.h?{h:p.h}:{h:null,x:p.x,y:p.y}):null,body:e.body,burnt:!!e.burnt,tag:e.tag||null})),clips:CLIP_ORDER.map(k=>CLIPS[k].h),next:NEXT});}
+function histTrack(){
+  if(DRAG||HIST.lastVer===VER)return;HIST.lastVer=VER;
+  const cur=snapState();if(cur===HIST.cur)return;
+  if(HIST.cur!==null){HIST.undo.push(HIST.cur);if(HIST.undo.length>HIST.max)HIST.undo.shift();HIST.redo=[];}
+  HIST.cur=cur;renderHistBtns();
+}
+function histReset(){HIST.undo=[];HIST.redo=[];HIST.cur=snapState();HIST.lastVer=VER;renderHistBtns();}
+function applySnap(str){
+  const d=JSON.parse(str),old=new Map(ELS.map(e=>[e.id,e]));
+  ELS=d.els.map(o=>{const e=old.get(o.id)||GRAVE.get(o.id)||{st:{}};
+    Object.assign(e,{id:o.id,type:o.type,props:JSON.parse(JSON.stringify(o.props)),rot:o.rot,at:o.at?o.at.slice():o.at,body:o.body?o.body.slice():o.body,burnt:o.burnt,tag:o.tag||undefined,pins:o.pins?o.pins.map(p=>Object.assign({},p,p.h?{h:p.h.slice()}:{})):undefined});
+    e.pressed=!!(e.props&&e.props.latch);if(!e.burnt){e._f=0;}return e;});
+  CLIP_ORDER.forEach((k,i)=>{const h=d.clips[i];if(h)CLIPS[k].h=h.slice();else parkClip(k);});
+  NEXT=Math.max(NEXT,d.next);
+  if(SEL&&!ELS.includes(SEL))SEL=null;
+  PLACE=null;WIRE0=null;ghost('');
+  HIST.cur=str;VER++;HIST.lastVer=VER;needBuild=true;renderProps();renderHistBtns();
+}
+function undo(){histTrack();if(!HIST.undo.length){say('Geri alınacak işlem yok.');return;}HIST.redo.push(HIST.cur);applySnap(HIST.undo.pop());say(`Geri alındı (${HIST.undo.length} adım daha geri alınabilir).`);}
+function redo(){histTrack();if(!HIST.redo.length){say('İleri alınacak işlem yok.');return;}HIST.undo.push(HIST.cur);applySnap(HIST.redo.pop());say('İleri alındı.');}
+document.addEventListener('pointerdown',()=>{if(!DRAG)histTrack();},true);
+document.addEventListener('keydown',()=>{if(!DRAG)histTrack();},true);
+function renderHistBtns(){const u=$('#tUndo'),r=$('#tRedo');if(u)u.disabled=!HIST.undo.length;if(r)r.disabled=!HIST.redo.length;}
 
 /* ---------- Araç çubuğu ve özellikler ---------- */
 const PALETTE=['res','led','diode','schottky','zener','ccap','ecap','ind','pot','btn','sw','mos','bat','dcs','trafo'];
 function renderTools(){
   $('#tools').innerHTML=PALETTE.map(t=>`<button class="tb${PLACE&&PLACE.type===t?' on':''}" data-t="${t}" title="${TYPES[t].info}">${TYPES[t].name}</button>`).join('')+
    `<span class="sep"></span><button class="tb${TOOL==='wire'?' on':''}" id="tWire">✎ Kablo</button><select id="tCol">${WIRECOLS.map(c=>`<option value="${c}" ${c===WIRECOL?'selected':''} style="background:${c}">${{'#e63946':'kırmızı','#1d4ed8':'mavi','#111':'siyah','#2a9d3a':'yeşil','#f4a300':'turuncu','#ffffff':'beyaz','#8338ec':'mor'}[c]}</option>`).join('')}</select>
+   <button class="tb" id="tUndo" title="Geri al (Cmd/Ctrl+Z)">↶ Geri al</button><button class="tb" id="tRedo" title="İleri al (Cmd/Ctrl+Shift+Z veya Ctrl+Y)">↷ İleri al</button>
    <button class="tb" id="tRot">⟳ Döndür (R)</button><button class="tb" id="tDel">🗑 Sil (Del)</button><button class="tb" id="tClr">Tahtayı temizle</button>
    <span class="sep"></span><span class="cablab">Cihaz kabloları:</span><span class="seg">${[['normal','Normal'],['trans','Şeffaf'],['hide','Gizli']].map(([k,t])=>`<button class="tb${CABLEMODE===k?' on':''}" data-cab="${k}" title="${k==='hide'?'Kablolar görünmez ama bağlantı ve ölçüm sürer':k==='trans'?'Kablolar soluk görünür':'Kablolar normal görünür'}">${t}</button>`).join('')}</span>`;
   $('#tools').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
@@ -1913,6 +1945,7 @@ function renderTools(){
     renderTools();
   });
   $('#tools').querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>{CABLEMODE=b.dataset.cab;try{localStorage.setItem('simCableMode',CABLEMODE);}catch(e){}VER++;renderTools();say({normal:'Cihaz kabloları normal görünümde.',trans:'Cihaz kabloları şeffaf: altlarındaki elemanlar görünür. Bağlantılar ve ölçümler aynen sürüyor.',hide:'Cihaz kabloları gizlendi: bağlantılar ve ölçümler aynen sürüyor. Prob ve klips uçları breadboard\'da görünmeye devam eder; değerleri sağdaki "Ölçüm izleme" panelinden takip edebilirsin.'}[CABLEMODE]);});
+  $('#tUndo').onclick=undo;$('#tRedo').onclick=redo;renderHistBtns();
   $('#tWire').onclick=()=>{TOOL=TOOL==='wire'?null:'wire';PLACE=null;WIRE0=null;ghost('');renderTools();if(TOOL)say('Kablo: önce bir deliğe, sonra diğer deliğe tıkla. Renk listeden seçilir. Esc: çık.');};
   $('#tCol').onchange=()=>{WIRECOL=$('#tCol').value;};
   $('#tRot').onclick=()=>{if(SEL&&TYPES[SEL.type].rigid){SEL.rot=(SEL.rot+1)&3;needBuild=true;VER++;}else if(PLACE)PLACE.rot=(PLACE.rot+1)&3;};
@@ -1962,6 +1995,7 @@ function loop(now){
   if(key!==sigKey){sigKey=key;needBuild=true;}
   if(needBuild)build();
   if(drawnVer!==VER)renderBoard();
+  histTrack();
   const wall=Math.min(0.05,(now-lastWall)/1000);lastWall=now;
   if(!paused&&wall>0){const target=sim.t+wall,c0=performance.now(),t0=sim.t;
     while(sim.t<target-1e-12&&performance.now()-c0<12){for(let k=0;k<64&&sim.t<target-1e-12;k++){sim.step();record();}}
@@ -2083,6 +2117,7 @@ function openTab(idx){
   const t=TABS[idx];freshAll();Object.keys(X).forEach(k=>delete X[k]);
   if(t.i==='free'){G2.mode='free';renderFree();say('Serbest kurma: araç çubuğundan eleman seç ve breadboard\'a yerleştir.');}
   else{G2.mode='exp';G2.exp=t.i;G2.step=0;G2.done={};EXPS[t.i].setup();needBuild=true;VER++;renderLesson();say('');}
+  histReset();
 }
 function goStep(n){G2.step=n;renderLesson();}
 function renderLesson(){
