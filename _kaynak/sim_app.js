@@ -70,7 +70,7 @@ function addEl(type,o={}){
   ELS.push(el);VER++;return el;
 }
 const GRAVE=new Map();
-function delEl(el){GRAVE.set(el.id,el);ELS=ELS.filter(e=>e!==el);if(SEL===el)SEL=null;VER++;renderProps();}
+function delEl(el){if(POP&&POP.el===el)closePop(true);GRAVE.set(el.id,el);ELS=ELS.filter(e=>e!==el);if(SEL===el)SEL=null;VER++;renderProps();}
 function parkClip(k){const i=CLIP_ORDER.indexOf(k),pair=Math.floor(i/2);CLIPS[k].h=null;CLIPS[k].px=208+i*64+pair*10;CLIPS[k].py=62;}
 function clearBoard(){ELS=[];SEL=null;CLIP_ORDER.forEach(parkClip);VER++;renderProps();}
 function wire(a,b,color){return addEl('wire',{pins:[H(a),H(b)],props:{color:color||'#e63946'}});}

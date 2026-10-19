@@ -74,6 +74,31 @@
   .props label{display:block;font-size:.85rem;margin:5px 0;} .props select,.props input[type=range]{margin-left:6px;vertical-align:middle;}
   .props .vin{display:inline-flex;gap:4px;align-items:center;margin-left:6px;vertical-align:middle;} .props .vin select{margin-left:0;max-width:7.5em;}
   .props .vtxt{width:6.5em;padding:2px 5px;font:inherit;font-family:Menlo,Consolas,monospace;font-size:.82rem;border:1px solid var(--line);border-radius:5px;}
+  .vpop{position:fixed;z-index:60;width:248px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 10px 7px;
+    box-shadow:0 10px 30px rgba(15,30,50,.22),0 2px 6px rgba(15,30,50,.12);font-size:.84rem;color:var(--ink);animation:vpIn .26s cubic-bezier(.34,1.56,.64,1) both;}
+  .vpop.out{animation:vpOut .16s ease-in both;pointer-events:none;}
+  .vpop .vparr{position:absolute;left:var(--ax);bottom:-7px;width:12px;height:12px;margin-left:-6px;background:var(--panel);border-right:1px solid var(--line);border-bottom:1px solid var(--line);transform:rotate(45deg);}
+  .vpop.below .vparr{bottom:auto;top:-7px;transform:rotate(225deg);}
+  .vpop .vph{display:flex;justify-content:space-between;align-items:center;font-weight:700;color:var(--accent);margin-bottom:6px;}
+  .vpop .vpx{border:0;background:none;color:var(--sub);cursor:pointer;font-size:.85rem;padding:0 2px;border-radius:4px;} .vpop .vpx:hover{background:var(--line);}
+  .vpop .vpr{display:flex;gap:6px;align-items:center;} .vpop .vpl{color:var(--sub);font-size:.8rem;}
+  .vpop .vpi{flex:1;min-width:0;padding:5px 8px;font-family:Menlo,Consolas,monospace;font-size:.95rem;border:1.5px solid var(--accent);border-radius:7px;outline:none;transition:border-color .15s,background .15s,box-shadow .15s;}
+  .vpop .vpi:focus{box-shadow:0 0 0 3px rgba(29,111,165,.18);}
+  .vpop .vpok{border:0;background:var(--accent);color:#fff;border-radius:7px;width:32px;height:30px;cursor:pointer;font-size:1rem;transition:transform .12s;} .vpop .vpok:active{transform:scale(.9);}
+  .vpop .vpc{display:flex;flex-wrap:wrap;gap:4px;margin-top:7px;}
+  .vpop .vpc button{border:1px solid var(--line);background:#f6f8fb;border-radius:999px;padding:2px 8px;font-size:.74rem;cursor:pointer;color:var(--ink);transition:background .12s,transform .12s;}
+  .vpop .vpc button:hover{background:#e3edf6;transform:translateY(-1px);} .vpop .vpc button.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+  .vpop .vpe{color:var(--bad);font-size:.76rem;margin-top:5px;min-height:0;} .vpop .vpe:empty{display:none;}
+  .vpop .vpt{color:var(--sub);font-size:.68rem;margin-top:6px;}
+  .vpop.bad .vpi{border-color:var(--accent2);background:var(--badbg);}
+  .vpop.shake{animation:vpShake .32s ease;}
+  .vpop.done .vpi{border-color:var(--ok);background:var(--okbg);} .vpop.done .vpok{background:var(--ok);}
+  .vpop .vpi.tick{animation:vpTick .18s ease;}
+  @keyframes vpIn{from{opacity:0;transform:scale(.6) translateY(6px);}to{opacity:1;transform:none;}}
+  @keyframes vpOut{to{opacity:0;transform:scale(.85) translateY(4px);}}
+  @keyframes vpShake{0%,100%{transform:none;}20%{transform:translateX(-6px);}40%{transform:translateX(5px);}60%{transform:translateX(-3px);}80%{transform:translateX(2px);}}
+  @keyframes vpTick{50%{transform:scale(1.05);}}
+  @media (prefers-reduced-motion:reduce){.vpop,.vpop.out,.vpop.shake,.vpop .vpi.tick{animation-duration:1ms;}}
   .props .vtxt.bad{border-color:var(--accent2);background:var(--badbg);} .props .verr{font-size:.78rem;color:var(--bad);margin:2px 0 4px;}
   .simline{font-size:.82rem;color:var(--sub);margin-top:4px;}
   .cablab{font-size:.78rem;color:var(--sub);margin-right:2px;} .seg{display:inline-flex;gap:2px;}
@@ -1742,7 +1767,7 @@ function addEl(type,o={}){
   ELS.push(el);VER++;return el;
 }
 const GRAVE=new Map();
-function delEl(el){GRAVE.set(el.id,el);ELS=ELS.filter(e=>e!==el);if(SEL===el)SEL=null;VER++;renderProps();}
+function delEl(el){if(POP&&POP.el===el)closePop(true);GRAVE.set(el.id,el);ELS=ELS.filter(e=>e!==el);if(SEL===el)SEL=null;VER++;renderProps();}
 function parkClip(k){const i=CLIP_ORDER.indexOf(k),pair=Math.floor(i/2);CLIPS[k].h=null;CLIPS[k].px=208+i*64+pair*10;CLIPS[k].py=62;}
 function clearBoard(){ELS=[];SEL=null;CLIP_ORDER.forEach(parkClip);VER++;renderProps();}
 function wire(a,b,color){return addEl('wire',{pins:[H(a),H(b)],props:{color:color||'#e63946'}});}
@@ -2082,7 +2107,7 @@ board.addEventListener('pointermove',e=>{
     if(d.kind==='clip'){CLIPS[d.k].h=null;CLIPS[d.k].px=p.x;CLIPS[d.k].py=p.y;d.moved=true;VER++;hlNet(holeAt(p.x,p.y,12));return;}
     if(d.kind==='pin'){const pp=d.el.pins[d.i];pp.h=null;pp.x=p.x;pp.y=p.y;VER++;hlNet(holeAt(p.x,p.y,12));return;}
     if(d.kind==='move'){const c=Math.round((p.x-X0)/P),r=Math.round((p.y-Y0)/P),na=[c-d.off[0],r-d.off[1]];if(na[0]!==d.el.at[0]||na[1]!==d.el.at[1]){d.el.at=na;d.moved=true;VER++;}return;}
-    if(d.kind==='body'){d.el.body=[Math.max(0,Math.min(780,p.x-d.dx)),Math.max(100,Math.min(380,p.y-d.dy))];VER++;return;}
+    if(d.kind==='body'){if(Math.hypot(p.x-d.dx-d.el.body[0],p.y-d.dy-d.el.body[1])>2)d.moved=true;else return;d.el.body=[Math.max(0,Math.min(780,p.x-d.dx)),Math.max(100,Math.min(380,p.y-d.dy))];VER++;return;}
     if(d.kind==='pot'){const np=Math.max(0,Math.min(1,d.pos0+((p.x-d.x0)-(p.y-d.y0))/160));if(Math.abs(np-d.el.props.pos)>0.002){d.el.props.pos=np;needBuild=true;VER++;}return;}
     return;
   }
@@ -2101,6 +2126,7 @@ board.addEventListener('pointerup',e=>{
   if(d.kind==='btn'){if(!d.el.props.latch){d.el.pressed=false;needBuild=true;VER++;}return;}
   if(d.kind==='clip'){const h=holeAt(p.x,p.y,12);if(h)CLIPS[d.k].h=h;else parkClip(d.k);VER++;needBuild=true;if(h){say(`${CLIPINFO[d.k][0]} → ${holeName(h)}`,'ok');probeHint(d.k);}hlNet(null);return;}
   if(d.kind==='pin'){const h=holeAt(p.x,p.y,12);const pp=d.el.pins[d.i];if(h)pp.h=h;VER++;needBuild=true;hlNet(null);return;}
+  if((d.kind==='move'||d.kind==='body')&&!d.moved&&VSPEC[d.el.type]&&!d.el.burnt){openPop(d.el,e.clientX,e.clientY);return;}
   if(d.kind==='move'){if(d.moved){const ok=pinHoles(d.el).every(h=>netOf(h));if(!ok)say('Bazı bacaklar deliğe oturmadı (kırmızı nokta): elemanı biraz kaydır.','warn');needBuild=true;VER++;}return;}
   if(d.kind==='body'||d.kind==='pot'){needBuild=true;VER++;return;}
 });
@@ -2244,6 +2270,19 @@ function renderTools(){
 }
 function opt(list,val,fmt){return list.map(v=>`<option value="${v}" ${Math.abs(v-val)<1e-15||v===val?'selected':''}>${fmt(v)}</option>`).join('');}
 const fmtV=(v,u)=>v!==0&&Math.abs(v)<1e-9?(+(v/1e-12).toPrecision(3))+' p'+u:fmtSI(v,u);
+/* Elle girilebilen değerler: tür → {anahtar, birim, sınırlar, hızlı seçim listesi} */
+const VSPEC={res:{k:'R',u:'Ω',lo:0.1,hi:100e6,list:RVALS,lab:'Direnç'},zener:{k:'Vz',u:'V',lo:1,hi:200,list:[3.3,5.1,6.2,9.1,12],lab:'Vz'},
+  ccap:{k:'C',u:'F',lo:1e-12,hi:1,list:CVALS_C,lab:'Kapasite'},ecap:{k:'C',u:'F',lo:1e-12,hi:1,list:CVALS_E,lab:'Kapasite'},
+  ind:{k:'L',u:'H',lo:1e-9,hi:10,list:LVALS,lab:'Endüktans'},pot:{k:'R',u:'Ω',lo:10,hi:10e6,list:[1000,10000,100000],lab:'Değer'},
+  dcs:{k:'V',u:'V',lo:0,hi:30,list:[3.3,5,9,12,15,24],lab:'Gerilim'}};
+/* Metni ayrıştırıp uygular; hata metni ya da null döner */
+function setVal(el,txt){
+  const S=VSPEC[el.type],v=Solver.parseSI(txt,S.u);
+  if(!isFinite(v))return '"'+String(txt).trim()+'" anlaşılamadı. Örnek: 4.7k, 2.2µ (ya da 2.2u), 470n, 1M, 10m';
+  if(v<S.lo||v>S.hi)return 'Değer '+fmtV(S.lo,S.u)+' ile '+fmtV(S.hi,S.u)+' arasında olmalı (girilen: '+fmtV(v,S.u)+').';
+  if(Math.abs(v-el.props[S.k])>1e-12*Math.abs(v)){el.props[S.k]=v;needBuild=true;VER++;}
+  return null;
+}
 /* Serbest değer kutusu (SI önekli: 4.7k, 2.2µ/2.2u, 470n, 1M, 10m) + isteğe bağlı hızlı seçim listesi */
 function vin(el,k,u,lo,hi,list,fmt){
   const v=el.props[k],inList=list&&list.some(x=>Math.abs(x-v)<=1e-9*Math.abs(x));
@@ -2254,31 +2293,25 @@ function renderProps(){
   const el=SEL,c=$('#propCard');
   if(!el){c.innerHTML=`<div class="stepno">Seçili eleman</div><p style="margin:4px 0;color:var(--sub);font-size:.88rem">Bir elemana tıkla: değerini değiştir, döndür, sil. Sürükleyerek taşı.</p>`;return;}
   const T=TYPES[el.type],p=el.props;let f='';
-  if(el.type==='res')f=`<label>Direnç ${vin(el,'R','Ω',0.1,100e6,RVALS)}</label>`;
+  const V=VSPEC[el.type];
+  if(el.type==='res')f=`<label>Direnç ${vin(el,'R','Ω',V.lo,V.hi,V.list)}</label>`;
   if(el.type==='led')f=`<label>Renk <select data-p="color" data-s="1">${Object.keys(LEDCOL).map(k=>`<option value="${k}" ${k===p.color?'selected':''}>${LEDCOL[k][1]}</option>`).join('')}</select></label>`;
-  if(el.type==='zener')f=`<label>Vz ${vin(el,'Vz','V',1,200,[3.3,5.1,6.2,9.1,12],v=>v+' V')}</label>`;
-  if(el.type==='ccap')f=`<label>Kapasite ${vin(el,'C','F',1e-12,1,CVALS_C)}</label>`;
-  if(el.type==='ecap')f=`<label>Kapasite ${vin(el,'C','F',1e-12,1,CVALS_E)}</label><label>Gerilim sınırı <select data-p="Vmax">${opt([16,25,50],p.Vmax,v=>v+' V')}</select></label>`;
-  if(el.type==='ind')f=`<label>Endüktans ${vin(el,'L','H',1e-9,10,LVALS)}</label>`;
-  if(el.type==='pot')f=`<label>Değer ${vin(el,'R','Ω',10,10e6,[1000,10000,100000])}</label><label>Konum <input type="range" min="0" max="1" step="0.01" value="${p.pos}" data-p="pos"></label>`;
+  if(el.type==='zener')f=`<label>Vz ${vin(el,'Vz','V',V.lo,V.hi,V.list,v=>v+' V')}</label>`;
+  if(el.type==='ccap')f=`<label>Kapasite ${vin(el,'C','F',V.lo,V.hi,V.list)}</label>`;
+  if(el.type==='ecap')f=`<label>Kapasite ${vin(el,'C','F',V.lo,V.hi,V.list)}</label><label>Gerilim sınırı <select data-p="Vmax">${opt([16,25,50],p.Vmax,v=>v+' V')}</select></label>`;
+  if(el.type==='ind')f=`<label>Endüktans ${vin(el,'L','H',V.lo,V.hi,V.list)}</label>`;
+  if(el.type==='pot')f=`<label>Değer ${vin(el,'R','Ω',V.lo,V.hi,V.list)}</label><label>Konum <input type="range" min="0" max="1" step="0.01" value="${p.pos}" data-p="pos"></label>`;
   if(el.type==='sw')f=`<label><input type="checkbox" data-p="on" ${p.on?'checked':''}> Açık (kapalı devre)</label>`;
   if(el.type==='btn')f=`<label><input type="checkbox" data-p="latch" ${p.latch?'checked':''}> Basılı kilitle</label>`;
-  if(el.type==='dcs')f=`<label>Gerilim ${vin(el,'V','V',0,30)}</label><label>Ayar <input type="range" min="0" max="30" step="0.1" value="${p.V}" data-p="V"> <b>${p.V.toFixed(1)} V</b></label><label>Akım sınırı <select data-p="I">${opt([0.1,0.5,1,3],p.I,v=>v+' A')}</select></label>`;
+  if(el.type==='dcs')f=`<label>Gerilim ${vin(el,'V','V',V.lo,V.hi)}</label><label>Ayar <input type="range" min="0" max="30" step="0.1" value="${p.V}" data-p="V"> <b>${p.V.toFixed(1)} V</b></label><label>Akım sınırı <select data-p="I">${opt([0.1,0.5,1,3],p.I,v=>v+' A')}</select></label>`;
   if(el.type==='trafo')f=`<label>Sekonder <select data-p="Vrms">${opt([6,9,12,24],p.Vrms,v=>v+'-0-'+v+' V')}</select></label>`;
   if(el.type==='wire')f=`<label>Renk <select data-p="color" data-s="1">${WIRECOLS.map(c=>`<option value="${c}" ${c===p.color?'selected':''}>${c}</option>`).join('')}</select></label>`;
   c.innerHTML=`<div class="stepno">Seçili eleman</div><h2>${T.name}${el.burnt?' <span style="color:#c0392b">(yanmış)</span>':''}</h2><div class="props">${f}<div class="verr" id="pErr" hidden></div></div>
    <div class="row">${T.rigid?'<button class="b sm" id="pRot">⟳ Döndür</button>':''}<button class="b sm" id="pDel">🗑 Sil</button>${el.burnt?'<button class="b sm pri" id="pFix">Yenile</button>':''}</div>`;
   c.querySelectorAll('[data-p]').forEach(inp=>{inp.oninput=inp.onchange=()=>{const k=inp.dataset.p;let v=inp.type==='checkbox'?inp.checked:(inp.dataset.s?inp.value:+inp.value);el.props[k]=v;if(k==='latch')el.pressed=v;needBuild=true;VER++;if(inp.type!=='range')renderProps();else{const b=inp.parentNode.querySelector('b');if(b)b.textContent=(+v).toFixed(1)+' V';const t=c.querySelector('.vtxt[data-v="'+k+'"]');if(t)t.value=fmtV(+v,'V');}};});
   c.querySelectorAll('.vtxt').forEach(inp=>{
-    const k=inp.dataset.v,u=inp.dataset.u,lo=+inp.dataset.lo,hi=+inp.dataset.hi,err=$('#pErr');
-    const fail=m=>{inp.classList.add('bad');err.hidden=false;err.textContent=m;};
-    const apply=()=>{
-      const v=Solver.parseSI(inp.value,u);
-      if(!isFinite(v))return fail('"'+inp.value.trim()+'" anlaşılamadı. Örnek: 4.7k, 2.2µ (ya da 2.2u), 470n, 1M, 10m');
-      if(v<lo||v>hi)return fail('Değer '+fmtV(lo,u)+' ile '+fmtV(hi,u)+' arasında olmalı (girilen: '+fmtV(v,u)+').');
-      if(Math.abs(v-el.props[k])>1e-12*Math.abs(v)){el.props[k]=v;needBuild=true;VER++;}
-      renderProps();
-    };
+    const k=inp.dataset.v,u=inp.dataset.u,err=$('#pErr');
+    const apply=()=>{const m=setVal(el,inp.value);if(m){inp.classList.add('bad');err.hidden=false;err.textContent=m;return;}renderProps();};
     inp.onchange=apply;
     inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();apply();}else if(e.key==='Escape'){inp.value=fmtV(el.props[k],u);inp.classList.remove('bad');err.hidden=true;inp.blur();}};
     inp.oninput=()=>{if(inp.classList.contains('bad')){inp.classList.remove('bad');err.hidden=true;}};
@@ -2286,6 +2319,54 @@ function renderProps(){
   if($('#pRot'))$('#pRot').onclick=()=>{el.rot=(el.rot+1)&3;needBuild=true;VER++;};
   $('#pDel').onclick=()=>{delEl(el);needBuild=true;};
   if($('#pFix'))$('#pFix').onclick=()=>{el.burnt=false;el._f=0;el.st={};needBuild=true;VER++;renderProps();say('Eleman yenilendi.','ok');};
+}
+
+/* ---------- Değer balonu: elemana tıklayınca (sürüklemeden) yanında açılır ---------- */
+const E12=[1,1.2,1.5,1.8,2.2,2.7,3.3,3.9,4.7,5.6,6.8,8.2];
+function e12Step(v,dir){ // bir sonraki/önceki E12 değeri
+  const d=Math.floor(Math.log10(v)+1e-9),m=v/Math.pow(10,d);let i=E12.findIndex(x=>x>=m-1e-9);if(i<0)i=12;
+  if(dir>0)i=Math.abs(E12[i%12]*(i>=12?10:1)-m)<1e-9?i+1:i;else i=i-1;
+  const dd=d+Math.floor(i/12),ii=((i%12)+12)%12;return +(E12[ii]*Math.pow(10,dd)).toPrecision(3);
+}
+let POP=null;
+function closePop(now){
+  const P=POP;if(!P)return;POP=null;document.removeEventListener('pointerdown',P.outside,true);window.removeEventListener('scroll',P.onScroll,true);
+  if(now){P.box.remove();return;}
+  P.box.classList.add('out');P.box.addEventListener('animationend',()=>P.box.remove(),{once:true});setTimeout(()=>P.box.remove(),400);
+}
+function openPop(el,cx,cy){
+  const S=VSPEC[el.type];if(!S)return;closePop(true);
+  // hızlı seçim: mevcut değere en yakın en fazla 8 değer
+  const cur=el.props[S.k];let ci=0;S.list.forEach((v,i)=>{if(Math.abs(Math.log(v/cur))<Math.abs(Math.log(S.list[ci]/cur)))ci=i;});
+  const c0=Math.max(0,Math.min(S.list.length-8,ci-3)),chips=S.list.slice(c0,c0+8);
+  const box=document.createElement('div');box.className='vpop';
+  box.innerHTML=`<div class="vph"><span>${TYPES[el.type].name}</span><button class="vpx" title="Kapat (Esc)">✕</button></div>
+   <div class="vpr">${S.lab===TYPES[el.type].name?'':`<span class="vpl">${S.lab}</span>`}<input class="vpi" type="text" spellcheck="false" autocomplete="off" value="${fmtV(el.props[S.k],S.u)}"><button class="vpok" title="Uygula (Enter)">✓</button></div>
+   <div class="vpc">${chips.map(v=>`<button data-v="${v}" class="${Math.abs(v-el.props[S.k])<=1e-9*v?'on':''}">${fmtV(v,S.u)}</button>`).join('')}</div>
+   <div class="vpe"></div><div class="vpt">Enter: uygula · ${S.k==='V'||S.k==='Vz'?'':'↑↓: E12 serisi · '}Esc: kapat</div><i class="vparr"></i>`;
+  document.body.appendChild(box);
+  // konum: tıklanan noktanın üstünde; yer yoksa altında, ekran kenarına kıstır
+  const W=box.offsetWidth,H=box.offsetHeight,vw=innerWidth,vh=innerHeight;
+  let x=Math.max(8,Math.min(vw-W-8,cx-W/2)),y=cy-H-16,below=false;if(y<8){y=cy+16;below=true;}y=Math.min(y,vh-H-8);
+  box.style.left=x+'px';box.style.top=y+'px';box.classList.toggle('below',below);
+  box.style.setProperty('--ax',Math.max(14,Math.min(W-14,cx-x))+'px');box.style.transformOrigin=`${cx-x}px ${below?0:H}px`;
+  const inp=box.querySelector('.vpi'),err=box.querySelector('.vpe');
+  const ok=()=>{box.classList.remove('shake');void box.offsetWidth;box.classList.add('done');renderProps();if(SEL===el)info(TYPES[el.type].name+valueText(el),TYPES[el.type].info);setTimeout(()=>{if(POP&&POP.box===box)closePop();},260);};
+  const apply=()=>{const m=setVal(el,inp.value);if(m){err.textContent=m;box.classList.remove('shake');void box.offsetWidth;box.classList.add('shake','bad');inp.focus();inp.select();return;}ok();};
+  inp.onkeydown=e=>{
+    if(e.key==='Enter'){e.preventDefault();apply();}
+    else if(e.key==='Escape'){e.preventDefault();closePop();}
+    else if((e.key==='ArrowUp'||e.key==='ArrowDown')&&S.k!=='V'&&S.k!=='Vz'){e.preventDefault();const cur=Solver.parseSI(inp.value,S.u);const b=isFinite(cur)&&cur>0?cur:el.props[S.k];
+      const n=e12Step(b,e.key==='ArrowUp'?1:-1);if(n>=S.lo&&n<=S.hi){inp.value=fmtV(n,S.u);box.classList.remove('bad');err.textContent='';inp.classList.remove('tick');void inp.offsetWidth;inp.classList.add('tick');}}
+  };
+  inp.oninput=()=>{box.classList.remove('bad');err.textContent='';};
+  box.querySelector('.vpok').onclick=apply;box.querySelector('.vpx').onclick=()=>closePop();
+  box.querySelectorAll('.vpc button').forEach(b=>b.onclick=()=>{inp.value=fmtV(+b.dataset.v,S.u);apply();});
+  const outside=e=>{if(!box.contains(e.target))closePop();};
+  const onScroll=e=>{if(!box.contains(e.target))closePop();};
+  POP={box,el,outside,onScroll};
+  setTimeout(()=>{if(POP&&POP.box===box){document.addEventListener('pointerdown',outside,true);window.addEventListener('scroll',onScroll,true);}},0);
+  inp.focus();inp.select();
 }
 
 /* ---------- Simülasyon kartı ---------- */
@@ -2321,7 +2402,7 @@ function loop(now){
 const mval=()=>lastMeter&&lastMeter.val!=null&&lastMeter.num!=='OL'?lastMeter.val:null;
 const inR=(v,a,b)=>v!==null&&v!==undefined&&v>=a&&v<=b;
 function cfgGen(i,o){Object.assign(GEN.CH[i],o);GEN.mark();}
-function freshAll(){clearBoard();GEN.reset();Scope.reset();MM.S.dial=2;MM.S.sel=0;MM.S.jack='vo';MM.S.hold=false;MM.S.fuseMA=true;MM.S.fuseA=true;PLACE=null;TOOL=null;WIRE0=null;ghost('');resetSim();renderTools();}
+function freshAll(){closePop(true);clearBoard();GEN.reset();Scope.reset();MM.S.dial=2;MM.S.sel=0;MM.S.jack='vo';MM.S.hold=false;MM.S.fuseMA=true;MM.S.fuseA=true;PLACE=null;TOOL=null;WIRE0=null;ghost('');resetSim();renderTools();}
 const sM=(ch,k)=>{const M=Scope.measure(ch);return M?M[k]:null;};
 function sAuto(){if(RING.n<4000||sim.t<0.06)setTimeout(sAuto,250);else Scope.press('auto');}
 const X={};
