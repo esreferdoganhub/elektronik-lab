@@ -19,4 +19,4 @@ let onChange=null;
 setInterval(()=>{if(CH.some(c=>c.on&&c.wave==='noise'))mark();},300);
 requestAnimationFrame(frame);
 function resetGen(){CH[0]=newCh();CH[1]=newCh();Object.assign(G,{ch:0,load:'HighZ',menu:'wave',page:0,param:'freq',entry:null,edit:false});mark();}
-return {CH,G,shape,mark,reset:resetGen,setOnChange:f=>{onChange=f;},outEl:i=>document.querySelector('#gOut'+i),showInfo:()=>setInfo('screen')};
+return {CH,G,shape,sample:(i,t)=>chSample(CH[i],t),mark,reset:resetGen,setOnChange:f=>{onChange=f;},outEl:i=>document.querySelector('#gOut'+i),showInfo:()=>setInfo('screen')};

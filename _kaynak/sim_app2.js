@@ -164,7 +164,7 @@ function updateSimCard(){
 
 /* ---------- Ana döngü ---------- */
 function loop(now){
-  const key=JSON.stringify([VER,MM.S.dial,MM.S.sel,MM.S.jack,MM.S.fuseMA,MM.S.fuseA,Scope.S.phys,GEN.CH.map(c=>[c.on,c.wave==='dc'||c.wave==='noise'?0:Math.round(Math.log10(c.freq)*4)]),GEN.G.load]);
+  const key=JSON.stringify([VER,MM.S.dial,MM.S.sel,MM.S.jack,MM.S.fuseMA,MM.S.fuseA,Scope.S.phys,GEN.CH.map(c=>[c.on,c.mod,c.wave==='dc'||c.wave==='noise'?0:Math.round(Math.log10(genFmax(c))*4)]),GEN.G.load]);
   if(key!==sigKey){sigKey=key;needBuild=true;}
   if(needBuild)build();
   if(drawnVer!==VER)renderBoard();

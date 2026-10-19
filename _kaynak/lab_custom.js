@@ -7,7 +7,7 @@ const BNCXs=[633,735,836];
 const GOUT=[820,860];
 function getSignals(){
   const out=[null,null];
-  [0,1].forEach(i=>{const d=CONN[i];if(d>=0&&CH[i].on&&!out[d])out[d]=Object.assign({},CH[i],{on:true,factor:G.load==='50Ω'?2:1});});
+  [0,1].forEach(i=>{const d=CONN[i];if(d>=0&&CH[i].on&&!out[d])out[d]=Object.assign({},CH[i],{on:true,factor:G.load==='50Ω'?2:1,fn:CH[i].mod?(t=>chSample(CH[i],t)):null});});
   return out;
 }
 /* ---------- Kablolar ---------- */

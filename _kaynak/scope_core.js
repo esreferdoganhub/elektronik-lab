@@ -164,6 +164,7 @@ function chainV(i,t){
   if(s&&s.on&&c.coup!=='GND'){
     const p=(((s.freq*t+s.phase/360)%1)+1)%1;
     if(s.wave==='noise'&&S.acq==='average'){let a=0;for(let k=0;k<16;k++)a+=Math.random()*2-1;v=(s.off+s.amp/2*a/16)*s.factor;}
+    else if(s.fn)v=s.fn(t)*s.factor;
     else v=(s.off+(s.wave==='dc'?0:s.amp/2*shape(s.wave,p,s.duty/100)))*s.factor;
     if(c.coup==='AC')v-=meanOf(s);
   }

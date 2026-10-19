@@ -168,13 +168,8 @@ let drawnVer=0;
 /* ---------- Devre kurulumu ---------- */
 const sim=new Solver.Sim();
 let NETNODE=new Map(),NNODES=0,MODEL={leds:[],res:[],caps:[],srcs:[],fuseEls:[],meter:null,scopeN:[null,null],dcs:[],diodes:[]},needBuild=true,shortWarn='';
-function genV(i,t){
-  const c=GEN.CH[i];const f=GEN.G.load==='50Ω'?2:1;
-  if(c.wave==='dc')return c.off*f;
-  if(c.wave==='noise')return (c.off+c.amp/2*(Math.random()*2-1))*f;
-  const p=(((c.freq*t+c.phase/360)%1)+1)%1;
-  return (c.off+c.amp/2*GEN.shape(c.wave,p,c.duty/100))*f;
-}
+function genV(i,t){return GEN.sample(i,t)*(GEN.G.load==='50Ω'?2:1);}
+function genFmax(c){return c.mod==='FM'?c.freq+c.freqDev:c.mod==='FSK'?Math.max(c.freq,c.hopFreq):(c.mod==='LIN'||c.mod==='LOG')?Math.max(c.swStart,c.swStop):c.freq;}
 function build(){
   needBuild=false;
   const par=new Map();const find=a=>{while(par.has(a)&&par.get(a)!==a){a=par.get(a);}return a;};
@@ -213,7 +208,7 @@ function build(){
     }
   });
   // jeneratör
-  [0,1].forEach(i=>{const c=GEN.CH[i],r=netOf(CLIPS['g'+(i+1)+'R'].h);if(c.on&&r!==null){const n=node(r);els.push(Solver.Vsrc(n,0,t=>genV(i,t),50));if(c.wave!=='dc'&&c.wave!=='noise')fmax=Math.max(fmax,c.freq);else fmax=Math.max(fmax,1000);}});
+  [0,1].forEach(i=>{const c=GEN.CH[i],r=netOf(CLIPS['g'+(i+1)+'R'].h);if(c.on&&r!==null){const n=node(r);els.push(Solver.Vsrc(n,0,t=>genV(i,t),50));if(c.wave!=='dc'&&c.wave!=='noise')fmax=Math.max(fmax,genFmax(c));else fmax=Math.max(fmax,1000);}});
   // osiloskop
   [0,1].forEach(i=>{const t=netOf(CLIPS['s'+(i+1)+'T'].h);if(t!==null){const n=node(t);MODEL.scopeN[i]=n;els.push(Solver.R(n,0,1e6*(Scope.S.phys[i]===10?10:1)));}});
   // multimetre

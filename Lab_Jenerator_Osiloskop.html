@@ -261,6 +261,7 @@ function chainV(i,t){
   if(s&&s.on&&c.coup!=='GND'){
     const p=(((s.freq*t+s.phase/360)%1)+1)%1;
     if(s.wave==='noise'&&S.acq==='average'){let a=0;for(let k=0;k<16;k++)a+=Math.random()*2-1;v=(s.off+s.amp/2*a/16)*s.factor;}
+    else if(s.fn)v=s.fn(t)*s.factor;
     else v=(s.off+(s.wave==='dc'?0:s.amp/2*shape(s.wave,p,s.duty/100)))*s.factor;
     if(c.coup==='AC')v-=meanOf(s);
   }
@@ -721,8 +722,11 @@ const WAVES=['sine','square','pulse','ramp','arb','noise','dc'];
 const WNAME={sine:'Sine',square:'Square',pulse:'Pulse',ramp:'Ramp',arb:'Arb',noise:'Noise',dc:'DC'};
 const WICON={sine:'M0 7 C4 -2 8 -2 13 7 S22 16 26 7',square:'M0 12 V2 H9 V12 H18 V2 H26',pulse:'M0 12 H5 V2 H11 V12 H26',ramp:'M0 12 L9 2 L18 12 L26 4',arb:'M0 9 L5 3 L9 11 L14 4 L19 12 L26 6',noise:'M0 7 L2 3 L4 11 L6 5 L8 10 L10 2 L12 9 L14 4 L17 11 L19 3 L22 10 L26 5',dc:'M0 7 H26'};
 const FMAX={sine:30e6,square:15e6,pulse:15e6,ramp:1e6,arb:6e6,noise:1e6,dc:1e6};
-const LAB={freq:'Freq',amp:'Amp',off:'Offset',phase:'Phase',duty:'Duty'};
-const PUNIT={freq:'Hz',amp:'Vpp',off:'V',phase:'°',duty:'%'};
+const LAB={freq:'Freq',amp:'Amp',off:'Offset',phase:'Phase',duty:'Duty',modWave:'ModWave',modFreq:'ModFreq',depth:'Depth',phaseDev:'PhaseDev',freqDev:'FreqDev',hopFreq:'HopFreq',fskRate:'Rate',swStart:'StartFreq',swStop:'StopFreq',swTime:'SwpTime'};
+const PUNIT={freq:'Hz',amp:'Vpp',off:'V',phase:'°',duty:'%',modFreq:'Hz',depth:'%',phaseDev:'°',freqDev:'Hz',hopFreq:'Hz',fskRate:'Hz',swStart:'Hz',swStop:'Hz',swTime:'s'};
+const FREQLIKE=new Set(['freq','modFreq','freqDev','hopFreq','fskRate','swStart','swStop']);
+const MODS=['AM','PM','FM','FSK','LIN','LOG'],MODLBL={AM:'AM',PM:'PM',FM:'FM',FSK:'FSK',LIN:'Line',LOG:'Log'},MWAVES=['sine','square','ramp'];
+const modParamList=m=>({AM:['modWave','modFreq','depth'],PM:['modWave','modFreq','phaseDev'],FM:['modWave','modFreq','freqDev'],FSK:['hopFreq','fskRate'],LIN:['swStart','swStop','swTime'],LOG:['swStart','swStop','swTime']})[m]||[];
 
 
 /* ---------- Dalga şekilleri ---------- */
@@ -740,12 +744,34 @@ const RMS={};
 WAVES.forEach(w=>{let s=0;const N=2000;for(let i=0;i<N;i++){const v=w==='noise'?0.5773:shape(w,i/N,0.5);s+=v*v;}RMS[w]=Math.sqrt(s/N);});
 function paramList(w){return w==='dc'?['off']:w==='noise'?['amp','off']:(w==='square'||w==='pulse'||w==='ramp')?['freq','amp','off','phase','duty']:['freq','amp','off','phase'];}
 const labOf=(p,w)=>p==='duty'?(w==='ramp'?'Symm':'Duty'):LAB[p];
+/* ---------- Modülasyonlu örnekleme (zaman tabanlı) ---------- */
+const INTEG={};MWAVES.forEach(w=>{const N=1024,a=new Float64Array(N+1);let s=0;for(let i=0;i<N;i++){a[i]=s;s+=shape(w,(i+0.5)/N,0.5)/N;}a[N]=s;INTEG[w]=a;});
+const frac=x=>x-Math.floor(x);
+function integ(w,p){const a=INTEG[w],N=1024,x=p*N,i=Math.min(N-1,Math.floor(x));return a[i]+(a[i+1]-a[i])*(x-i);}
+function chSample(c,t){
+  if(c.wave==='dc')return c.off;
+  if(c.wave==='noise')return c.off+c.amp/2*(Math.random()*2-1);
+  let ph=c.freq*t+c.phase/360,env=1;
+  switch(c.mod){
+    case 'AM':{const m=shape(c.modWave,frac(c.modFreq*t),0.5),k=c.depth/100;env=(1+k*m)/(1+k);break;}
+    case 'PM':ph+=c.phaseDev/360*shape(c.modWave,frac(c.modFreq*t),0.5);break;
+    case 'FM':ph+=c.freqDev/c.modFreq*integ(c.modWave,frac(c.modFreq*t));break;
+    case 'FSK':{const Ts=1/(2*c.fskRate),k=Math.floor(t/Ts),r=t-k*Ts;ph=(Math.ceil(k/2)*c.freq+Math.floor(k/2)*c.hopFreq)*Ts+r*(k%2?c.hopFreq:c.freq)+c.phase/360;break;}
+    case 'LIN':{const T=c.swTime,n=Math.floor(t/T),tau=t-n*T,f0=c.swStart,f1=c.swStop;ph=frac(n*(f0*T+(f1-f0)*T/2))+f0*tau+(f1-f0)*tau*tau/(2*T)+c.phase/360;break;}
+    case 'LOG':{const T=c.swTime,n=Math.floor(t/T),tau=t-n*T,f0=c.swStart,r=c.swStop/c.swStart,L=Math.abs(Math.log(r))<1e-9?1e-9:Math.log(r),F=x=>f0*T/L*(Math.pow(r,x/T)-1);ph=frac(n*F(T))+F(tau)+c.phase/360;break;}
+  }
+  return c.off+c.amp/2*env*shape(c.wave,frac(ph),c.duty/100);
+}
+function modPeriod(c){return c.mod==='FSK'?1/c.fskRate:(c.mod==='LIN'||c.mod==='LOG')?c.swTime:1/c.modFreq;}
 
 /* ---------- Durum ---------- */
-const newCh=()=>({on:false,wave:'sine',freq:1000,amp:0.1,off:0,phase:0,duty:50});
+const newCh=()=>({on:false,wave:'sine',freq:1000,amp:0.1,off:0,phase:0,duty:50,mod:null,modWave:'sine',modFreq:100,depth:100,phaseDev:90,freqDev:1000,hopFreq:2000,fskRate:100,swStart:100,swStop:1000,swTime:1});
 const CH=[newCh(),newCh()];
-const G={ch:0,load:'HighZ',menu:'wave',page:0,param:'freq',entry:null,edit:false,cur:{freq:3,amp:-2,off:-2,phase:0,duty:0},info:'screen',mode:'lesson',lesson:0,step:0,busy:0,mute:false};
-const CRANGE={freq:[-3,7],amp:[-3,1],off:[-3,1],phase:[-2,2],duty:[-2,1]};
+const G={ch:0,load:'HighZ',menu:'wave',page:0,param:'freq',entry:null,edit:false,cur:{freq:3,amp:-2,off:-2,phase:0,duty:0,modFreq:1,depth:0,phaseDev:0,freqDev:2,hopFreq:2,fskRate:1,swStart:1,swStop:2,swTime:-1},info:'screen',mode:'lesson',lesson:0,step:0,busy:0,mute:false};
+const CRANGE={freq:[-3,7],amp:[-3,1],off:[-3,1],phase:[-2,2],duty:[-2,1],modFreq:[-3,4],depth:[-1,2],phaseDev:[-2,2],freqDev:[-3,7],hopFreq:[-3,7],fskRate:[-3,5],swStart:[-3,7],swStop:[-3,7],swTime:[-3,2]};
+const editable=()=>G.menu==='param'||(G.menu==='mode'&&!!CH[G.ch].mod);
+const curList=()=>G.menu==='mode'?modParamList(CH[G.ch].mod):paramList(CH[G.ch].wave);
+const defUnit=p=>FREQLIKE.has(p)?2:0;
 const TD=[],VD=[];
 [-8,-7,-6,-5,-4,-3,-2,-1,0].forEach(e=>[1,2,5].forEach(m=>TD.push(m*Math.pow(10,e))));
 TD.push(10);
@@ -762,12 +788,15 @@ function siFmt(x,u){
   return (+(x/sc).toPrecision(4))+' '+p+u;
 }
 function fmtP(p,v){
-  if(p==='freq'){const sc=v>=1e6?1e6:v>=1e3?1e3:1,u=sc===1e6?'MHz':sc===1e3?'kHz':'Hz';const [ip,fp]=(v/sc).toFixed(8).split('.');return{num:ip+'.'+fp.match(/.{1,3}/g).join(','),u,lg:Math.log10(sc),grp:true,ipl:ip.length,st:0,dec:8};}
+  if(p==='modWave')return{num:WNAME[v]||v,u:'',lg:0,ipl:0,st:0,dec:0,txt:true};
+  if(p==='swTime'){const t=v.toFixed(3);return{num:t,u:'s',lg:0,ipl:t.split('.')[0].length,st:0,dec:3};}
+  if(FREQLIKE.has(p)){const sc=v>=1e6?1e6:v>=1e3?1e3:1,u=sc===1e6?'MHz':sc===1e3?'kHz':'Hz';const [ip,fp]=(v/sc).toFixed(8).split('.');return{num:ip+'.'+fp.match(/.{1,3}/g).join(','),u,lg:Math.log10(sc),grp:true,ipl:ip.length,st:0,dec:8};}
   if(p==='amp'){if(v>=1)return{num:v.toFixed(3),u:'Vpp',lg:0,ipl:v.toFixed(3).split('.')[0].length,st:0,dec:3};return{num:String(Math.round(v*1000)),u:'mVpp',lg:-3,ipl:String(Math.round(v*1000)).length,st:0,dec:0};}
   if(p==='off'){const a=Math.abs(v),sg=v<0?'-':'';if(a>=1){const t=a.toFixed(3);return{num:sg+t,u:'V',lg:0,ipl:t.split('.')[0].length,st:sg.length,dec:3};}const t=String(Math.round(a*1000));return{num:sg+t,u:'mV',lg:-3,ipl:t.length,st:sg.length,dec:0};}
-  const t=v.toFixed(2);return{num:t,u:p==='phase'?'°':'%',lg:0,ipl:t.split('.')[0].length,st:0,dec:2};
+  const t=v.toFixed(2);return{num:t,u:(p==='phase'||p==='phaseDev')?'°':'%',lg:0,ipl:t.split('.')[0].length,st:0,dec:2};
 }
 function cidx(f,d){
+  if(f.txt)return -1;
   const k=d-f.lg;
   if(k>=0){const i=f.ipl-1-k;return i<0?-1:f.st+i;}
   const fi=-k-1;if(fi>=f.dec)return -1;
@@ -783,6 +812,13 @@ function limits(c,p){
   if(p==='amp')return[0.001,Math.min(G.load==='50Ω'?10:20,2*(10-Math.abs(c.off)))];
   if(p==='off')return[-(10-c.amp/2),10-c.amp/2];
   if(p==='duty')return[1,99];
+  if(p==='modFreq')return[0.002,50000];
+  if(p==='depth')return[0,120];
+  if(p==='phaseDev')return[0,360];
+  if(p==='freqDev')return[0,Math.max(0,Math.min(c.freq,FMAX[c.wave]-c.freq))];
+  if(p==='hopFreq'||p==='swStart'||p==='swStop')return[1e-6,FMAX[c.wave]];
+  if(p==='fskRate')return[0.002,100000];
+  if(p==='swTime')return[0.001,500];
   return[0,359.99];
 }
 function setP(i,p,v){
@@ -795,19 +831,22 @@ function setP(i,p,v){
   return m;
 }
 function nudge(p,dir){
-  const c=CH[G.ch],st=Math.pow(10,G.cur[p]);
+  const c=CH[G.ch];if(p==='modWave'){const L=MWAVES;c.modWave=L[(L.indexOf(c.modWave)+dir+L.length)%L.length];return;}
+  const st=Math.pow(10,G.cur[p]);
   const n=Math.round(c[p]/st)+dir;
   setP(G.ch,p,n*st);
 }
 function unitsFor(p){
   const c=CH[G.ch];
-  if(p==='freq')return[['MHz',1e6],['kHz',1e3],['Hz',1],['mHz',1e-3],null,'x'];
+  if(FREQLIKE.has(p))return[['MHz',1e6],['kHz',1e3],['Hz',1],['mHz',1e-3],null,'x'];
+  if(p==='swTime')return[['s',1],['ms',1e-3],null,null,null,'x'];
+  if(p==='phaseDev')return[['°',1],null,null,null,null,'x'];
   if(p==='amp'){const f=2/RMS[c.wave];return[['Vpp',1],['mVpp',1e-3],['Vrms',f],['mVrms',f*1e-3],null,'x'];}
   if(p==='off')return[['V',1],['mV',1e-3],null,null,null,'x'];
   if(p==='phase')return[['°',1],null,null,null,null,'x'];
   return[['%',1],null,null,null,null,'x'];
 }
-function ensureParam(){const l=paramList(CH[G.ch].wave);if(!l.includes(G.param))G.param=l[0];}
+function ensureParam(){const l=curList();if(l.length&&!l.includes(G.param))G.param=l[0];}
 
 /* ---------- Ses ---------- */
 let actx=null;
@@ -830,7 +869,22 @@ const INFO={
  sk3:['Soft tuş 4','Dalga menüsünde Ramp, parametre menüsünde Phase, sayı girerken dördüncü birim (mHz/mVrms).'],
  sk4:['Soft tuş 5','Dalga menüsünde Arb (keyfi dalga), parametre menüsünde Duty/Symm (sadece kare, darbe ve rampa dalgalarında).'],
  sk5:['Soft tuş 6','Dalga menüsünde Page Down/Up (2. sayfa: Noise, DC), parametre menüsünde Wave (dalga menüsüne dön), sayı girerken İptal.'],
- mode:['Mode tuşu','Çalışma modu: Sürekli, Modülasyon, Tarama (Sweep), Burst. Bu eğitimde hep sürekli (Continuous) mod kullanılır.'],
+ mode:['Mode tuşu','Modülasyon ve tarama menüsünü açar: AM, PM, FM, FSK, Line (doğrusal tarama), Log (logaritmik tarama). Bir tür seçilince Mode tuşu yeşil yanar ve çıkış modüle edilir. Mode menüsündeyken tekrar basarsan modülasyon kapanır. Taşıyıcının frekansı ve genliği Wave menüsünden ayarlanır.'],
+ m_AM:['AM: genlik modülasyonu','Taşıyıcının genliği modülasyon sinyaline göre değişir (zarf). Depth (derinlik) %100 iken genlik zarfın dibinde sıfıra iner. AM radyo yayını bu yöntemi kullanır.'],
+ m_PM:['PM: faz modülasyonu','Taşıyıcının fazı modülasyon sinyaline göre ileri-geri kayar; PhaseDev en büyük faz sapmasıdır. Genlik sabittir.'],
+ m_FM:['FM: frekans modülasyonu','Taşıyıcının frekansı modülasyon sinyaline göre artıp azalır; FreqDev en büyük frekans sapmasıdır. Genlik sabit kalır. FM radyo bu yöntemi kullanır.'],
+ m_FSK:['FSK: frekans kaydırmalı anahtarlama','Çıkış iki frekans arasında sırayla atlar: taşıyıcı frekansı ve HopFreq. Rate, saniyedeki atlama hızıdır. Dijital veri iletiminde (modem, uzaktan kumanda) kullanılır.'],
+ m_LIN:['Line: doğrusal frekans taraması','Frekans StartFreq\'ten StopFreq\'e SwpTime süresinde doğrusal olarak artar ve başa döner. Filtre ve devrelerin frekans tepkisini ölçmek için kullanılır.'],
+ m_LOG:['Log: logaritmik frekans taraması','Frekans logaritmik taranır: her on katlık aralıkta (ör. 100 Hz→1 kHz, 1→10 kHz) eşit süre geçer. Ses ve geniş bant ölçümlerinde tercih edilir.'],
+ p_modWave:['ModWave: modülasyon dalgası','Taşıyıcıyı değiştiren sinyalin şekli (Sine, Square, Ramp). Düğmeyle değiştirilir.'],
+ p_modFreq:['ModFreq: modülasyon frekansı','Modülasyon sinyalinin frekansı: zarfın (AM) ya da frekans salınımının (FM) saniyedeki tekrar sayısı. Taşıyıcı frekansından çok küçük seçilir.'],
+ p_depth:['Depth: modülasyon derinliği','AM\'de genliğin ne kadar değiştiği. %0: modülasyon yok, %100: genlik sıfıra kadar iner, %100 üstü aşırı modülasyon.'],
+ p_phaseDev:['PhaseDev: faz sapması','PM\'de taşıyıcı fazının en büyük kayma miktarı (derece).'],
+ p_freqDev:['FreqDev: frekans sapması','FM\'de taşıyıcı frekansının en fazla ne kadar artıp azalacağı. Frekans f ± FreqDev aralığında salınır.'],
+ p_hopFreq:['HopFreq: atlama frekansı','FSK\'de taşıyıcı frekansının yanında kullanılan ikinci frekans.'],
+ p_fskRate:['Rate: FSK hızı','İki frekans arasında saniyede kaç kez geçiş yapılacağı.'],
+ p_swStart:['StartFreq: başlangıç frekansı','Taramanın başladığı frekans.'],p_swStop:['StopFreq: bitiş frekansı','Taramanın bittiği frekans; sonra başa döner.'],
+ p_swTime:['SwpTime: tarama süresi','Başlangıçtan bitiş frekansına bir taramanın süresi (saniye).'],
  wave:['Wave tuşu','Dalga şekli menüsünü açar. Dalga seçince parametre menüsüne geçilir.'],
  util:['Utility tuşu','Sistem ayarları. Burada Limit (çıkış yükü) HighZ ↔ 50 Ω değiştirilir. Üreteç, ayarlanan genliği yük seçimine göre hesaplar: 50 Ω seçip yüksek empedanslı osiloskopa bağlarsan ekrandaki gerilim iki katı olur.'],
  knob:['Döner düğme','İki modu var. GEZİNME modunda (sarı çerçeve) düğmeyi çevirmek Freq → Amp → Offset → Phase arasında gezdirir. DÜZENLEME modunda (mavi) her tık imlecin altındaki basamağı artırır/azaltır. Modlar arası geçiş: düğmenin ortasına bas (Enter). Sürükle ya da fare tekerleğini kullan.'],
@@ -859,7 +913,7 @@ function setInfo(k){if(!INFO[k])return;G.info=k;G.custom=null;renderInfo();}
 function renderInfo(){
   const i=G.custom||INFO[G.info]||INFO.screen,c=CH[G.ch];
   $('#infoCard').innerHTML=`<div class="stepno">Bilgi · imleci bir parçanın üzerine getir</div><h2>${i[0]}</h2><p style="margin:2px 0 0">${i[1]}</p>
-  <div class="dyn"><b>Seçili: CH${G.ch+1}</b> · ${WNAME[c.wave]} · ${G.menu==='param'?labOf(G.param,c.wave)+(G.edit?' (düzenleme, adım '+stepTxt(G.param,G.cur[G.param])+')':' (gezinme modu)'):'dalga menüsü'} · Yük: ${G.load}</div>`;
+  <div class="dyn"><b>Seçili: CH${G.ch+1}</b> · ${WNAME[c.wave]} · ${editable()?labOf(G.param,c.wave)+(G.edit?' (düzenleme, adım '+stepTxt(G.param,G.cur[G.param])+')':' (gezinme modu)'):'dalga menüsü'} · Yük: ${G.load}</div>`;
 }
 function say(msg,tone='info'){const f=$('#fb');f.className=tone==='info'?'':tone;f.textContent=msg;}
 
@@ -910,13 +964,15 @@ function softLabels(){
     if(G.page===0)return['sine','square','pulse','ramp','arb'].map(w=>({t:WNAME[w],w,sel:c.wave===w})).concat([{t:'Page Down'}]);
     return[{t:'Noise',w:'noise',sel:c.wave==='noise'},{t:'DC',w:'dc',sel:c.wave==='dc'},{t:''},{t:''},{t:''},{t:'Page Up'}];
   }
+  if(G.menu==='mode')return MODS.map(m=>({t:MODLBL[m],sel:c.mod===m,red:true}));
   const l=paramList(c.wave),a=[];
   for(let i=0;i<5;i++)a.push(i<l.length?{t:labOf(l[i],c.wave),sel:G.param===l[i]}:{t:''});
   a.push({t:'Wave'});return a;
 }
 /* ---------- LCD ---------- */
 function lcdSvg(){
-  const c=CH[G.ch];let s=`<rect width="424" height="238" fill="#04060b" stroke="#0e1830" stroke-width="2"/><rect width="424" height="38" fill="#0a1428"/><line x1="212" y1="0" x2="212" y2="38" stroke="#2a3a5a"/><line x1="0" y1="38" x2="424" y2="38" stroke="#3f6cb0" stroke-width="1.5"/>`;
+  const c=CH[G.ch];
+  {const mb=document.querySelector('[data-btn="mode"] rect');if(mb){mb.setAttribute('fill',c.mod?'#3ee05a':'#8fb0d6');mb.style.filter=c.mod?'drop-shadow(0 0 6px #22c55e)':'';}}let s=`<rect width="424" height="238" fill="#04060b" stroke="#0e1830" stroke-width="2"/><rect width="424" height="38" fill="#0a1428"/><line x1="212" y1="0" x2="212" y2="38" stroke="#2a3a5a"/><line x1="0" y1="38" x2="424" y2="38" stroke="#3f6cb0" stroke-width="1.5"/>`;
   [0,1].forEach(i=>{
     const x0=i*212,ch=CH[i];
     s+=`<g data-chsel="${i}" data-info="chhead"><rect x="${x0}" y="0" width="212" height="38" fill="transparent"/>`;
@@ -926,9 +982,10 @@ function lcdSvg(){
      <text x="${x0+196}" y="28" text-anchor="end" font-size="14" font-weight="800" fill="${ch.on?'#4ade80':'#fff'}" pointer-events="none">${ch.on?'ON':'OFF'}</text></g>`;
   });
   s+=`<g data-row-group="1" data-info="params"><rect x="3" y="44" width="206" height="150" fill="#070b14" stroke="#b3262f" stroke-width="2"/>`;
-  const list=paramList(c.wave),CW=7.2;
+  const list=curList(),CW=7.2,VX=G.menu==='mode'?86:64;
+  if(G.menu==='mode'&&!c.mod)s+=`<text x="14" y="76" font-size="12" fill="#cfe0ff">Modülasyon kapalı</text><text x="14" y="96" font-size="11" fill="#8fb4ff">(Continuous çıkış)</text><text x="14" y="124" font-size="10.5" fill="#ffd23f">Alttaki soft tuşlardan</text><text x="14" y="140" font-size="10.5" fill="#ffd23f">bir tür seç: AM, PM, FM...</text>`;
   list.forEach((p,idx)=>{
-    const y=70+idx*28,sel=G.menu==='param'&&G.param===p;
+    const y=70+idx*28,sel=editable()&&G.param===p;
     s+=`<g data-row="${p}" data-info="p_${p==='duty'&&c.wave==='ramp'?'duty':p}">`;
     s+=`<rect x="6" y="${y-17}" width="200" height="25" fill="${sel&&(G.edit||G.entry!==null)?'#1a4a9a':'transparent'}" stroke="${sel&&!G.edit&&G.entry===null?'#ffd23f':'none'}" stroke-width="2"/>`;
     s+=`<text x="12" y="${y}" font-size="13" font-weight="700" fill="#cfe0ff" pointer-events="none">${labOf(p,c.wave)}</text>`;
@@ -936,25 +993,34 @@ function lcdSvg(){
     if(sel&&G.entry!==null){numTxt=G.entry||'_';txt=numTxt+' ';}
     else txt=numTxt+' '+f.u;
     const full=sel&&G.entry!==null?G.entry+'_':numTxt+' '+f.u;
-    s+=`<text x="64" y="${y}" font-family="Menlo,Consolas,monospace" font-size="12" fill="${sel&&G.entry!==null?'#ffd23f':'#fff'}" textLength="${(full.length*CW).toFixed(1)}" lengthAdjust="spacing" pointer-events="none" xml:space="preserve">${full}</text>`;
-    if(sel&&G.entry===null&&G.edit){const ix=cidx(f,G.cur[p]);if(ix>=0)s+=`<rect class="blink" x="${64+ix*CW}" y="${y+2}" width="${CW}" height="2" fill="#ffd23f"/>`;}
+    s+=`<text x="${VX}" y="${y}" font-family="Menlo,Consolas,monospace" font-size="12" fill="${sel&&G.entry!==null?'#ffd23f':'#fff'}" textLength="${(full.length*CW).toFixed(1)}" lengthAdjust="spacing" pointer-events="none" xml:space="preserve">${full}</text>`;
+    if(sel&&G.entry===null&&G.edit){const ix=cidx(f,G.cur[p]);if(ix>=0)s+=`<rect class="blink" x="${VX+ix*CW}" y="${y+2}" width="${CW}" height="2" fill="#ffd23f"/>`;}
     s+='</g>';
   });
-  if(G.menu==='param'&&G.entry===null)s+=`<text x="204" y="190" text-anchor="end" font-size="9" fill="${G.edit?'#8fb4ff':'#ffd23f'}">${G.edit?'Adım: '+stepTxt(G.param,G.cur[G.param]):'Gezin · Enter: düzenle'}</text>`;
+  if(editable()&&G.entry===null)s+=`<text x="204" y="190" text-anchor="end" font-size="9" fill="${G.edit?'#8fb4ff':'#ffd23f'}">${G.edit?(G.param==='modWave'?'Düğme: dalga seç':'Adım: '+stepTxt(G.param,G.cur[G.param])):'Gezin · Enter: düzenle'}</text>`;
+  if(c.mod&&G.menu!=='mode')s+=`<text x="204" y="60" text-anchor="end" font-size="9" font-weight="700" fill="#3ee05a">${MODLBL[c.mod]} açık</text>`;
   if(G.entry!==null)s+=`<text x="204" y="190" text-anchor="end" font-size="9" fill="#ffd23f">Birimi soft tuşla seç</text>`;
   s+=`</g><g data-info="preview"><rect x="213" y="44" width="208" height="150" fill="#04060b" stroke="#b3262f" stroke-width="2"/>`;
   const x1=232,x2=402,cy=128,amp=34;
   s+=`<line x1="${x1}" y1="${cy}" x2="${x2}" y2="${cy}" stroke="#bbb" stroke-dasharray="2 3"/>`;
   let d='';const N=170,per=c.wave==='dc'?1:2;
+  if(c.mod&&c.wave!=='dc'&&c.wave!=='noise'){
+    const il=Object.assign({},c,{off:0,amp:2,phase:0});let tw=2;const NN=340;
+    if(c.mod==='AM'||c.mod==='PM'||c.mod==='FM'){il.modFreq=1;il.freq=16;il.freqDev=9;}
+    else if(c.mod==='FSK'){il.fskRate=1;il.freq=6;il.hopFreq=c.hopFreq>=c.freq?16:3;}
+    else{il.swTime=1;tw=1;il.swStart=c.swStop>=c.swStart?2:24;il.swStop=c.swStop>=c.swStart?24:2;}
+    for(let i=0;i<=NN;i++){const v=chSample(il,tw*i/NN);d+=(i?'L':'M')+(x1+i*(x2-x1)/NN).toFixed(1)+' '+(cy-v*amp).toFixed(1);}
+  }else
   for(let i=0;i<=N;i++){const p0=((per*i/N)%1+1)%1;const v=(per*i/N>=per)?shape(c.wave,0.9999,c.duty/100):shape(c.wave,p0,c.duty/100);d+=(i?'L':'M')+(x1+i*(x2-x1)/N).toFixed(1)+' '+(cy-v*amp).toFixed(1);}
-  s+=`<path d="${d}" fill="none" stroke="#ffe27a" stroke-width="1.8"/>`;
-  if(c.wave!=='dc'&&c.wave!=='noise')s+=`<path d="M${x1} 66 H${x1+(x2-x1)/2} M${x1+5} 62 L${x1} 66 L${x1+5} 70 M${x1+(x2-x1)/2-5} 62 L${x1+(x2-x1)/2} 66 L${x1+(x2-x1)/2-5} 70" fill="none" stroke="#fff" stroke-width="1.4"/>`;
+  s+=`<path d="${d}" fill="none" stroke="#ffe27a" stroke-width="${c.mod?1.3:1.8}"/>`;
+  if(c.wave!=='dc'&&c.wave!=='noise'&&!c.mod)s+=`<path d="M${x1} 66 H${x1+(x2-x1)/2} M${x1+5} 62 L${x1} 66 L${x1+5} 70 M${x1+(x2-x1)/2-5} 62 L${x1+(x2-x1)/2} 66 L${x1+(x2-x1)/2-5} 70" fill="none" stroke="#fff" stroke-width="1.4"/>`;
   s+='</g>';
   const sk=softLabels();
   s+=`<g data-info="softkeys">`;
   sk.forEach((k,i)=>{
     const x=i*70.67;
-    s+=`<rect x="${x+1}" y="198" width="68.7" height="39" fill="${k.sel?'#1a4a9a':'#0c1428'}" stroke="#3f6cb0"/>`;
+    s+=`<rect x="${x+1}" y="198" width="68.7" height="39" fill="${k.sel&&!k.red?'#1a4a9a':'#0c1428'}" stroke="#3f6cb0"/>`;
+    if(k.sel&&k.red)s+=`<ellipse cx="${x+35.3}" cy="217" rx="26" ry="13" fill="url(#redglow)"/>`;
     if(k.t)s+=`<text x="${x+35.3}" y="${k.w?213:220}" text-anchor="middle" font-size="11" font-weight="700" fill="#e8eeff">${k.t}</text>`;
     if(k.w)s+=`<path d="${WICON[k.w]}" transform="translate(${x+22} 218)" fill="none" stroke="#e8eeff" stroke-width="1.6"/>`;
   });
@@ -969,7 +1035,11 @@ function press(b,silent){
   flash(b);setInfo(b);tick(b==='knob'?700:1100);
   const c=CH[G.ch];
   if(b==='wave'){G.menu='wave';G.page=0;G.entry=null;say('Dalga menüsü: soft tuşlardan bir dalga şekli seç.');}
-  else if(b==='mode')say('Mode: Sürekli / Modülasyon / Tarama / Burst. Bu eğitimde sürekli (Continuous) mod kullanılıyor.');
+  else if(b==='mode'){
+    G.entry=null;G.edit=false;
+    if(G.menu==='mode'){if(c.mod){say(`${MODLBL[c.mod]} kapatıldı: çıkış yeniden sürekli (Continuous). Mode tuşunun ışığı söndü.`);c.mod=null;}G.menu='param';ensureParam();}
+    else{G.menu='mode';if(c.mod)G.param=modParamList(c.mod)[0];say(c.mod?`Mode menüsü: ${MODLBL[c.mod]} açık. Parametreleri düğmeyle gez (Enter: düzenle). Kapatmak için Mode'a tekrar bas.`:'Mode menüsü: alttaki soft tuşlarla AM, PM, FM, FSK modülasyonu ya da Line/Log frekans taraması seç. Seçince Mode tuşu yeşil yanar.');}
+  }
   else if(b==='util'){
     G.load=G.load==='HighZ'?'50Ω':'HighZ';
     if(G.load==='50Ω')CH.forEach(x=>{if(x.amp>10)x.amp=10;});
@@ -980,7 +1050,7 @@ function press(b,silent){
   }else if(b==='enter')doEnter();
   else if(b==='left'||b==='right'){
     if(G.entry!==null){if(b==='left')G.entry=G.entry.slice(0,-1);}
-    else if(G.menu!=='param')say('Önce bir parametre seç (Wave → dalga şekli).','warn');
+    else if(!editable())say(G.menu==='mode'?'Önce alttaki soft tuşlardan bir modülasyon türü seç.':'Önce bir parametre seç (Wave → dalga şekli).','warn');
     else if(!G.edit)moveSel(b==='left'?-1:1);
     else{const r=CRANGE[G.param];G.cur[G.param]=Math.max(r[0],Math.min(r[1],G.cur[G.param]+(b==='left'?1:-1)));say('İmleç: adım '+stepTxt(G.param,G.cur[G.param]));}
   }else if(/^k\d$/.test(b)||b==='kdot'||b==='kpm')entryKey(b);
@@ -988,19 +1058,21 @@ function press(b,silent){
   mark();
 }
 function moveSel(dir){
-  const l=paramList(CH[G.ch].wave);let i=l.indexOf(G.param);i=(i+dir+l.length)%l.length;G.param=l[i];
+  const l=curList();if(!l.length)return;let i=l.indexOf(G.param);i=(i+dir+l.length)%l.length;G.param=l[i];
   setInfo('p_'+l[i]);say(`Seçim: ${labOf(l[i],CH[G.ch].wave)}. Değiştirmek için Enter'a bas (düğmenin ortası).`);
 }
 function doEnter(){
   const c=CH[G.ch];
-  if(G.entry!==null){softKey({freq:2,amp:0,off:0,phase:0,duty:0}[G.param]);return;}
-  if(G.menu!=='param'){say('Enter bir parametreyi onaylar. Önce Wave tuşuyla bir dalga şekli seç.','warn');return;}
+  if(G.entry!==null){softKey(defUnit(G.param));return;}
+  if(!editable()){say('Enter bir parametreyi onaylar. Önce Wave tuşuyla bir dalga şekli seç.','warn');return;}
   G.edit=!G.edit;
   say(G.edit?`Düzenleme modu: ${labOf(G.param,c.wave)} değerini düğme ile değiştir (← → basamak). Parametreler arasında gezinmek için tekrar Enter.`:'Gezinme modu: düğmeyi çevirerek Freq, Amp, Offset... arasında gez; Enter ile düzenle.','ok');
 }
 function entryKey(b){
   const c=CH[G.ch];
   if(G.menu==='wave'){G.menu='param';G.param=paramList(c.wave)[0];}
+  if(G.menu==='mode'&&!c.mod){say('Önce alttaki soft tuşlardan bir modülasyon türü seç.','warn');return;}
+  if(G.param==='modWave'){say('ModWave sayı ile girilmez: Enter ile düzenlemeye geç ve düğmeyi çevirerek Sine/Square/Ramp seç.','warn');return;}
   if(G.entry===null)G.entry='';
   if(b==='kpm')G.entry=G.entry[0]==='-'?G.entry.slice(1):'-'+G.entry;
   else if(b==='kdot'){if(!G.entry.includes('.'))G.entry+=(G.entry===''||G.entry==='-'?'0.':'.');}
@@ -1020,6 +1092,7 @@ function softKey(i){
     if(!$('#fb').className.includes('warn'))say(`${labOf(G.param,c.wave)} = ${ptxt(G.param,c[G.param])} olarak ayarlandı.`,'ok');
     return;
   }
+  if(G.menu==='mode'){const m=MODS[i];if(!m)return;c.mod=m;G.param=modParamList(m)[0];G.edit=false;setInfo('m_'+m);say(`${MODLBL[m]} açıldı: Mode tuşu yeşil yanıyor ve çıkış ${m==='LIN'||m==='LOG'?'frekans taraması yapıyor':'modüle ediliyor'}. Parametreleri düğmeyle gez, Enter ile düzenle. Taşıyıcıyı Wave menüsünden ayarla.`,'ok');return;}
   if(G.menu==='wave'){
     const L=softLabels()[i];
     if(L.t==='Page Down'){G.page=1;return;}
@@ -1038,7 +1111,7 @@ function softKey(i){
 }
 function knobStep(dir){
   if(G.entry!==null){say('Önce sayı girişini bitir (birim seç) ya da İptal et.','warn');return false;}
-  if(G.menu!=='param'){say('Döner düğme bir parametreyi değiştirir. Önce Wave → bir dalga seç.','warn');return false;}
+  if(!editable()){say(G.menu==='mode'?'Önce alttaki soft tuşlardan bir modülasyon türü seç.':'Döner düğme bir parametreyi değiştirir. Önce Wave → bir dalga seç.','warn');return false;}
   if(!G.edit){moveSel(dir);mark();return true;}
   nudge(G.param,dir);setInfo('knob');mark();
   const c=CH[G.ch];say(`${labOf(G.param,c.wave)} = ${ptxt(G.param,c[G.param])}`);
@@ -1055,7 +1128,7 @@ stage.addEventListener('pointerdown',e=>{
   if(t.id==='knobBtn'){kdrag={a:knobAng(e),acc:0,inner:true,moved:false,x:e.clientX,y:e.clientY};flash('enter');t.setPointerCapture&&t.setPointerCapture(e.pointerId);setInfo('enter');return;}
   if(t.closest('#knobHit')){kdrag={a:knobAng(e),acc:0};t.setPointerCapture&&t.setPointerCapture(e.pointerId);setInfo('knob');return;}
   const b=t.closest('[data-btn]');if(b){press(b.dataset.btn);return;}
-  const r=t.closest('[data-row]');if(r){const p=r.dataset.row;const c=CH[G.ch];if(paramList(c.wave).includes(p)){G.menu='param';G.param=p;G.edit=true;G.entry=null;setInfo('p_'+p);mark();say(`${labOf(p,c.wave)} seçildi.`);}return;}
+  const r=t.closest('[data-row]');if(r){const p=r.dataset.row;const c=CH[G.ch];if(curList().includes(p)){if(G.menu!=='mode')G.menu='param';G.param=p;G.edit=true;G.entry=null;setInfo('p_'+p);mark();say(`${labOf(p,c.wave)} seçildi.`);}return;}
   const h=t.closest('[data-chsel]');if(h){G.ch=+h.dataset.chsel;G.entry=null;ensureParam();setInfo('chhead');mark();say(`CH${G.ch+1} seçildi (çıkışı değiştirmek için CH${G.ch+1} tuşuna bas).`);}
 });
 stage.addEventListener('pointermove',e=>{
@@ -1095,7 +1168,7 @@ const BNCXs=[633,735,836];
 const GOUT=[820,860];
 function getSignals(){
   const out=[null,null];
-  [0,1].forEach(i=>{const d=CONN[i];if(d>=0&&CH[i].on&&!out[d])out[d]=Object.assign({},CH[i],{on:true,factor:G.load==='50Ω'?2:1});});
+  [0,1].forEach(i=>{const d=CONN[i];if(d>=0&&CH[i].on&&!out[d])out[d]=Object.assign({},CH[i],{on:true,factor:G.load==='50Ω'?2:1,fn:CH[i].mod?(t=>chSample(CH[i],t)):null});});
   return out;
 }
 /* ---------- Kablolar ---------- */
