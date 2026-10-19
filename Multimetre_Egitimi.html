@@ -23,6 +23,24 @@
   main{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(300px,1fr);gap:18px;align-items:start;}
   .stage-wrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px;box-shadow:0 2px 6px rgba(15,35,55,.05);}
   svg#stage{width:100%;height:auto;display:block;user-select:none;touch-action:none;}
+  .leftcol{display:flex;flex-direction:column;gap:18px;min-width:0;}
+  #acdc{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px 16px;box-shadow:0 2px 6px rgba(15,35,55,.05);}
+  #acdc h3{margin:0 0 2px;font-size:1.05rem;color:var(--accent);}
+  #acdc .sub{font-size:.85rem;color:var(--sub);margin:0 0 8px;}
+  #acdc svg{width:100%;height:auto;display:block;}
+  .acrow{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin:8px 0;font-size:.86rem;}
+  .acrow .seg{display:inline-flex;flex-wrap:wrap;gap:4px;}
+  .acrow .seg button{border:1px solid var(--line);background:#fff;border-radius:7px;padding:5px 10px;font-size:.82rem;cursor:pointer;}
+  .acrow .seg button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .acrow select,.acrow input[type=range]{vertical-align:middle;}
+  .acrow label{color:var(--sub);}
+  .acrow .chk label{color:var(--ink);margin-right:8px;cursor:pointer;}
+  .acvals{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:6px;}
+  .acvals div{background:#f4f8fc;border:1px solid var(--line);border-radius:8px;padding:6px 9px;}
+  .acvals span{display:block;font-size:.72rem;color:var(--sub);text-transform:uppercase;letter-spacing:.03em;}
+  .acvals b{font-family:Menlo,Consolas,monospace;font-size:1rem;}
+  .acvals .mm{background:#e7f6f2;border-color:#bfe3da;}
+  @media (max-width:700px){.acvals{grid-template-columns:repeat(2,1fr);}}
   .side{display:flex;flex-direction:column;gap:14px;}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:0 2px 6px rgba(15,35,55,.05);}
   .card h2{margin:0 0 4px;font-size:1.1rem;color:var(--accent);}
@@ -76,6 +94,7 @@
   </header>
   <nav id="chips"></nav>
   <main>
+   <div class="leftcol">
     <div class="stage-wrap">
       <svg id="stage" viewBox="0 0 900 625" xmlns="http://www.w3.org/2000/svg">
         <defs>
@@ -93,6 +112,21 @@
         <g id="leadG"></g>
       </svg>
     </div>
+    <div id="acdc" style="display:none">
+      <h3>AC ve DC: dalga grafiği</h3>
+      <p class="sub">Grafik ağır çekimde oynar: gerçek frekans ne olursa olsun bir döngü yaklaşık 3 saniye sürer. Sağdaki devrede akımın yönünü ve şiddetini izle.</p>
+      <svg id="acSvg" viewBox="0 0 880 270" xmlns="http://www.w3.org/2000/svg"></svg>
+      <div class="acrow">
+        <span class="seg" id="acWave"></span>
+      </div>
+      <div class="acrow">
+        <label>Frekans <select id="acF"></select></label>
+        <label><span id="acVlab">Tepe değeri</span> <input type="range" id="acV" min="1" max="20" step="0.5"> <b id="acVv"></b></label>
+        <span class="chk"><label><input type="checkbox" data-s="T"> Periyot</label><label><input type="checkbox" data-s="P"> Tepe / tepe-tepe</label><label><input type="checkbox" data-s="R"> Etkin (rms)</label><label><input type="checkbox" data-s="A"> Ortalama</label></span>
+      </div>
+      <div class="acvals" id="acVals"></div>
+    </div>
+   </div>
     <aside class="side">
       <div class="card" id="lessonCard"></div>
       <div class="card" id="modeInfo"></div>
@@ -524,6 +558,90 @@ document.addEventListener('keydown',e=>{
   if(e.key==='ArrowLeft'&&S.dial>0){setDial(S.dial-1);}
 });
 
+/* ---------- AC / DC grafik paneli ---------- */
+const AC={wave:'sine',f:50,V:10,show:{T:true,P:false,R:false,A:false},ph:0,last:0};
+const ACW={dc:'DC (doğru)',sine:'Sinüs AC',square:'Kare AC',half:'Yarım dalga (darbeli DC)',full:'Tam dalga (darbeli DC)'};
+const ACF=[1,5,50,60,400,1000];
+function acVal(w,V,p){const s=Math.sin(2*Math.PI*p);switch(w){case 'dc':return V;case 'sine':return V*s;case 'square':return p%1<0.5?V:-V;case 'half':return Math.max(0,V*s);case 'full':return V*Math.abs(s);}return 0;}
+function acStats(w,V){
+  switch(w){
+    case 'dc':return {mean:V,rms:V,acrms:0,vpp:0,peak:V};
+    case 'sine':return {mean:0,rms:V/Math.SQRT2,acrms:V/Math.SQRT2,vpp:2*V,peak:V};
+    case 'square':return {mean:0,rms:V,acrms:V,vpp:2*V,peak:V};
+    case 'half':{const m=V/Math.PI,r=V/2;return {mean:m,rms:r,acrms:Math.sqrt(r*r-m*m),vpp:V,peak:V};}
+    case 'full':{const m=2*V/Math.PI,r=V/Math.SQRT2;return {mean:m,rms:r,acrms:Math.sqrt(r*r-m*m),vpp:V,peak:V};}
+  }
+}
+const fv=(x,u)=>{const a=Math.abs(x);if(a===0)return '0 '+u;if(a<1)return (x*1000).toFixed(0)+' m'+u;return (+x.toFixed(a<10?2:1))+' '+u;};
+const ft=x=>x>=1?x.toFixed(2)+' s':x>=1e-3?(+(x*1e3).toFixed(2))+' ms':(+(x*1e6).toFixed(1))+' μs';
+function acBuild(){
+  $('#acWave').innerHTML=Object.keys(ACW).map(k=>`<button data-w="${k}" class="${AC.wave===k?'on':''}">${ACW[k]}</button>`).join('');
+  $('#acWave').querySelectorAll('button').forEach(b=>b.onclick=()=>{AC.wave=b.dataset.w;acBuild();});
+  $('#acF').innerHTML=ACF.map(f=>`<option value="${f}" ${f===AC.f?'selected':''}>${f>=1000?f/1000+' kHz':f+' Hz'}</option>`).join('');
+  $('#acF').disabled=AC.wave==='dc';
+  $('#acF').onchange=()=>{AC.f=+$('#acF').value;acBuild();};
+  $('#acV').value=AC.V;$('#acVv').textContent=AC.V+' V';$('#acVlab').textContent=AC.wave==='dc'?'Gerilim':'Tepe değeri (Vp)';
+  $('#acV').oninput=()=>{AC.V=+$('#acV').value;$('#acVv').textContent=AC.V+' V';acVals();};
+  document.querySelectorAll('#acdc [data-s]').forEach(c=>{c.checked=!!AC.show[c.dataset.s];c.onchange=()=>{AC.show[c.dataset.s]=c.checked;};});
+  acVals();
+}
+function acVals(){
+  const st=acStats(AC.wave,AC.V),dc=AC.wave==='dc',T=1/AC.f;
+  const out=[['Frekans',dc?'0 Hz (sabit)':(AC.f>=1000?AC.f/1000+' kHz':AC.f+' Hz')],['Periyot (T = 1/f)',dc?'— (tekrar etmez)':ft(T)],['Tepe (Vp)',fv(st.peak,'V')],['Tepe-tepe (Vpp)',dc?'0 V (dalgalanma yok)':fv(st.vpp,'V')],
+   ['Etkin değer (rms)',fv(st.rms,'V')],['Ortalama',fv(st.mean,'V')],['Multimetre V⎓ okur',fv(st.mean,'V'),'mm'],['Multimetre V~ okur',fv(st.acrms,'V'),'mm']];
+  $('#acVals').innerHTML=out.map(o=>`<div class="${o[2]||''}"><span>${o[0]}</span><b>${o[1]}</b></div>`).join('');
+}
+function acDraw(now){
+  const dtR=Math.min(0.1,(now-(AC.last||now))/1000);AC.last=now;AC.ph=(AC.ph+dtR/3)%1;
+  const svg=$('#acSvg');if(!svg||$('#acdc').style.display==='none'){requestAnimationFrame(acDraw);return;}
+  const w=AC.wave,V=AC.V,dc=w==='dc',st=acStats(w,V),T=1/AC.f,per=2;
+  const X0=60,X1=600,Y0=135,Vm=20*1.15,ys=v=>Y0-v/Vm*105,xs=p=>X0+p/per*(X1-X0);
+  let s=`<rect x="0" y="0" width="880" height="270" fill="#fbfcfe" rx="10"/>`;
+  for(let k=0;k<=8;k++){const x=X0+k*(X1-X0)/8;s+=`<line x1="${x}" y1="25" x2="${x}" y2="245" stroke="#e6ecf2"/>`;}
+  for(let v=-20;v<=20;v+=5){s+=`<line x1="${X0}" y1="${ys(v)}" x2="${X1}" y2="${ys(v)}" stroke="${v===0?'#9fb0c0':'#e6ecf2'}" stroke-width="${v===0?1.4:1}"/><text x="${X0-8}" y="${ys(v)+4}" font-size="10" fill="#7b8a99" text-anchor="end">${v}</text>`;}
+  s+=`<text x="${X0-34}" y="22" font-size="11" fill="#52606d">v (V)</text><text x="${X1}" y="262" font-size="11" fill="#52606d" text-anchor="end">zaman (t) →</text>`;
+  if(!dc)for(let k=0;k<=4;k++){s+=`<text x="${X0+k*(X1-X0)/4}" y="262" font-size="10" fill="#7b8a99" text-anchor="middle">${ft(k*T/2).replace(' ','')}</text>`;}
+  // dalga ve yön bölgeleri
+  const N=360;let d='',pos='',neg='';
+  for(let k=0;k<=N;k++){const p=per*k/N,v=acVal(w,V,p),x=xs(p),y=ys(v);d+=(k?'L':'M')+x.toFixed(1)+' '+y.toFixed(1);}
+  if(!dc){let pp=`M${X0} ${Y0}`,nn=`M${X0} ${Y0}`;for(let k=0;k<=N;k++){const p=per*k/N,v=acVal(w,V,p),x=xs(p).toFixed(1);pp+=` L${x} ${ys(Math.max(0,v)).toFixed(1)}`;nn+=` L${x} ${ys(Math.min(0,v)).toFixed(1)}`;}pp+=` L${X1} ${Y0}Z`;nn+=` L${X1} ${Y0}Z`;
+    s+=`<path d="${pp}" fill="#ff5a5a" opacity=".13"/><path d="${nn}" fill="#3a7bff" opacity=".13"/>`;
+    if(w==='sine'||w==='square')s+=`<text x="${xs(0.25)}" y="${ys(V)-10}" font-size="11" font-weight="700" fill="#c0392b" text-anchor="middle">+ yön</text><text x="${xs(0.75)}" y="${ys(-V)+20}" font-size="11" font-weight="700" fill="#1d4ed8" text-anchor="middle">− yön (akım ters)</text>`;}
+  s+=`<path d="${d}" fill="none" stroke="#e0a800" stroke-width="3" stroke-linejoin="round"/>`;
+  if(dc)s+=`<text x="${(X0+X1)/2}" y="${ys(V)-12}" font-size="12" font-weight="700" fill="#8a6d00" text-anchor="middle">Sabit: yönü ve büyüklüğü değişmez</text>`;
+  // açıklamalar
+  if(AC.show.T&&!dc){const xa=xs(0),xb=xs(1),y=34;s+=`<path d="M${xa} ${y} H${xb} M${xa} ${y-5} V${y+5} M${xb} ${y-5} V${y+5}" stroke="#1d6fa5" stroke-width="1.6"/><path d="M${xa+6} ${y-4} L${xa} ${y} L${xa+6} ${y+4} M${xb-6} ${y-4} L${xb} ${y} L${xb-6} ${y+4}" fill="none" stroke="#1d6fa5" stroke-width="1.6"/><rect x="${(xa+xb)/2-62}" y="${y-9}" width="124" height="18" rx="4" fill="#fbfcfe"/><text x="${(xa+xb)/2}" y="${y+4}" font-size="11.5" font-weight="700" fill="#1d6fa5" text-anchor="middle">Periyot T = ${ft(T)}</text><line x1="${xb}" y1="${y}" x2="${xb}" y2="${Y0}" stroke="#1d6fa5" stroke-dasharray="3 3"/>`;}
+  if(AC.show.P&&!dc){const xp=xs(w==='square'?0.25:(w==='full'?0.25:0.25));s+=`<line x1="${xp}" y1="${ys(0)}" x2="${xp}" y2="${ys(V)}" stroke="#c0392b" stroke-width="2"/><path d="M${xp-4} ${ys(V)+7} L${xp} ${ys(V)} L${xp+4} ${ys(V)+7}" fill="none" stroke="#c0392b" stroke-width="2"/><text x="${xp+6}" y="${(ys(0)+ys(V))/2}" font-size="11.5" font-weight="700" fill="#c0392b">Vp = ${fv(V,'V')}</text>`;
+    const xr=xs(1.62),lo=st.vpp===2*V?-V:0,ym=(ys(V)+ys(lo))/2;s+=`<path d="M${xr} ${ys(V)} V${ys(lo)} M${xr-5} ${ys(V)} H${xr+5} M${xr-5} ${ys(lo)} H${xr+5}" stroke="#7b2cbf" stroke-width="1.8"/><rect x="${xr+6}" y="${ym-9}" width="92" height="17" rx="4" fill="#fbfcfe" opacity=".92"/><text x="${xr+10}" y="${ym+4}" font-size="11" font-weight="700" fill="#7b2cbf">Vpp = ${fv(st.vpp,'V')}</text>`;}
+  if(AC.show.R){[st.rms].concat(w==='sine'||w==='square'?[-st.rms]:[]).forEach(v=>{s+=`<line x1="${X0}" y1="${ys(v)}" x2="${X1}" y2="${ys(v)}" stroke="#2a9d3a" stroke-width="1.6" stroke-dasharray="7 4"/>`;});const xl=dc?X0+6:xs(0.94);s+=`<rect x="${xl-2}" y="${ys(st.rms)-17}" width="122" height="15" rx="3" fill="#fbfcfe" opacity=".9"/><text x="${xl}" y="${ys(st.rms)-5}" font-size="11" font-weight="700" fill="#2a9d3a">Etkin (rms) = ${fv(st.rms,'V')}</text>`;}
+  if(AC.show.A){s+=`<line x1="${X0}" y1="${ys(st.mean)}" x2="${X1}" y2="${ys(st.mean)}" stroke="#e76f00" stroke-width="2" stroke-dasharray="2 4"/><text x="${X1-6}" y="${ys(st.mean)-5}" font-size="11" font-weight="700" fill="#e76f00" text-anchor="end">Ortalama = ${fv(st.mean,'V')}</text>`;}
+  // şimdi imleci
+  const pn=AC.ph*per,vn=acVal(w,V,pn%1),xn=xs(pn);
+  s+=`<line x1="${xn}" y1="25" x2="${xn}" y2="245" stroke="#334e68" stroke-opacity=".25"/><circle cx="${xn}" cy="${ys(vn)}" r="6" fill="#e0a800" stroke="#fff" stroke-width="2"/>`;
+  // devre
+  const cx=760,top=55,bot=215,lx=690,rx=830,i=vn/V,mag=Math.abs(vn)/20;
+  s+=`<rect x="650" y="25" width="220" height="220" rx="10" fill="#fff" stroke="#e1e7ee"/><text x="760" y="43" font-size="11" font-weight="700" fill="#52606d" text-anchor="middle">DEVREDEKİ AKIM</text>`;
+  s+=`<path d="M${lx} ${top+20} V${bot} H${rx} V${top+20} H${lx}" fill="none" stroke="#475569" stroke-width="3"/>`;
+  s+=`<circle cx="${lx}" cy="${(top+20+bot)/2}" r="17" fill="#fff" stroke="#475569" stroke-width="3"/>`+(dc||w==='half'||w==='full'?`<text x="${lx}" y="${(top+20+bot)/2+5}" font-size="15" font-weight="800" fill="#475569" text-anchor="middle">${dc?'=':'⏦'}</text>`:`<path d="M${lx-9} ${(top+20+bot)/2} q4.5 -9 9 0 t9 0" fill="none" stroke="#475569" stroke-width="2.4"/>`);
+  if(dc)s+=`<text x="${lx-24}" y="${(top+20+bot)/2-14}" font-size="12" font-weight="800" fill="#c0392b">+</text>`;
+  const g=Math.min(1,Math.abs(vn)/V);
+  s+=`<circle cx="${rx}" cy="${(top+20+bot)/2}" r="${16+18*g}" fill="#ffd23f" opacity="${(0.15+0.6*g*g).toFixed(2)}"/><circle cx="${rx}" cy="${(top+20+bot)/2}" r="14" fill="#fff8d6" stroke="#475569" stroke-width="3"/><path d="M${rx-6} ${(top+20+bot)/2+6} l12 -12 M${rx-6} ${(top+20+bot)/2-6} l12 12" stroke="#475569" stroke-width="2"/>`;
+  // akım okları (yöne göre)
+  const dir=vn>=0?1:-1,n=6,phase=(now/1000*(0.6+2.4*mag))%1;
+  if(Math.abs(vn)>0.05*V){for(let k=0;k<n;k++){let q=((k/n)+(dir>0?phase:-phase)+1)%1;const L=2*(rx-lx)+2*(bot-top-20);let dd=q*L,x,y,a;
+    if(dd<rx-lx){x=lx+dd;y=top+20;a=0;}else if((dd-=rx-lx)<bot-top-20){x=rx;y=top+20+dd;a=90;}else if((dd-=bot-top-20)<rx-lx){x=rx-dd;y=bot;a=180;}else{dd-=rx-lx;x=lx;y=bot-dd;a=270;}
+    if(dir<0)a+=180;s+=`<path d="M-6 -5 L5 0 L-6 5 Z" fill="${dir>0?'#c0392b':'#1d4ed8'}" opacity="${(0.35+0.65*Math.min(1,Math.abs(i))).toFixed(2)}" transform="translate(${x} ${y}) rotate(${a})"/>`;}}
+  s+=`<text x="760" y="235" font-size="11" font-weight="700" text-anchor="middle" fill="${Math.abs(vn)<0.05*V?'#7b8a99':(vn>0?'#c0392b':'#1d4ed8')}">${Math.abs(vn)<0.05*V?'akım ≈ 0 (yön değişiyor)':(vn>0?'saat yönünde':'saat yönünün tersine')} · v = ${vn.toFixed(1)} V</text>`;
+  svg.innerHTML=s;
+  requestAnimationFrame(acDraw);
+}
+function acShow(on,cfg){
+  $('#acdc').style.display=on?'':'none';
+  if(cfg){if(cfg.wave)AC.wave=cfg.wave;if(cfg.f)AC.f=cfg.f;if(cfg.V)AC.V=cfg.V;if(cfg.show)AC.show=Object.assign({T:false,P:false,R:false,A:false},cfg.show);}
+  if(on)acBuild();
+}
+requestAnimationFrame(acDraw);
+
 /* ---------- Dersler ---------- */
 const H=(...a)=>a;
 const LESSONS=[
@@ -535,49 +653,59 @@ const LESSONS=[
   {t:'Girişler: COM (ortak; siyah prob her zaman buraya), VΩμAmA (kırmızı prob: gerilim, direnç, küçük akım vb.), 10A (kırmızı prob: yalnızca büyük akım). Kırmızı prob girişini değiştirmek için üzerine tıkla.',hl:['jcom','jvo','j10']},
   {t:'Güvenlik: CAT II 1000 V / CAT III 600 V. mA girişi 400 mA, 10A girişi 10 A sigortalıdır. 10A girişi en çok 10 saniye yüklenir, her 15 dakikada bir. Akım ölçmeden önce her zaman doğru giriş ve konumu kontrol et.',hl:['j10','jvo']}
  ]},
- {tab:'1 DC gerilim',scene:'vdc',title:'DC gerilim ölçümü',steps:[
+ {tab:'1 AC ve DC',scene:'vdc',title:'AC ve DC: özellikleri',panel:true,steps:[
+  {t:'<b>DC (doğru akım/gerilim)</b>: yönü ve büyüklüğü zamanla değişmez. Grafikte yatay bir çizgidir; frekansı 0 Hz\'dir, periyodu yoktur. Bir ucu hep + (artı), diğeri hep − (eksi) kalır. Örnekler: pil, akü, adaptör, güneş paneli. Sağdaki devrede akım hep aynı yönde akar.',p:{wave:'dc',V:9,show:{A:true}},act:()=>{setDial(2);S.conn=true;}},
+  {t:'<b>AC (alternatif akım/gerilim)</b>: hem büyüklüğü hem yönü sürekli değişir. Sinüs dalgada gerilim 0\'dan pozitif tepeye çıkar, 0\'a iner, sonra negatif tepeye gider. Pozitif yarım periyotta akım bir yönde (kırmızı), negatif yarım periyotta ters yönde (mavi) akar. Örnek: priz (şebeke), trafo çıkışı, jeneratör.',p:{wave:'sine',f:50,V:10,show:{}},act:()=>{setScene('vac');setDial(1);S.conn=true;}},
+  {t:'<b>Frekans ve periyot</b>: Periyot (T), dalganın kendini bir kez tekrarlaması için geçen süredir. Frekans (f), bir saniyedeki tekrar sayısıdır: <b>f = 1 / T</b>. Türkiye\'de şebeke 50 Hz\'dir, yani T = 20 ms. Akım saniyede 2·f = 100 kez yön değiştirir. Frekans listesinden değer seçip periyodun nasıl değiştiğini gör.',p:{wave:'sine',f:50,V:10,show:{T:true}},act:()=>{setScene('vac');setDial(1);S.conn=true;}},
+  {t:'<b>Tepe, tepe-tepe ve etkin değer</b>: Tepe değer (Vp) dalganın ulaştığı en büyük değerdir; tepe-tepe (Vpp) en büyük ile en küçük arasıdır (sinüste 2·Vp). <b>Etkin değer (rms)</b>, aynı direnci aynı miktarda ısıtan DC gerilimdir: sinüste <b>Vrms = Vp / √2 ≈ 0.707·Vp</b>. Prizdeki "230 V" etkin değerdir; tepe değeri ≈ 325 V\'tur.',p:{wave:'sine',f:50,V:10,show:{T:false,P:true,R:true}},act:()=>{setScene('vac');setDial(1);S.conn=true;}},
+  {t:'<b>Ortalama değer ve multimetre</b>: Sinüs AC\'nin bir periyottaki ortalaması 0\'dır (pozitif ve negatif alanlar eşit). Bu yüzden multimetre <b>V⎓ (DC)</b> konumunda AC ölçerken ≈ 0 gösterir; <b>V~ (AC)</b> konumunda ise etkin (rms) değeri gösterir. Solda multimetre şu an prizde V⎓ konumunda: 0 okuyor. Kadranı V~\'e çevirip farkı gör.',p:{wave:'sine',f:50,V:10,show:{R:true,A:true}},act:()=>{setScene('vac');setDial(2);S.conn=true;}},
+  {t:'<b>Darbeli (dalgalı) DC</b>: Doğrultulmuş gerilim yönü değiştirmez ama büyüklüğü değişir. Hem bir <b>DC bileşeni</b> (ortalama) hem de bir <b>AC bileşeni</b> (dalgalanma) vardır. Multimetrede V⎓ ortalamayı (yarım dalgada Vp/π), V~ ise yalnızca dalgalanmanın etkin değerini gösterir. Yarım dalga ve tam dalga arasında geçiş yapıp değerleri karşılaştır.',p:{wave:'half',f:50,V:10,show:{A:true,R:true}}},
+  {t:'<b>Kare dalga AC</b>: Gerilim iki seviye arasında ani geçiş yapar; yön yine her yarım periyotta değişir. Kare dalgada Vrms = Vp\'dir (sinüsten büyük). Not: "True RMS" olmayan multimetreler sinüs için ayarlıdır; kare, darbe gibi sinüs dışı dalgalarda hatalı okuyabilir.',p:{wave:'square',f:50,V:10,show:{P:true,R:true}}},
+  {t:'<b>Akımda AC ve DC</b>: Aynı ayrım akım için de geçerlidir. Multimetrenin μA, mA ve A konumları önce DC ölçer; <b>SELECT</b> tuşu AC akıma geçirir (ekranda AC yazar). Akım her zaman devreye <b>seri</b> bağlanarak ölçülür. Örnek: 9 V / 1 kΩ devresinde DC akım ≈ 9 mA.',p:{wave:'dc',V:9,show:{A:true}},act:()=>{setScene('cur');setDial(9);S.jack='vo';S.conn=true;}}
+ ]},
+ {tab:'2 DC gerilim',scene:'vdc',title:'DC gerilim ölçümü',steps:[
   {t:'Amaç: 9 V pilin gerilimini ölçmek. DC gerilim konumu "V" yazısının yanında düz çizgi + kesikli çizgi simgesiyle gösterilir.',hl:['dial'],act:()=>setDial(2)},
   {t:'Siyah prob COM girişinde, kırmızı prob VΩμAmA girişinde olmalı. Gerilim ölçerken kırmızı probu 10A girişine takmak yanlıştır.',hl:['jcom','jvo'],act:()=>{S.jack='vo';}},
   {t:'Voltmetre ölçülen elemana PARALEL bağlanır: kırmızı prob + uca, siyah prob − uca.',hl:[],act:()=>{S.conn=true;}},
   {t:'Okuma ≈ 9.1 V. Şimdi probları ters çeviriyoruz: ekranda eksi işareti çıkar.',hl:['lcd'],act:()=>{S.rev=true;}},
   {t:'Eksi işareti probların ters bağlandığını söyler, zarar vermez. DC devrelerde polarite bulmak için kullanışlıdır. "Polariteyi çevir" butonuyla kendin dene.',hl:['lcd'],act:()=>{S.rev=true;}}
  ]},
- {tab:'2 AC gerilim',scene:'vac',title:'AC gerilim ölçümü (priz)',steps:[
+ {tab:'3 AC gerilim',scene:'vac',title:'AC gerilim ölçümü (priz)',steps:[
   {t:'Şebeke gerilimi AC\'dir. Kadranı V~ (dalga simgeli) konuma al. Ekranın solunda "AC" işareti belirir.',hl:['dial','lcd'],act:()=>setDial(1)},
   {t:'Kırmızı prob VΩμAmA girişinde, siyah prob COM\'da. AC\'de polarite önemli değildir, bu yüzden eksi işareti çıkmaz.',hl:['jcom','jvo'],act:()=>{S.jack='vo';}},
   {t:'Probları priz deliklerine paralel bağla. Okuma ≈ 230 V rms. Tepe değeri ≈ 325 V\'tur.',hl:['lcd'],act:()=>{S.conn=true;}},
   {t:'Güvenlik: Yüksek gerilimde sadece yalıtkan prob tutamaklarına dokun, cihazın CAT sınıfını (600 V CAT III) aşma, hasarlı probları kullanma.',hl:[]}
  ]},
- {tab:'3 Direnç',scene:'res',title:'Direnç ölçümü',steps:[
+ {tab:'4 Direnç',scene:'res',title:'Direnç ölçümü',steps:[
   {t:'Direnç ölçümü için kadranı Ω konumuna al (bu konum aynı zamanda süreklilik ve diyot konumudur; SELECT ilk basışta süreklilik, sonra diyot).',hl:['dial'],act:()=>setDial(4)},
   {t:'Kural: direnç yalnız ENERJİSİZ devrede ölçülür; mümkünse eleman devreden ayrılır, aksi halde paralel yollar hatalı okutur. Prob uçları boşken ekranda "OL" (open line) görünür.',hl:['lcd']},
   {t:'Probları direncin iki ucuna bağla. Direnç ölçümünde polarite önemsizdir.',hl:[],act:()=>{S.conn=true;}},
   {t:'Okuma ≈ 4.70 kΩ. Renk kodu: sarı (4), mor (7), kırmızı (×100), altın (%5 tolerans) → 47 × 100 = 4.7 kΩ. Ölçümle doğrulanır.',hl:['lcd']}
  ]},
- {tab:'4 Süreklilik',scene:'cont',title:'Süreklilik (buzzer) testi',steps:[
+ {tab:'5 Süreklilik',scene:'cont',title:'Süreklilik (buzzer) testi',steps:[
   {t:'Süreklilik testi Ω konumunun ikinci işlevidir. Önce kadranı Ω\'ya al.',hl:['dial'],act:()=>setDial(4)},
   {t:'SELECT düğmesine bir kez bas: ekranda "•)))" simgesi belirir.',hl:['select','lcd'],act:()=>{S.sel=1;}},
   {t:'Probları kablonun iki ucuna bağla. Direnç yaklaşık 50 Ω\'un altına inince multimetre ötmeye başlar (sesin açık olsun).',hl:[],act:()=>{S.conn=true;}},
   {t:'Bip = iletim var. Sessizlik ve "OL" = kopukluk. Sigorta, kablo ve lehim bağlantısı kontrolünde en hızlı yöntemdir. Yine yalnızca enerjisiz devrede kullanılır.',hl:['lcd']}
  ]},
- {tab:'5 Diyot',scene:'diode',title:'Diyot testi',steps:[
+ {tab:'6 Diyot',scene:'diode',title:'Diyot testi',steps:[
   {t:'Diyot testi de Ω konumunun bir işlevidir. Kadranı Ω\'ya al.',hl:['dial'],act:()=>setDial(4)},
   {t:'SELECT\'e iki kez bas: ekranda diyot simgesi belirir. Bu modda multimetre diyoda küçük bir akım verir ve üzerindeki gerilim düşümünü gösterir.',hl:['select','lcd'],act:()=>{S.sel=2;}},
   {t:'Kırmızı prob anotta, siyah prob katotta: diyot iletimde. Silisyum diyotta ≈ 0.5–0.7 V okunur.',hl:[],act:()=>{S.conn=true;}},
   {t:'Probları ters çevirince diyot yalıtımda: ekranda "OL". İki yönde de OL = diyot kopuk; iki yönde de ≈ 0 = diyot kısa devre.',hl:['lcd'],act:()=>{S.rev=true;}}
  ]},
- {tab:'6 Kapasite',scene:'cap',title:'Kapasite ölçümü',steps:[
+ {tab:'7 Kapasite',scene:'cap',title:'Kapasite ölçümü',steps:[
   {t:'Kadranı kapasite simgesine (iki paralel çizgi) al.',hl:['dial'],act:()=>setDial(5)},
   {t:'Önce kondansatörü boşalt (uçlarını bir dirençle kısa devre et), yoksa multimetre zarar görebilir. Kutuplu (elektrolitik) kondansatörde + ucu kırmızı prob ile eşle.',hl:[]},
   {t:'Probları kondansatör uçlarına bağla. Büyük kapasitelerde okuma oturana kadar biraz beklemek gerekir.',hl:[],act:()=>{S.conn=true;}},
   {t:'Okuma ≈ 98.7 nF (nominal 100 nF, ±%5 tolerans). nF → μF dönüşümünü ekran birimine bakarak yap.',hl:['lcd']}
  ]},
- {tab:'7 Frekans',scene:'hz',title:'Frekans ölçümü',steps:[
+ {tab:'8 Frekans',scene:'hz',title:'Frekans ölçümü',steps:[
   {t:'Kadranı Hz konumuna al.',hl:['dial'],act:()=>setDial(6)},
   {t:'Probları sinyal kaynağına (jeneratör çıkışı) bağla: kırmızı sinyal, siyah toprak.',hl:[],act:()=>{S.conn=true;}},
   {t:'Okuma ≈ 50.0 Hz. Periyot T = 1/f = 20 ms. Sinyal seviyesi çok küçük veya çok büyükse okuma kararsızlaşır.',hl:['lcd']}
  ]},
- {tab:'8 Akım',scene:'cur',title:'Akım ölçümü (seri bağlantı)',steps:[
+ {tab:'9 Akım',scene:'cur',title:'Akım ölçümü (seri bağlantı)',steps:[
   {t:'Akım ölçümü en tehlikeli ölçümdür: multimetre devreye SERİ girer. Önce devreyi kes: A ve B noktaları arasında devre açık, akım akmıyor.',hl:[],act:()=>{S.conn=false;}},
   {t:'Akım yaklaşık 9 V / 1 kΩ = 9 mA beklenir, yani mA konumu uygundur. Kadranı mA\'ya al; bu konumda kırmızı prob VΩμAmA girişinde olmalı.',hl:['dial','jvo'],act:()=>{setDial(9);S.jack='vo';}},
   {t:'Multimetreyi A-B noktaları arasına bağla. Devre multimetre üzerinden kapanır ve akım akar (mavi noktalar).',hl:['lcd'],act:()=>{S.conn=true;}},
@@ -586,13 +714,13 @@ const LESSONS=[
   {t:'A konumunda kırmızı prob 10A girişine takılmalı. Bu konumda çözünürlük düşüktür (0.01 A). Gerçek 10 A ölçümü için en çok 10 saniye ölç.',hl:['dial','j10','lcd'],act:()=>{setDial(10);S.jack='10A';}},
   {t:'Altın kural: Akım konumunda kalmış multimetreyle gerilim ölçme! Gerilim kaynağını akım konumunda ölçmek kısa devredir ve sigorta atar. "Serbest mod"da güvenle dene.',hl:[]}
  ]},
- {tab:'9 hFE',scene:'hfe',title:'Transistör hFE ölçümü',steps:[
+ {tab:'10 hFE',scene:'hfe',title:'Transistör hFE ölçümü',steps:[
   {t:'hFE (DC akım kazancı) probsuz ölçülür. Kadranı hFE konumuna al.',hl:['dial'],act:()=>setDial(7)},
   {t:'Transistörün bacaklarını (B-C-E) soketteki NPN yazılı sıraya takacaksın. PNP transistör için alt satır kullanılır.',hl:['hfe']},
   {t:'Transistör sokete takıldı ve ekran okuma yaptı.',hl:['hfe','lcd'],act:()=>{S.conn=true;}},
   {t:'hFE ≈ 187: IC = hFE × IB. Değer üretici katalog aralığı içindeyse transistör büyük olasılıkla sağlamdır; 0 veya çok düşük değer arızaya işaret eder.',hl:['lcd']}
  ]},
- {tab:'10 NCV',scene:'ncv',title:'Temassız gerilim (NCV)',steps:[
+ {tab:'11 NCV',scene:'ncv',title:'Temassız gerilim (NCV)',steps:[
   {t:'NCV (Non-Contact Voltage): kablonun elektrik alanını temas etmeden algılar. Kadranı NCV konumuna al.',hl:['dial'],act:()=>setDial(11)},
   {t:'Sensör multimetrenin üst ucundadır (▲ NCV). Telin ucuna yaklaştırdığında bip ve ekranda çubuklar çıkar.',hl:['ncv'],act:()=>{S.conn=true;}},
   {t:'Dikkat: NCV yalnızca ön tarama içindir. "Bip yok" demek "gerilim yok" demek değildir (ekranlı kablo, zayıf alan). Asıl doğrulama probla V~ konumunda yapılır.',hl:[]}
@@ -615,6 +743,7 @@ function openTab(idx){
   const t=TABS[idx];
   $('#freeScenes').style.display=t.i==='free'?'':'none';
   clearHalos();
+  if(t.i==='free'||t.i==='quiz'||!LESSONS[t.i].panel)acShow(false);
   if(t.i==='free'){S.mode='free';resetState();setScene('cur');freeScene('vdc');renderFree();}
   else if(t.i==='quiz'){S.mode='quiz';startQuiz();}
   else{S.mode='lesson';S.lesson=t.i;S.step=0;setScene(LESSONS[t.i].scene);enterStep(0);}
@@ -624,6 +753,7 @@ function enterStep(n){
   setScene(les.scene);resetState();
   for(let i=0;i<=n;i++){const a=les.steps[i].act;if(a)a();}
   showHalos(les.steps[n].hl);
+  acShow(!!les.panel,les.steps[n].p);
   renderLesson();mark();
 }
 function renderLesson(){
