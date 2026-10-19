@@ -17,7 +17,34 @@
   nav#chips button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
   #bench{position:relative;}
   .row1{display:grid;grid-template-columns:minmax(0,.84fr) minmax(0,1fr);gap:12px;margin-bottom:12px;}
-  .row2{display:grid;grid-template-columns:200px minmax(0,1fr) 340px;gap:12px;align-items:start;}
+  .row2{display:grid;grid-template-columns:180px minmax(0,1fr) 236px 310px;gap:12px;align-items:start;}
+  .row2.pcol{grid-template-columns:180px minmax(0,1fr) 44px 310px;}
+  .parts{background:#eef1f5;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 24px);position:sticky;top:12px;}
+  .parts .phead{display:flex;align-items:stretch;border-bottom:1px solid var(--line);background:#f7f8fa;}
+  .parts .psel{flex:1;padding:6px 10px;min-width:0;}
+  .parts .psel span{display:block;font-size:.7rem;color:var(--sub);}
+  .parts .psel select{width:100%;border:none;background:transparent;font-size:.95rem;font-weight:600;color:var(--ink);padding:0;cursor:pointer;}
+  .parts .ptog{width:40px;border:none;border-left:1px solid var(--line);background:#f7f8fa;cursor:pointer;font-size:1.1rem;color:#334e68;}
+  .parts .ptog:hover{background:#e9eef4;}
+  .parts .psearch{position:relative;margin:10px;}
+  .parts .psearch input{width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 30px 7px 10px;font-size:.9rem;background:#fff;}
+  .parts .psearch svg{position:absolute;right:9px;top:8px;width:16px;height:16px;stroke:#9aa5b1;fill:none;stroke-width:2.2;}
+  .parts .plist{overflow-y:auto;padding:0 10px 12px;}
+  .parts h4{margin:10px 2px 6px;font-size:.95rem;font-weight:600;color:#1d8fd1;border-bottom:1px solid #d5dde6;padding-bottom:3px;}
+  .parts .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .parts .pc{background:#fff;border:1px solid transparent;border-radius:8px;padding:6px 2px 5px;text-align:center;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;transition:border-color .12s,box-shadow .12s;}
+  .parts .pc:hover{border-color:#8fc6ea;box-shadow:0 2px 6px rgba(29,111,165,.12);}
+  .parts .pc.on{border-color:#1d8fd1;box-shadow:0 0 0 2px #cfe7f7;}
+  .parts .pc.on span{color:#1d8fd1;}
+  .parts .pc svg{width:44px;height:44px;display:block;margin:0 auto 2px;pointer-events:none;}
+  .parts .pc span{font-size:.68rem;line-height:1.15;color:#333;display:block;min-height:2.3em;pointer-events:none;}
+  .parts .phint{font-size:.72rem;color:var(--sub);margin:8px 2px 0;}
+  .parts .pempty{font-size:.8rem;color:var(--sub);padding:10px 2px;}
+  .row2.pcol .parts .psel,.row2.pcol .parts .psearch,.row2.pcol .parts .plist{display:none;}
+  .row2.pcol .parts .ptog{width:100%;border-left:none;height:44px;}
+  .row2.pcol .parts .pvert{display:block;}
+  .parts .pvert{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-size:.8rem;font-weight:600;color:#334e68;margin:10px auto;cursor:pointer;}
+  #dragImg{position:fixed;left:0;top:0;width:52px;height:52px;pointer-events:none;z-index:50;display:none;opacity:.85;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25));}
   .inst,.boardWrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px;}
   .ilabel{font-size:.74rem;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin:2px 6px 4px;}
   .inst svg,#board{width:100%;height:auto;display:block;user-select:none;touch-action:none;}
@@ -67,8 +94,9 @@
   .blink{animation:bl 1s steps(2,start) infinite;} @keyframes bl{50%{opacity:0}}
   .knobwrap{cursor:grab;} .scb{cursor:pointer;transition:transform .08s,filter .08s;} .scb.scp{transform:translate(0,2px);filter:brightness(.8);} .scknob{cursor:grab;}
   .clickable{cursor:pointer;} .knob{cursor:grab;} .beepicon{animation:bp .25s infinite alternate;} @keyframes bp{to{opacity:.25}}
-  @media (max-width:1250px){.row2{grid-template-columns:180px minmax(0,1fr);} .side{grid-column:1 / -1;}}
-  @media (max-width:800px){.row1{grid-template-columns:1fr;} .row2{grid-template-columns:1fr;}}
+  @media (max-width:1440px){.row2{grid-template-columns:170px minmax(0,1fr) 224px;} .row2.pcol{grid-template-columns:170px minmax(0,1fr) 44px;} .side{grid-column:1 / -1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start;}}
+  @media (max-width:1000px){.row2,.row2.pcol{grid-template-columns:150px minmax(0,1fr);} .parts{grid-column:1 / -1;position:static;max-height:none;}}
+  @media (max-width:800px){.row1{grid-template-columns:1fr;} .row2,.row2.pcol{grid-template-columns:1fr;} .parts{position:static;max-height:none;}}
 </style>
 </head>
 <body>
@@ -99,6 +127,7 @@
           <g id="meterG" transform="translate(30 5)"></g>
         </svg></div>
       <div class="boardWrap"><div id="tools"></div><svg id="board" viewBox="0 0 930 455" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <aside class="parts" id="parts"></aside>
       <aside class="side">
         <div class="card" id="lessonCard"></div>
         <div id="fb"></div>
@@ -109,6 +138,7 @@
       </aside>
     </div>
     <svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="dragImg"></div>
   </div>
 </div>
 <script>
@@ -1998,20 +2028,97 @@ document.addEventListener('pointerdown',()=>{if(!DRAG)histTrack();},true);
 document.addEventListener('keydown',()=>{if(!DRAG)histTrack();},true);
 function renderHistBtns(){const u=$('#tUndo'),r=$('#tRedo');if(u)u.disabled=!HIST.undo.length;if(r)r.disabled=!HIST.redo.length;}
 
+/* ---------- Bileşen paneli (Tinkercad tarzı) ---------- */
+const PCATS=[['Genel',['res','ccap','ecap','diode','zener','ind']],['Giriş',['btn','pot','sw']],['Çıkış',['led']],['Yarı iletken',['schottky','mos']],['Güç kaynakları',['bat','dcs','trafo']]];
+const PNAME={res:'Direnç',ccap:'Kondansatör',ecap:'Polarize Kondansatör',diode:'Diyot',zener:'Zener Diyot',ind:'İndüktör',btn:'Basmalı Buton',pot:'Potansiyometre',sw:'Sürgülü Anahtar',led:'LED',schottky:'Schottky Diyot',mos:'MOSFET (N)',bat:'9 V Pil',dcs:'Ayarlı DC Kaynak',trafo:'Trafo 12-0-12 V'};
+function partIcon(t){
+  const leg=(x1,y1,x2,y2)=>`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#9a9fa6" stroke-width="2.4" stroke-linecap="round"/>`;
+  switch(t){
+    case 'res':return `${leg(30,4,30,56)}<rect x="24" y="16" width="12" height="28" rx="5" fill="#dcc48e" stroke="#a88f5a"/><rect x="24" y="21" width="12" height="3" fill="#7b3f00"/><rect x="24" y="26" width="12" height="3" fill="#111"/><rect x="24" y="31" width="12" height="3" fill="#d62828"/><rect x="24" y="38" width="12" height="3" fill="#c9a227"/>`;
+    case 'ccap':return `${leg(24,36,24,56)}${leg(36,36,36,56)}<path d="M30 6 C14 6 12 24 16 34 Q30 42 44 34 C48 24 46 6 30 6Z" fill="#2363b8"/><path d="M22 14 Q26 9 32 9" fill="none" stroke="#6fa3e8" stroke-width="2.5" stroke-linecap="round"/>`;
+    case 'ecap':return `${leg(25,44,25,57)}${leg(35,44,35,57)}<rect x="15" y="6" width="30" height="40" rx="5" fill="#252628"/><rect x="36" y="6" width="9" height="40" rx="3" fill="#7b8088"/><ellipse cx="30" cy="8" rx="15" ry="4" fill="#4a4c50"/><text x="40.5" y="30" font-size="9" font-weight="800" fill="#252628" text-anchor="middle">−</text>`;
+    case 'diode':case 'schottky':return `${leg(30,2,30,58)}<rect x="24" y="15" width="12" height="30" rx="2" fill="#2b2b2b"/><rect x="24" y="37" width="12" height="4" fill="#9ca3af"/>`;
+    case 'zener':return `${leg(30,2,30,58)}<rect x="24" y="15" width="12" height="30" rx="2" fill="#e9873a"/><rect x="24" y="37" width="12" height="4" fill="#222"/>`;
+    case 'ind':{let s=`${leg(2,30,58,30)}`;for(let k=0;k<11;k++)s+=`<ellipse cx="${13+k*3.4}" cy="30" rx="2" ry="7" fill="none" stroke="#c98a3d" stroke-width="2"/>`;return s;}
+    case 'led':return `${leg(25,40,25,57)}${leg(35,40,35,52)}<path d="M18 40 V22 A12 12 0 0 1 42 22 V40 Z" fill="#ff3b3b" fill-opacity=".85"/><rect x="16" y="38" width="28" height="4" rx="1" fill="#e02020"/><circle cx="30" cy="22" r="5" fill="#fff" opacity=".5"/>`;
+    case 'btn':return `${leg(14,46,14,56)}${leg(46,46,46,56)}<rect x="8" y="10" width="44" height="38" rx="3" fill="#c7c9cc" stroke="#8d9096"/><circle cx="14" cy="16" r="2.4" fill="#555"/><circle cx="46" cy="16" r="2.4" fill="#555"/><circle cx="14" cy="42" r="2.4" fill="#555"/><circle cx="46" cy="42" r="2.4" fill="#555"/><circle cx="30" cy="29" r="11" fill="#2b2b2b"/>`;
+    case 'pot':{let s=`${leg(22,46,22,57)}${leg(30,46,30,57)}${leg(38,46,38,57)}<circle cx="30" cy="26" r="21" fill="#1f3550"/>`;for(let k=0;k<24;k++){const a=k*15*Math.PI/180;s+=`<line x1="${30+17*Math.sin(a)}" y1="${26-17*Math.cos(a)}" x2="${30+20*Math.sin(a)}" y2="${26-20*Math.cos(a)}" stroke="#6a8bb2" stroke-width="1.2"/>`;}return s+`<circle cx="30" cy="26" r="15" fill="#3f86d6"/><line x1="30" y1="26" x2="21" y2="35" stroke="#1f3550" stroke-width="3" stroke-linecap="round"/>`;}
+    case 'sw':return `${leg(18,40,18,54)}${leg(30,40,30,54)}${leg(42,40,42,54)}<rect x="6" y="20" width="48" height="20" rx="3" fill="#2d2f33"/><rect x="11" y="24" width="18" height="12" rx="1" fill="#dcdcdc"/>${[0,1,2,3].map(k=>`<line x1="${14+k*4}" y1="26" x2="${14+k*4}" y2="34" stroke="#999" stroke-width="1.2"/>`).join('')}<rect x="32" y="25" width="18" height="10" fill="#111"/>`;
+    case 'mos':return `${leg(22,44,22,58)}${leg(30,44,30,58)}${leg(38,44,38,58)}<rect x="16" y="4" width="28" height="16" rx="2" fill="#b8bcc2"/><circle cx="30" cy="12" r="4" fill="#eef1f5"/><rect x="16" y="20" width="28" height="25" rx="2" fill="#1d1d1d"/>`;
+    case 'bat':return `<rect x="16" y="10" width="28" height="44" rx="4" fill="#222"/><rect x="16" y="34" width="28" height="20" rx="4" fill="#c9a227"/><circle cx="24" cy="8" r="3.5" fill="#c9a227"/><circle cx="36" cy="8" r="3.5" fill="#d7dce2"/><text x="30" y="28" font-size="11" font-weight="800" fill="#fff" text-anchor="middle">9V</text>`;
+    case 'dcs':return `<rect x="4" y="12" width="52" height="36" rx="4" fill="#e9e6dd" stroke="#9c9a90"/><rect x="9" y="17" width="30" height="16" rx="2" fill="#0b1a12"/><text x="36" y="29" font-size="9" font-family="Menlo,monospace" font-weight="700" fill="#5dff7a" text-anchor="end">12.0</text><circle cx="44" cy="22" r="4" fill="#cfcdc5" stroke="#888"/><circle cx="16" cy="41" r="3.5" fill="#d62828"/><circle cx="28" cy="41" r="3.5" fill="#222"/>`;
+    case 'trafo':return `<rect x="6" y="12" width="48" height="34" rx="4" fill="#5b6470"/><rect x="10" y="16" width="20" height="26" rx="2" fill="#3a414a"/>${[0,1,2,3].map(k=>`<line x1="12" y1="${20+k*6}" x2="28" y2="${20+k*6}" stroke="#c98a3d" stroke-width="2.2"/>`).join('')}<text x="43" y="28" font-size="7" font-weight="700" fill="#fff" text-anchor="middle">12V</text><text x="43" y="37" font-size="6" fill="#ddd" text-anchor="middle">~</text>${[0,1,2].map(k=>`<circle cx="${34+k*7}" cy="50" r="2.4" fill="${k===1?'#222':'#e0b000'}"/>`).join('')}`;
+  }
+  return '';
+}
+let PCAT='all',PQ='',PCOL=false;try{PCOL=localStorage.getItem('simPartsCol')==='1';}catch(e){}
+const norm=s=>s.toLocaleLowerCase('tr').replace(/[ıi̇]/g,'i');
+function renderParts(){
+  const el=$('#parts');if(!el)return;
+  $('.row2').classList.toggle('pcol',PCOL);
+  if(!el.dataset.built){
+    el.dataset.built='1';
+    el.innerHTML=`<div class="phead"><div class="psel"><span>Bileşenler</span><select id="pCat"><option value="all">Tümü</option>${PCATS.map(c=>`<option value="${c[0]}">${c[0]}</option>`).join('')}</select></div><button class="ptog" id="pTog" title="Paneli daralt/genişlet"></button></div>
+     <div class="pvert" id="pVert">Bileşenler</div>
+     <div class="psearch"><input id="pSearch" placeholder="Ara" autocomplete="off"><svg viewBox="0 0 24 24"><circle cx="10" cy="10" r="7"/><path d="M15 15l6 6"/></svg></div>
+     <div class="plist" id="pList"></div>`;
+    $('#pCat').onchange=()=>{PCAT=$('#pCat').value;renderParts();};
+    $('#pSearch').oninput=()=>{PQ=$('#pSearch').value;renderParts();};
+    const tog=()=>{PCOL=!PCOL;try{localStorage.setItem('simPartsCol',PCOL?'1':'0');}catch(e){}renderParts();};
+    $('#pTog').onclick=tog;$('#pVert').onclick=tog;
+  }
+  $('#pTog').textContent=PCOL?'❮':'❯';
+  const q=norm(PQ.trim());let h='';
+  PCATS.forEach(([cat,list])=>{
+    if(PCAT!=='all'&&PCAT!==cat)return;
+    const items=list.filter(t=>!q||norm(PNAME[t]).includes(q)||norm(TYPES[t].name).includes(q));
+    if(!items.length)return;
+    h+=`<h4>${cat}</h4><div class="pgrid">${items.map(t=>`<div class="pc${PLACE&&PLACE.type===t?' on':''}" data-pt="${t}" title="${TYPES[t].info.replace(/"/g,'&quot;')}"><svg viewBox="0 0 60 60">${partIcon(t)}</svg><span>${PNAME[t]}</span></div>`).join('')}</div>`;
+  });
+  h+=h?`<p class="phint">Kartı breadboard'a sürükleyip bırak ya da karta tıklayıp sonra bir deliğe tıkla. R: döndür, Esc: bitir.</p>`:`<div class="pempty">"${PQ}" ile eşleşen bileşen yok.</div>`;
+  $('#pList').innerHTML=h;
+  $('#pList').querySelectorAll('[data-pt]').forEach(c=>c.addEventListener('pointerdown',e=>{e.preventDefault();c.setPointerCapture(e.pointerId);NEWDRAG={t:c.dataset.pt,x0:e.clientX,y0:e.clientY,moved:false};}));
+}
+function addFlex(t,at){
+  const k=ELS.filter(e=>e.body).length,b=at||[10,130+(k%3)*104];
+  const el=addEl(t,{body:[Math.max(0,Math.min(780,b[0])),Math.max(100,Math.min(380,b[1]))]});
+  el.pins.forEach((p,i)=>{p.x=el.body[0]+20+i*40;p.y=el.body[1]-14;});
+  needBuild=true;select(el);say(`${PNAME[t]} eklendi. Uçlarındaki gri tutamakları sürükleyip deliklere tak.`,'ok');
+}
+function clickPart(t){
+  TOOL=null;WIRE0=null;
+  if(!TYPES[t].rigid){PLACE=null;addFlex(t);}
+  else{PLACE=PLACE&&PLACE.type===t?null:{type:t,rot:0};say(PLACE?`${PNAME[t]}: breadboard'da bir deliğe tıklayarak yerleştir (R: döndür, Esc: bitir).`:'');}
+  renderTools();
+}
+let NEWDRAG=null;
+const dragImg=$('#dragImg');
+function overBoard(e){const r=board.getBoundingClientRect();return e.clientX>=r.left&&e.clientX<=r.right&&e.clientY>=r.top&&e.clientY<=r.bottom;}
+document.addEventListener('pointermove',e=>{
+  if(!NEWDRAG)return;const d=NEWDRAG;
+  if(!d.moved&&Math.hypot(e.clientX-d.x0,e.clientY-d.y0)>6){d.moved=true;dragImg.innerHTML=`<svg viewBox="0 0 60 60">${partIcon(d.t)}</svg>`;dragImg.style.display='block';}
+  if(!d.moved)return;
+  const ob=overBoard(e);dragImg.style.transform=`translate(${e.clientX-26}px,${e.clientY-26}px)`;dragImg.style.opacity=ob&&TYPES[d.t].rigid?'0':'.85';
+  if(ob&&TYPES[d.t].rigid){const p=bpt(e),h=holeAt(p.x,p.y,10);if(h){const tmp={id:0,type:d.t,props:Object.assign({},TYPES[d.t].props),rot:PLACE&&PLACE.type===d.t?PLACE.rot:0,at:h,st:{}};ghost(`<g opacity=".6" pointer-events="none">${drawEl(tmp)}</g>`);hlNet(h);}else{ghost('');}}
+  else ghost('');
+});
+document.addEventListener('pointerup',e=>{
+  if(!NEWDRAG)return;const d=NEWDRAG;NEWDRAG=null;dragImg.style.display='none';ghost('');hlNet(null);
+  if(!d.moved){clickPart(d.t);return;}
+  if(!overBoard(e)){say('Bileşeni breadboard\'ın üzerine bırakmalısın.','warn');return;}
+  const p=bpt(e);
+  if(TYPES[d.t].rigid){const h=holeAt(p.x,p.y,10);if(!h){say('Bir deliğin üzerine bırak (delikler bırakınca yeşil yanar).','warn');return;}const el=addEl(d.t,{at:h,rot:0});needBuild=true;select(el);PLACE=null;TOOL=null;renderTools();say(`${PNAME[d.t]} ${holeName(h)} deliğine yerleştirildi. R ile döndürebilir, sürükleyerek taşıyabilirsin.`,'ok');}
+  else{PLACE=null;addFlex(d.t,[p.x-20,p.y-20]);renderTools();}
+});
+
 /* ---------- Araç çubuğu ve özellikler ---------- */
 const PALETTE=['res','led','diode','schottky','zener','ccap','ecap','ind','pot','btn','sw','mos','bat','dcs','trafo'];
 function renderTools(){
-  $('#tools').innerHTML=PALETTE.map(t=>`<button class="tb${PLACE&&PLACE.type===t?' on':''}" data-t="${t}" title="${TYPES[t].info}">${TYPES[t].name}</button>`).join('')+
-   `<span class="sep"></span><button class="tb${TOOL==='wire'?' on':''}" id="tWire">✎ Kablo</button><select id="tCol">${WIRECOLS.map(c=>`<option value="${c}" ${c===WIRECOL?'selected':''} style="background:${c}">${{'#e63946':'kırmızı','#1d4ed8':'mavi','#111':'siyah','#2a9d3a':'yeşil','#f4a300':'turuncu','#ffffff':'beyaz','#8338ec':'mor'}[c]}</option>`).join('')}</select>
+  renderParts();
+  $('#tools').innerHTML=`<button class="tb${TOOL==='wire'?' on':''}" id="tWire">✎ Kablo</button><select id="tCol">${WIRECOLS.map(c=>`<option value="${c}" ${c===WIRECOL?'selected':''} style="background:${c}">${{'#e63946':'kırmızı','#1d4ed8':'mavi','#111':'siyah','#2a9d3a':'yeşil','#f4a300':'turuncu','#ffffff':'beyaz','#8338ec':'mor'}[c]}</option>`).join('')}</select>
    <button class="tb" id="tUndo" title="Geri al (Cmd/Ctrl+Z)">↶ Geri al</button><button class="tb" id="tRedo" title="İleri al (Cmd/Ctrl+Shift+Z veya Ctrl+Y)">↷ İleri al</button>
    <button class="tb" id="tRot">⟳ Döndür (R)</button><button class="tb" id="tDel">🗑 Sil (Del)</button><button class="tb" id="tClr">Tahtayı temizle</button>
    <span class="sep"></span><span class="cablab">Cihaz kabloları:</span><span class="seg">${[['normal','Normal'],['trans','Şeffaf'],['hide','Gizli']].map(([k,t])=>`<button class="tb${CABLEMODE===k?' on':''}" data-cab="${k}" title="${k==='hide'?'Kablolar görünmez ama bağlantı ve ölçüm sürer':k==='trans'?'Kablolar soluk görünür':'Kablolar normal görünür'}">${t}</button>`).join('')}</span>`;
-  $('#tools').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{
-    const t=b.dataset.t;TOOL=null;WIRE0=null;
-    if(!TYPES[t].rigid){const k=ELS.filter(e=>e.body).length;const el=addEl(t,{body:[10+(k%2)*0,140+(k%3)*100]});el.body=[10,130+(k%3)*104];el.pins.forEach((p,i)=>{p.x=el.body[0]+20+i*40;p.y=el.body[1]-14;});needBuild=true;select(el);PLACE=null;say(`${TYPES[t].name} eklendi. Uçlarındaki gri tutamakları sürükleyip deliklere tak.`,'ok');}
-    else{PLACE=PLACE&&PLACE.type===t?null:{type:t,rot:0};say(PLACE?`${TYPES[t].name}: breadboard'a tıklayarak yerleştir (R: döndür, Esc: bitir).`:'');}
-    renderTools();
-  });
   $('#tools').querySelectorAll('[data-cab]').forEach(b=>b.onclick=()=>{CABLEMODE=b.dataset.cab;try{localStorage.setItem('simCableMode',CABLEMODE);}catch(e){}VER++;renderTools();say({normal:'Cihaz kabloları normal görünümde.',trans:'Cihaz kabloları şeffaf: altlarındaki elemanlar görünür. Bağlantılar ve ölçümler aynen sürüyor.',hide:'Cihaz kabloları gizlendi: bağlantılar ve ölçümler aynen sürüyor. Prob ve klips uçları breadboard\'da görünmeye devam eder; değerleri sağdaki "Ölçüm izleme" panelinden takip edebilirsin.'}[CABLEMODE]);});
   $('#tUndo').onclick=undo;$('#tRedo').onclick=redo;renderHistBtns();
   $('#tWire').onclick=()=>{TOOL=TOOL==='wire'?null:'wire';PLACE=null;WIRE0=null;ghost('');renderTools();if(TOOL)say('Kablo: önce bir deliğe, sonra diğer deliğe tıkla. Renk listeden seçilir. Esc: çık.');};
@@ -2183,7 +2290,7 @@ TABS.forEach((t,idx)=>{const b=document.createElement('button');b.textContent=t.
 function openTab(idx){
   chips.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===idx));
   const t=TABS[idx];freshAll();Object.keys(X).forEach(k=>delete X[k]);
-  if(t.i==='free'){G2.mode='free';renderFree();say('Serbest kurma: araç çubuğundan eleman seç ve breadboard\'a yerleştir.');}
+  if(t.i==='free'){G2.mode='free';renderFree();say('Serbest kurma: sağdaki Bileşenler panelinden bir kartı breadboard\'a sürükle.');}
   else{G2.mode='exp';G2.exp=t.i;G2.step=0;G2.done={};EXPS[t.i].setup();needBuild=true;VER++;renderLesson();say('');}
   histReset();
 }
@@ -2253,7 +2360,7 @@ function renderMonitor(){
 }
 function renderFree(){
   $('#lessonCard').innerHTML=`<div class="stepno">Serbest kurma</div><h2>Kendi devreni kur</h2>
-   <p>1) Üstteki araç çubuğundan bir eleman seç, breadboard'a tıkla (R ile döndür, Esc ile bitir). 2) "Kablo" ile iki delik arasına atlama kablosu çek. 3) Pil/DC kaynak/trafo uçlarını, cihaz problarını ve klipslerini sürükleyip deliklere tak.</p>
+   <p>1) Sağdaki <b>Bileşenler</b> panelinden bir kartı breadboard'a sürükleyip bırak ya da karta tıklayıp sonra bir deliğe tıkla (R ile döndür, Esc ile bitir). Kategori listesi ve arama kutusuyla elemanı hızla bul. 2) "Kablo" ile iki delik arasına atlama kablosu çek. 3) Pil/DC kaynak/trafo uçlarını, cihaz problarını ve klipslerini sürükleyip deliklere tak.</p>
    <p style="font-size:.88rem;color:var(--sub)">İpucu: Bir deliğin üzerine gelince o deliğe bağlı tüm delikler yeşil yanar. Elemanı seçip Del ile silebilirsin. Gerçekteki gibi: seri direnç olmadan LED yanar, aşırı güçte direnç yanar, akım konumunda gerilim ölçersen sigorta atar.</p>`;
 }
 

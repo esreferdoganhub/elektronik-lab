@@ -45,7 +45,34 @@ css = r"""
   nav#chips button.on{background:var(--accent);color:#fff;border-color:var(--accent);}
   #bench{position:relative;}
   .row1{display:grid;grid-template-columns:minmax(0,.84fr) minmax(0,1fr);gap:12px;margin-bottom:12px;}
-  .row2{display:grid;grid-template-columns:200px minmax(0,1fr) 340px;gap:12px;align-items:start;}
+  .row2{display:grid;grid-template-columns:180px minmax(0,1fr) 236px 310px;gap:12px;align-items:start;}
+  .row2.pcol{grid-template-columns:180px minmax(0,1fr) 44px 310px;}
+  .parts{background:#eef1f5;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 24px);position:sticky;top:12px;}
+  .parts .phead{display:flex;align-items:stretch;border-bottom:1px solid var(--line);background:#f7f8fa;}
+  .parts .psel{flex:1;padding:6px 10px;min-width:0;}
+  .parts .psel span{display:block;font-size:.7rem;color:var(--sub);}
+  .parts .psel select{width:100%;border:none;background:transparent;font-size:.95rem;font-weight:600;color:var(--ink);padding:0;cursor:pointer;}
+  .parts .ptog{width:40px;border:none;border-left:1px solid var(--line);background:#f7f8fa;cursor:pointer;font-size:1.1rem;color:#334e68;}
+  .parts .ptog:hover{background:#e9eef4;}
+  .parts .psearch{position:relative;margin:10px;}
+  .parts .psearch input{width:100%;border:1px solid var(--line);border-radius:6px;padding:7px 30px 7px 10px;font-size:.9rem;background:#fff;}
+  .parts .psearch svg{position:absolute;right:9px;top:8px;width:16px;height:16px;stroke:#9aa5b1;fill:none;stroke-width:2.2;}
+  .parts .plist{overflow-y:auto;padding:0 10px 12px;}
+  .parts h4{margin:10px 2px 6px;font-size:.95rem;font-weight:600;color:#1d8fd1;border-bottom:1px solid #d5dde6;padding-bottom:3px;}
+  .parts .pgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;}
+  .parts .pc{background:#fff;border:1px solid transparent;border-radius:8px;padding:6px 2px 5px;text-align:center;cursor:grab;user-select:none;-webkit-user-select:none;touch-action:none;transition:border-color .12s,box-shadow .12s;}
+  .parts .pc:hover{border-color:#8fc6ea;box-shadow:0 2px 6px rgba(29,111,165,.12);}
+  .parts .pc.on{border-color:#1d8fd1;box-shadow:0 0 0 2px #cfe7f7;}
+  .parts .pc.on span{color:#1d8fd1;}
+  .parts .pc svg{width:44px;height:44px;display:block;margin:0 auto 2px;pointer-events:none;}
+  .parts .pc span{font-size:.68rem;line-height:1.15;color:#333;display:block;min-height:2.3em;pointer-events:none;}
+  .parts .phint{font-size:.72rem;color:var(--sub);margin:8px 2px 0;}
+  .parts .pempty{font-size:.8rem;color:var(--sub);padding:10px 2px;}
+  .row2.pcol .parts .psel,.row2.pcol .parts .psearch,.row2.pcol .parts .plist{display:none;}
+  .row2.pcol .parts .ptog{width:100%;border-left:none;height:44px;}
+  .row2.pcol .parts .pvert{display:block;}
+  .parts .pvert{display:none;writing-mode:vertical-rl;transform:rotate(180deg);font-size:.8rem;font-weight:600;color:#334e68;margin:10px auto;cursor:pointer;}
+  #dragImg{position:fixed;left:0;top:0;width:52px;height:52px;pointer-events:none;z-index:50;display:none;opacity:.85;filter:drop-shadow(0 4px 8px rgba(0,0,0,.25));}
   .inst,.boardWrap{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:6px;}
   .ilabel{font-size:.74rem;color:var(--sub);text-transform:uppercase;letter-spacing:.05em;margin:2px 6px 4px;}
   .inst svg,#board{width:100%;height:auto;display:block;user-select:none;touch-action:none;}
@@ -95,8 +122,9 @@ css = r"""
   .blink{animation:bl 1s steps(2,start) infinite;} @keyframes bl{50%{opacity:0}}
   .knobwrap{cursor:grab;} .scb{cursor:pointer;transition:transform .08s,filter .08s;} .scb.scp{transform:translate(0,2px);filter:brightness(.8);} .scknob{cursor:grab;}
   .clickable{cursor:pointer;} .knob{cursor:grab;} .beepicon{animation:bp .25s infinite alternate;} @keyframes bp{to{opacity:.25}}
-  @media (max-width:1250px){.row2{grid-template-columns:180px minmax(0,1fr);} .side{grid-column:1 / -1;}}
-  @media (max-width:800px){.row1{grid-template-columns:1fr;} .row2{grid-template-columns:1fr;}}
+  @media (max-width:1440px){.row2{grid-template-columns:170px minmax(0,1fr) 224px;} .row2.pcol{grid-template-columns:170px minmax(0,1fr) 44px;} .side{grid-column:1 / -1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start;}}
+  @media (max-width:1000px){.row2,.row2.pcol{grid-template-columns:150px minmax(0,1fr);} .parts{grid-column:1 / -1;position:static;max-height:none;}}
+  @media (max-width:800px){.row1{grid-template-columns:1fr;} .row2,.row2.pcol{grid-template-columns:1fr;} .parts{position:static;max-height:none;}}
 """
 
 html = f"""<!DOCTYPE html>
@@ -135,6 +163,7 @@ html = f"""<!DOCTYPE html>
           <g id="meterG" transform="translate(30 5)"></g>
         </svg></div>
       <div class="boardWrap"><div id="tools"></div><svg id="board" viewBox="0 0 930 455" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      <aside class="parts" id="parts"></aside>
       <aside class="side">
         <div class="card" id="lessonCard"></div>
         <div id="fb"></div>
@@ -145,6 +174,7 @@ html = f"""<!DOCTYPE html>
       </aside>
     </div>
     <svg id="overlay" xmlns="http://www.w3.org/2000/svg"></svg>
+    <div id="dragImg"></div>
   </div>
 </div>
 <script>
