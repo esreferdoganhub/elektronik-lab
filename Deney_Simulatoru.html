@@ -121,6 +121,7 @@
   [data-btn],[data-row],[data-chsel]{cursor:pointer;} [data-btn]{transition:transform .08s,filter .08s;} [data-btn].pressed{transform:translate(0,2.5px);filter:brightness(.78);}
   .blink{animation:bl 1s steps(2,start) infinite;} @keyframes bl{50%{opacity:0}}
   .knobwrap{cursor:grab;} .scb{cursor:pointer;transition:transform .08s,filter .08s;} .scb.scp{transform:translate(0,2px);filter:brightness(.8);} .scknob{cursor:grab;}
+  .meter-label{font:700 12px "Segoe UI",Arial,sans-serif;fill:#e8e8e8;}
   .clickable{cursor:pointer;} .knob{cursor:grab;} .beepicon{animation:bp .25s infinite alternate;} @keyframes bp{to{opacity:.25}}
   @media (max-width:1440px){.row2{grid-template-columns:170px minmax(0,1fr) 224px;} .row2.pcol{grid-template-columns:170px minmax(0,1fr) 44px;} .side{grid-column:1 / -1;display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));align-items:start;}}
   @media (max-width:1000px){.row2,.row2.pcol{grid-template-columns:150px minmax(0,1fr);} .parts{grid-column:1 / -1;position:static;max-height:none;}}
