@@ -179,6 +179,7 @@ html = f"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deney Simülatörü</title>
 <style>{css}</style>
+<script src="site-nav.js"></script>
 </head>
 <body>
 <div class="app">
