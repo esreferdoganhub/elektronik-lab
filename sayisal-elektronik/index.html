@@ -69,9 +69,31 @@ body.wide #right{display:none}
 .meter-label{font:700 12px "Segoe UI",Arial,sans-serif;fill:#e8e8e8}.clickable{cursor:pointer}.beepicon{animation:bp .25s infinite alternate}@keyframes bp{to{opacity:.25}}
 .halo{display:none}
 #right{flex:0 0 clamp(360px,33vw,540px);min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--line);background:#f7f9fb}
-#tabs{display:flex;gap:4px;padding:6px 8px;overflow-x:auto;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 auto}
-#tabs button{white-space:nowrap;padding:4px 9px;border-radius:5px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-size:12px}
-#tabs button.act{background:var(--acc);color:#fff;border-color:var(--acc);font-weight:600}
+#tabs{display:flex;gap:6px;padding:7px 8px;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 auto;align-items:center;position:relative}
+#tabs .seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden;flex:0 0 auto}
+#tabs .seg button{border:0;background:var(--panel2);padding:5px 10px;font-size:12px;cursor:pointer;white-space:nowrap}
+#tabs .seg button+button{border-left:1px solid var(--line)}
+#tabs .seg button.act{background:var(--acc);color:#fff;font-weight:600}
+#mpick{flex:1;min-width:0;display:flex;align-items:center;gap:7px;border:1px solid var(--line);border-radius:7px;background:#fff;padding:4px 8px;cursor:pointer;text-align:left}
+#mpick:hover,#mpick.open{border-color:var(--acc);box-shadow:0 0 0 3px #1d6fa51f}
+#mpick .no{flex:0 0 auto;background:var(--acc);color:#fff;border-radius:5px;font-size:11px;font-weight:700;padding:1px 6px}
+#mpick .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-weight:600;font-size:12.5px}
+#mpick .cv{flex:0 0 auto;color:var(--mut);transition:transform .15s}#mpick.open .cv{transform:rotate(180deg)}
+#tabs .nav{flex:0 0 auto;width:28px;height:28px;border:1px solid var(--line);border-radius:7px;background:var(--panel2);cursor:pointer;font-size:15px;line-height:1}
+#tabs .nav:hover{border-color:var(--acc)}
+#mgrid{position:absolute;left:8px;right:8px;top:calc(100% + 4px);z-index:50;background:#fff;border:1px solid var(--line);border-radius:10px;box-shadow:0 14px 34px #0f1e3233;padding:8px;display:none;max-height:min(70vh,560px);overflow:auto}
+#mgrid.open{display:block}
+#mgrid input{width:100%;border:1px solid var(--line);border-radius:7px;padding:6px 9px;font:inherit;margin-bottom:7px}
+#mgrid .gh{font-size:11px;color:var(--mut);margin:2px 2px 6px}
+#mgrid .gg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:6px}
+#mgrid .mc{display:flex;gap:8px;align-items:flex-start;text-align:left;border:1px solid var(--line);border-radius:8px;background:#fafbfc;padding:7px 8px;cursor:pointer;font:inherit}
+#mgrid .mc:hover{border-color:var(--acc);background:#f1f7fc}
+#mgrid .mc.act{border-color:var(--acc);background:#e8f1f9;box-shadow:inset 3px 0 0 var(--acc)}
+#mgrid .mc .no{flex:0 0 auto;min-width:30px;text-align:center;background:#e3eefa;color:#0d3b57;border-radius:5px;font-size:11px;font-weight:700;padding:2px 4px}
+#mgrid .mc.act .no{background:var(--acc);color:#fff}
+#mgrid .mc b{display:block;font-size:12.5px;line-height:1.25}
+#mgrid .mc small{display:block;color:var(--mut);font-size:11px;line-height:1.3;margin-top:2px}
+#mgrid .none{color:var(--mut);font-size:12px;padding:8px}
 #exp{flex:0 0 auto;max-height:190px;overflow:auto;padding:8px 10px;background:#ffffff;border-bottom:1px solid var(--line)}
 #exp h3{margin:0 0 4px;font-size:12px;color:var(--acc)}
 #exp .cat{color:var(--mut);font-size:11.5px;columns:2;column-gap:18px;margin:0 0 6px;padding-left:16px}
@@ -93,8 +115,6 @@ body.wide #right{display:none}
 #scope{width:100%;height:112px;display:block;background:#04100a;border-radius:4px;margin-top:3px}
 .pk.ch1{border-color:#b89a12}.pk.ch2{border-color:#1b8fb0}.ch1t{color:#f5d742}.ch2t{color:#3fd0ff}
 #dmm select,#scopeBox select{background:#fff;border:1px solid var(--line);border-radius:4px;padding:1px 3px;font-size:11.5px}
-#tabs .set{background:#f4f6f9;border-color:#c5d0dc}#tabs .set.act{background:#4b78c2;border-color:#4b78c2;color:#fff}
-#tabs .sep{width:1px;background:var(--line);margin:0 4px;flex:0 0 auto}
 .orow.dcinfo{display:block;line-height:1.45;color:var(--txt);font-size:12px}.dcinfo b{color:var(--acc)}.dcinfo table{border-collapse:collapse;margin-top:4px}.dcinfo td{border:1px solid var(--line);padding:1px 6px;font-size:11.5px}
 .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 svg#wires{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:20;overflow:visible}
@@ -1293,13 +1313,33 @@ function mount(n){
       for(const k in probe)if(probe[k]>=0&&J[probe[k]].id.startsWith(pre))probe[k]=-1;updProbeUI();
       O_.el.style.display='none';O_.opts.style.display='none';O_.mounted=false;if(rm.length)toast(`${O_.fam==='dc'?'DC modül '+O_.dcn:'Modül '+mounted} çıkarıldı; ona bağlı ${rm.length} kablo söküldü.`,2500)}
     mounted=n;const M=modBy(n);M.el.style.display='';M.opts.style.display='';M.mounted=true;
-    $$('#tabs button[data-n]').forEach(b=>b.classList.toggle('act',+b.dataset.n===n));setSet(M.fam==='dc'?'dc':'dig')}
+    setSet(M.fam==='dc'?'dc':'dig');pickUI()}
   renderExp()}
-function setSet(k){$$('#tabs .set').forEach(b=>b.classList.toggle('act',b.dataset.set===k));$$('#tabs button[data-n]').forEach(b=>b.style.display=((+b.dataset.n>100)===(k==='dc'))?'':'none')}
+/* ---------- modül seçici: set seçimi + açılır, aranabilir modül ızgarası ---------- */
+const DIGT={1:'Lojik kapılar',2:'Boole cebri ve De Morgan',3:'Flip-floplar',4:'Sayıcılar',5:'Toplayıcı ve çıkarıcılar',6:'Kaydediciler (shift register)',7:'Hafıza: RAM ve EEPROM',8:'Karakter jeneratörü, nokta matris',9:'Multiplexer / demultiplexer',10:'ADC ve DAC',11:'555 zamanlayıcı uygulamaları'};
+let SET='dig';
+const mName=M=>M.fam==='dc'?M.title:DIGT[M.id];
+const mNo=M=>M.fam==='dc'?'DC '+M.dcn:'DIG '+M.id;
+const mSub=M=>(M.fam==='dc'?M.cat.map(c=>c.t):CAT[M.id]).slice(0,3).join(' · ');
+const setMods=k=>MODS.filter(M=>(M.fam==='dc')===(k==='dc'));
+function setSet(k){SET=k;$$('#tabs .seg button').forEach(b=>b.classList.toggle('act',b.dataset.set===k))}
+function pickUI(){const M=modBy(mounted);if(!M)return;$('#mpick .no').textContent=mNo(M);$('#mpick .nm').textContent=mName(M);$('#mpick').title=mNo(M)+' – '+mName(M)+' (değiştirmek için tıklayın)'}
+function gridOpen(on){const g=$('#mgrid');on=on===undefined?!g.classList.contains('open'):on;g.classList.toggle('open',on);$('#mpick').classList.toggle('open',on);if(on){renderGrid('');const i=$('#mgrid input');i.value='';setTimeout(()=>i.focus(),0)}}
+function renderGrid(q){const gg=$('#mgrid .gg');gg.innerHTML='';q=q.toLocaleLowerCase('tr');
+  const L=setMods(SET).filter(M=>!q||(mNo(M)+' '+mName(M)+' '+(M.fam==='dc'?M.cat.map(c=>c.t):CAT[M.id]).join(' ')).toLocaleLowerCase('tr').includes(q));
+  $('#mgrid .gh').textContent=(SET==='dc'?'Y-0016-DC · DC devre modülleri':'Y-0016 DIG · dijital devre modülleri')+' — takmak istediğiniz modülü seçin';
+  if(!L.length){gg.append(h('div',{class:'none'},'Eşleşen modül yok.'));return}
+  for(const M of L){const b=h('button',{class:'mc'+(M.id===mounted?' act':'')},h('span',{class:'no'},mNo(M)),h('span',{},h('b',{},mName(M)),h('small',{},mSub(M))));b.onclick=()=>{gridOpen(false);mount(M.id)};gg.append(b)}}
+function step_(d){const L=setMods(modBy(mounted).fam==='dc'?'dc':'dig'),i=L.findIndex(M=>M.id===mounted);mount(L[(i+d+L.length)%L.length].id)}
 function buildTabs(){const t=$('#tabs');
-  [['dig','Dijital (DIG)'],['dc','DC Devreler']].forEach(([k,l])=>{const b=h('button',{class:'set','data-set':k,title:k==='dc'?'Y-0016-DC DC Devreler Uygulama Modülleri (14 modül)':'Y-0016 DIG Dijital Devreler Modülleri (11 modül)'},l);b.onclick=()=>{if((k==='dc')!==(mounted>100))mount(k==='dc'?101:1);else setSet(k)};t.append(b)});
-  t.append(h('span',{class:'sep'}));
-  for(const M of MODS){const dc=M.fam==='dc';const b=h('button',{'data-n':M.id,title:dc?M.title:CAT[M.id][0]},dc?'DC '+M.dcn:'Modül '+M.id);b.onclick=()=>mount(M.id);t.append(b)}}
+  const seg=h('div',{class:'seg'});[['dig','Dijital'],['dc','DC Devreler']].forEach(([k,l])=>{const b=h('button',{'data-set':k,title:k==='dc'?'Y-0016-DC: 14 DC devre modülü':'Y-0016 DIG: 11 dijital devre modülü'},l);
+    b.onclick=e=>{e.stopPropagation();setSet(k);gridOpen(true)};seg.append(b)});
+  const pk=h('button',{id:'mpick'},h('span',{class:'no'}),h('span',{class:'nm'}),h('span',{class:'cv'},'▾'));pk.onclick=e=>{e.stopPropagation();setSet(modBy(mounted).fam==='dc'?'dc':'dig');gridOpen()};
+  const pv=h('button',{class:'nav',title:'Önceki modül'},'‹'),nx=h('button',{class:'nav',title:'Sonraki modül'},'›');pv.onclick=()=>step_(-1);nx.onclick=()=>step_(1);
+  const g=h('div',{id:'mgrid'});const inp=h('input',{type:'search',placeholder:'Modül ya da deney ara… (ör. sayıcı, zener, osilatör)'});inp.oninput=()=>renderGrid(inp.value);
+  inp.onkeydown=e=>{if(e.key==='Enter'){const f=$('#mgrid .mc');if(f)f.click()}if(e.key==='Escape')gridOpen(false)};
+  g.append(inp,h('div',{class:'gh'}),h('div',{class:'gg'}));g.addEventListener('pointerdown',e=>e.stopPropagation());
+  t.append(seg,pk,pv,nx,g);document.addEventListener('pointerdown',()=>gridOpen(false))}
 function renderExp(){
   const n=mounted,M=modBy(n),e=$('#exp');e.innerHTML='';
   if(M.fam==='dc'){
