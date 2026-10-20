@@ -28,7 +28,7 @@ var path=decodeURIComponent(location.pathname);
 var cur='home';
 if(/sayisal-elektronik(\/|\/index\.html)?$/.test(path))cur='dig';
 else{var f=path.split('/').pop();SEQ.forEach(function(p){if(p.href===f)cur=p.k;});}
-var DARK=cur==='dig',APP=cur==='dig';
+var DARK=false,APP=cur==='dig';
 
 /* ---- stiller (ilk boyamadan önce) ---- */
 var css=''+
