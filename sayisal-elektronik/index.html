@@ -38,7 +38,7 @@ button,select{font:inherit;color:inherit}
 body.wide #right{display:none}
 #trainer{position:absolute;left:0;top:0;width:1px;height:1px;transform-origin:0 0;user-select:none;-webkit-user-select:none;touch-action:none}
 /* ===== tezgâh kartları ===== */
-.tcard{position:absolute;border-radius:7px;background:#0b0c0f;box-shadow:0 8px 22px #000b,0 0 0 1.5px #2f3640}
+.tcard{position:absolute;border-radius:7px;background:#f2f2ed;box-shadow:0 8px 22px #000b,0 0 0 1.5px #b9b9b1}
 .tcard.inst{background:#d9d6cc}
 .tcard.drag{box-shadow:0 14px 34px #000d,0 0 0 2px var(--acc);z-index:5}
 .tin{position:absolute;transform-origin:50% 50%;border-radius:7px;overflow:hidden}
@@ -256,7 +256,7 @@ const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
 const TR=$('#trainer');
 /* ===== Panel çizimi: tamamen vektör, fotoğraf yok ===== */
 (function drawPanel(){
-const P=[],W='#e9ecef';
+const P=[],W='#1c1d1f';
 const R=(x,y,w,h,o='')=>P.push(`<rect x="${x}" y="${y}" width="${w}" height="${h}" ${o}/>`);
 const box=(x,y,w,h,sw=1.4)=>R(x,y,w,h,`rx="2.5" fill="none" stroke="${W}" stroke-width="${sw}"`);
 const tx=(x,y,t,s=7.5,a='middle',c=W,extra='')=>P.push(`<text x="${x}" y="${y}" font-size="${s}" text-anchor="${a}" fill="${c}" ${extra}>${t}</text>`);
@@ -267,12 +267,12 @@ const ring=(x,y,r=19)=>{P.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="none"
 const knobLab=(x,y,r=19)=>{tx(x-r+4,y+r+4,'0',5.5);tx(x+r-3,y+r+4,'MAX',5.5)};
 // çerçeve
 P.push(`<defs><linearGradient id="fr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2447b8"/><stop offset="1" stop-color="#14297a"/></linearGradient>
-<linearGradient id="pn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#101114"/><stop offset="1" stop-color="#08080a"/></linearGradient>
+<linearGradient id="pn" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f7f7f3"/><stop offset="1" stop-color="#e9e9e2"/></linearGradient>
 <pattern id="holes" width="7.2" height="7.2" patternUnits="userSpaceOnUse"><rect width="7.2" height="7.2" fill="#e4e4de"/><circle cx="3.6" cy="3.6" r="1.15" fill="#3a3a3a"/></pattern>
 <radialGradient id="glass" cx="38%" cy="32%" r="75%"><stop offset="0" stop-color="#ff9a8c"/><stop offset=".45" stop-color="#b3201a"/><stop offset="1" stop-color="#4a0805"/></radialGradient>
 <radialGradient id="disc" cx="40%" cy="35%" r="75%"><stop offset="0" stop-color="#fff"/><stop offset=".6" stop-color="#c9cdd2"/><stop offset="1" stop-color="#7d838b"/></radialGradient></defs>`);
 R(0,0,768,799,'rx="14" fill="url(#fr)"');R(3,3,762,793,'rx="12" fill="none" stroke="#4a68d6" stroke-width="1.5" opacity=".6"');
-R(18,26,732,746,'rx="5" fill="url(#pn)" stroke="#000" stroke-width="2"');
+R(18,26,732,746,'rx="5" fill="url(#pn)" stroke="#9a9a92" stroke-width="2"');
 // kulplar / vidalar
 R(112,4,80,16,'rx="6" fill="#6f7782" stroke="#222"');R(575,4,90,16,'rx="6" fill="#6f7782" stroke="#222"');R(110,778,70,18,'rx="6" fill="#6f7782" stroke="#222"');R(585,778,70,18,'rx="6" fill="#6f7782" stroke="#222"');
 for(const[x,y]of[[40,16],[724,16],[40,782],[724,782]])P.push(`<circle cx="${x}" cy="${y}" r="7" fill="#222"/><circle cx="${x}" cy="${y}" r="4.5" fill="#8a9099"/>`);
@@ -310,7 +310,7 @@ tx(73,236,'ON/ON',7);tx(73,245,'SWITCH',7);tx(136,236,'ON/0/ON',7);tx(136,245,'S
 for(const[x0,jx]of[[73,106],[136,169]]){pa(`M${x0+14} 276H${jx-14}`,W,1);pa(`M${jx-14} 263H${jx-8}M${jx-14} 277H${jx-8}M${jx-14} 291H${jx-8}M${jx-14} 263V291`,W,1)}
 tx(266,229,'POTANTIOMETERS',7);
 for(const[kx,ky,a,w,b,l]of[[210,248,198,215,231,'1K'],[263,249,249,267,282,'10K'],[316,251,301,318,333,'100K']]){ring(kx,ky);tx(a,277,'0',5.5);tx(b,277,'MAX',5.5);
-  R(a+5,281,(b-a)-10,7,'fill="none" stroke="#e9ecef" stroke-width="1"');ln(a,292,a,288);ln(b,292,b,288);ln(w,292,w,285);tx(w,303,l,7.5)}
+  R(a+5,281,(b-a)-10,7,'fill="none" stroke="#1c1d1f" stroke-width="1"');ln(a,292,a,288);ln(b,292,b,288);ln(w,292,w,285);tx(w,303,l,7.5)}
 // ---- FUNCTION GENERATOR
 box(48,308,297,78);tx(196,319,'FUNCTION GENERATOR',7.5);
 ar(75,336,0);pa('M75 332V347',W,1);P.push(`<path d="M71 340L75 333L79 340z" fill="${W}"/>`);tx(75,383,'ON/OFF',6.5);
@@ -324,37 +324,37 @@ ln(279,351,279,364);ln(302,351,302,364);ln(326,351,326,364);tx(279,377,'GND',6);
 box(348,203,390,85);ln(348,218,738,218);tx(543,213,'OUTPUT UNITS',7.5);ln(437,218,437,288);ln(539,218,539,288);ln(628,218,628,288);
 tx(393,227,'RELAYS (DC 12V)',6.5);tx(488,227,'LAMPS (12V)',6.5);tx(584,227,'BUZZER',7);tx(682,227,'SPEAKER',7);
 for(const x of[373,387,401,415]){ln(x,238,x,248);ln(x,270,x,279)}
-R(370,248,50,22,'rx="2" fill="#141414" stroke="#e9ecef"');R(376,252,10,14,'fill="none" stroke="#e9ecef"');pa('M392 255H410M392 263H410',W,1);pa('M396 255L404 252M396 263L404 260',W,1);
+R(370,248,50,22,'rx="2" fill="#ffffff" stroke="#1c1d1f"');R(376,252,10,14,'fill="none" stroke="#1c1d1f"');pa('M392 255H410M392 263H410',W,1);pa('M396 255L404 252M396 263L404 260',W,1);
 for(const[a,b,cx]of[[450,464,455],[482,497,487],[514,529,520]]){ln(a,238,b,238);ln(a,279,b,279);ln(a,238,a,250);ln(a,270,a,279);ln(b,238,b,279,'#0000',1);
-  P.push(`<circle cx="${cx}" cy="260" r="11" fill="#2a2a2a" stroke="#e9ecef"/><circle cx="${cx}" cy="260" r="8.4" fill="url(#glass)"/>`)}
-ln(571,245,571,252);ln(571,269,571,276);R(576,252,8,16,'fill="none" stroke="#e9ecef"');tx(580,244,'+',8,'start');tx(580,282,'–',8,'start');
-P.push(`<circle cx="600" cy="260" r="19" fill="none" stroke="#0d0d0d" stroke-width="5"/><circle cx="600" cy="260" r="19" fill="none" stroke="#e9ecef" stroke-width="1"/><circle cx="600" cy="260" r="14" fill="url(#disc)"/><circle cx="600" cy="260" r="3" fill="#555"/>`);
-ln(667,245,667,252);ln(667,270,667,276);R(662,252,6,15,'fill="none" stroke="#e9ecef"');pa('M668 252L680 245V274L668 267',W,1);tx(674,243,'+',7,'start');tx(674,282,'–',7,'start');tx(715,258,'8 OHM',6.5,'middle');tx(715,267,'2W',6.5,'middle');
+  P.push(`<circle cx="${cx}" cy="260" r="11" fill="#2a2a2a" stroke="#1c1d1f"/><circle cx="${cx}" cy="260" r="8.4" fill="url(#glass)"/>`)}
+ln(571,245,571,252);ln(571,269,571,276);R(576,252,8,16,'fill="none" stroke="#1c1d1f"');tx(580,244,'+',8,'start');tx(580,282,'–',8,'start');
+P.push(`<circle cx="600" cy="260" r="19" fill="none" stroke="#0d0d0d" stroke-width="5"/><circle cx="600" cy="260" r="19" fill="none" stroke="#1c1d1f" stroke-width="1"/><circle cx="600" cy="260" r="14" fill="url(#disc)"/><circle cx="600" cy="260" r="3" fill="#555"/>`);
+ln(667,245,667,252);ln(667,270,667,276);R(662,252,6,15,'fill="none" stroke="#1c1d1f"');pa('M668 252L680 245V274L668 267',W,1);tx(674,243,'+',7,'start');tx(674,282,'–',7,'start');tx(715,258,'8 OHM',6.5,'middle');tx(715,267,'2W',6.5,'middle');
 // ---- HEX DECODER
 box(348,290,192,96);tx(358,299,'TTL',6.5,'start');tx(396,319,'HEXEDECIMAL',6.5);tx(396,328,'DECODER',6.5);
-R(446,299,56,42,'rx="2" fill="#7c7f82" stroke="#e9ecef"');
+R(446,299,56,42,'rx="2" fill="#7c7f82" stroke="#1c1d1f"');
 pa('M379 350V344H435V350M453 350V346H509V350M472 346V342',W,1);ln(474,341,474,346);ln(379,350,379,360);
 for(const[x,t]of[[379,'A1'],[397,'B1'],[416,'C1'],[434,'D1'],[453,'A2'],[472,'B2'],[491,'C2'],[509,'D2']]){ln(x,350,x,361);tx(x,382,t,6.5)}
 // ---- LOGIC INDICATOR
 box(542,290,196,96);tx(554,299,'TTL',6.5,'start');
-[569,587,606,624,643,661,680,698].forEach((x,n)=>{ln(x,304,x,309);R(x-3,309,6,18,'fill="none" stroke="#e9ecef"');ln(x,327,x,337);ln(x,355,x,361);tx(x,382,7-n,7)});
-R(558,337,148,18,'rx="2" fill="none" stroke="#e9ecef"');tx(632,349,'LOGIC INDICATOR',7);
+[569,587,606,624,643,661,680,698].forEach((x,n)=>{ln(x,304,x,309);R(x-3,309,6,18,'fill="none" stroke="#1c1d1f"');ln(x,327,x,337);ln(x,355,x,361);tx(x,382,7-n,7)});
+R(558,337,148,18,'rx="2" fill="none" stroke="#1c1d1f"');tx(632,349,'LOGIC INDICATOR',7);
 // ---- OSILATÖR
 box(48,392,192,152);tx(60,401,'TTL',6.5,'start');
-R(103,453,67,47,'fill="none" stroke="#e9ecef" stroke-width="1.3"');tx(137,471,'OSCILLATOR',6.5);pa('M108 493H116V484H124V493H132V484H140V493H148V484H156V493H164',W,1);
+R(103,453,67,47,'fill="none" stroke="#1c1d1f" stroke-width="1.3"');tx(137,471,'OSCILLATOR',6.5);pa('M108 493H116V484H124V493H132V484H140V493H148V484H156V493H164',W,1);
 ar(88,473);ln(72,473,88,473);ln(75,505,75,492);
 for(const[t,y,x0,y0]of[['100KHz',415,137,453],['10KHz',439,153,453],['1KHz',464,170,464],['100Hz',488,170,488],['10Hz',513,153,500],['1Hz',537,137,500]]){
   if(x0===170)pa(`M170 ${y}H203`);else pa(`M${x0} ${y0}V${y}H203`);ar(190,y);tx(212,y-10,t,6.5)}
 tx(73,540,'ON/OFF',6.5);
 // ---- PULS
-box(48,548,192,52);tx(60,557,'TTL',6.5,'start');R(121,558,47,35,'fill="none" stroke="#e9ecef"');tx(144,578,'PULSE',7);
+box(48,548,192,52);tx(60,557,'TTL',6.5,'start');R(121,558,47,35,'fill="none" stroke="#1c1d1f"');tx(144,578,'PULSE',7);
 ar(105,575);ln(94,575,105,575);tx(83,596,'BUTTON',6);pa('M168 565H203M168 589H203');ar(190,565);ar(190,589);tx(197,583,'OUT',6);
 pa('M222 560H226V565M222 590V586H226');
 box(48,603,192,66);tx(60,612,'TTL',6.5,'start');tx(67,653,'BUTTON',6);ar(92,635);ln(80,635,92,635);ring(114,639,18);knobLab(114,639,18);tx(114,667,'FREQUENCY',6);
-R(152,612,48,46,'fill="none" stroke="#e9ecef"');tx(176,631,'ONE',6.5);tx(176,639,'SHUTTLE',6.5);tx(176,647,'PULSE',6.5);
+R(152,612,48,46,'fill="none" stroke="#1c1d1f"');tx(176,631,'ONE',6.5);tx(176,639,'SHUTTLE',6.5);tx(176,647,'PULSE',6.5);
 ar(142,639);ln(132,639,142,639);pa('M200 621H203M200 649H203');ar(204,621);ar(204,649);tx(224,637,'OUT',6);
 box(48,672,192,73);tx(60,681,'TTL',6.5,'start');
-R(138,676,38,62,'fill="none" stroke="#e9ecef"');tx(157,696,'SET',6.5);tx(157,704,'RESET',6.5);tx(157,712,'PRESET',6.5);tx(157,720,'PULSE',6.5);
+R(138,676,38,62,'fill="none" stroke="#1c1d1f"');tx(157,696,'SET',6.5);tx(157,704,'RESET',6.5);tx(157,712,'PRESET',6.5);tx(157,720,'PULSE',6.5);
 for(const y of[686,723]){tx(65,y+2.5,'0',7);tx(102,y+2.5,'1',7);ar(112,y);ln(104,y,112,y);ln(176,y,184,y);ln(190,y,202,y);ln(176,y+2,176,y+2)}
 tx(215,706,'OUT',6);
 // ---- BINARY SWITCH
@@ -821,15 +821,15 @@ function modPower(M){
   if(M.fam==='555'){M.on=ok&&v>=4.5&&v<=16;M.thr=Math.max(1.4,v/3)}
   else if(M.fam==='cmos'){M.on=ok&&v>=3&&v<=15;M.hi=v;M.lo=.02;M.thr=v/2}
   else{M.on=ok&&v>=4.5&&v<=5.5;M.hi=v*.68;M.lo=.2;M.thr=2.0}}
-function GX(){const P=[],W='#e9ecef';const g={P,
+function GX(){const P=[],W='#1c1d1f';const g={P,
   R:(x,y,w,hh,o='')=>P.push(`<rect x="${x}" y="${y}" width="${w}" height="${hh}" ${o}/>`),
   box:(x,y,w,hh,sw=1.1)=>g.R(x,y,w,hh,`rx="2" fill="none" stroke="${W}" stroke-width="${sw}"`),
   tx:(x,y,t,s=6,a='middle',ex='')=>P.push(`<text x="${x}" y="${y}" font-size="${s}" text-anchor="${a}" fill="${W}" ${ex}>${t}</text>`),
   ov:(x,y,t,s=5.5,a='middle')=>P.push(`<text x="${x}" y="${y}" font-size="${s}" text-anchor="${a}" fill="${W}" text-decoration="overline">${t}</text>`),
   ln:(x1,y1,x2,y2,w=.9)=>P.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${W}" stroke-width="${w}"/>`),
   pa:(d,w=.9,f='none')=>P.push(`<path d="${d}" stroke="${W}" stroke-width="${w}" fill="${f}" stroke-linejoin="round" stroke-linecap="round"/>`),
-  ic:(x,y,w,hh,l1,l2)=>{g.R(x,y,w,hh,`fill="#030303" stroke="${W}" stroke-width="1.1"`);if(l1)g.tx(x+w/2,y+hh/2+(l2?-2:2),l1,6.5);if(l2)g.tx(x+w/2,y+hh/2+8,l2,6.5)},
-  ring:(x,y)=>P.push(`<circle cx="${x}" cy="${y}" r="5" fill="#000" stroke="#8d939b" stroke-width="2.2" opacity=".55"/>`)};
+  ic:(x,y,w,hh,l1,l2)=>{g.R(x,y,w,hh,`fill="#ffffff" stroke="${W}" stroke-width="1.1"`);if(l1)g.tx(x+w/2,y+hh/2+(l2?-2:2),l1,6.5);if(l2)g.tx(x+w/2,y+hh/2+8,l2,6.5)},
+  ring:(x,y)=>P.push(`<circle cx="${x}" cy="${y}" r="5" fill="#fff" stroke="#8d939b" stroke-width="2.2" opacity=".8"/>`)};
   return g}
 const GBODY={AND:'M0 -7H10A7 7 0 0 1 10 7H0Z',OR:'M-1 -7Q9 -7 20 0Q9 7 -1 7Q3 0 -1 -7Z',XOR:'M-1 -7Q9 -7 20 0Q9 7 -1 7Q3 0 -1 -7ZM-4 -7Q0 0 -4 7',NOT:'M0 -6L15 0L0 6Z'};
 function gsym(g,type,x,y,ins,xin,xout,yout){
@@ -837,7 +837,7 @@ function gsym(g,type,x,y,ins,xin,xout,yout){
   const end={AND:17,OR:20,XOR:20,NOT:15}[base];const n=ins.length;const off=n===1?[0]:n===2?[-4,4]:[-5,0,5];
   g.pa(GBODY[base].replace(/([MLHVQA])(-?[\d.]+) (-?[\d.]+)/g,(m,c,a,b)=>m),1);
   g.P[g.P.length-1]=g.P[g.P.length-1].replace('<path','<path transform="translate('+x+','+y+')"');
-  if(bub)g.P.push(`<circle cx="${x+end+2.2}" cy="${y}" r="2.2" fill="none" stroke="#e9ecef" stroke-width="1"/>`);
+  if(bub)g.P.push(`<circle cx="${x+end+2.2}" cy="${y}" r="2.2" fill="none" stroke="#1c1d1f" stroke-width="1"/>`);
   const xi=base==='AND'||base==='NOT'?0:base==='XOR'?-3:2;
   ins.forEach((jy,i)=>{if(jy==null)return;const by=y+off[i];g.pa(`M${xin+6} ${jy}H${x-5}V${by}H${x+xi}`)});
   const ys=yout==null?y:yout;g.pa(`M${x+end+(bub?4.4:0)} ${y}H${xout-8}V${ys}H${xout-6}`)}
@@ -847,9 +847,9 @@ function makeModule(n,code,fam,build){
   const el=h('div',{class:'modp',style:`left:${MX}px;top:${MY}px;width:${MW}px;height:${MH}px;display:none`});TR.append(el);
   const M={id:n,fam,on:false,vccV:0,hi:3.4,lo:.2,thr:2,comps:[],el,mounted:false,opts:h('div',{class:'mopt',style:'display:none'})};MODS.push(M);PW.push(M);
   const g=GX();
-  g.R(0,0,MW,MH,'rx="6" fill="#0b0b0d" stroke="#000" stroke-width="2"');g.R(2,2,MW-4,MH-4,'rx="5" fill="none" stroke="#2c2d33" stroke-width="1.2"');
-  for(const[x,y]of[[6,6],[336,6],[6,344],[336,344],[171,344]])g.P.push(`<circle cx="${x}" cy="${y}" r="2.2" fill="#222" stroke="#444" stroke-width=".6"/>`);
-  g.tx(14,18,'YF',11,'start','font-style="italic" font-weight="900"');g.tx(33,13,'YILDIRIM',8,'start','font-weight="800"');g.tx(33,20,'ELEKTRONİK',4.6,'start');
+  g.R(0,0,MW,MH,'rx="6" fill="#f4f4ef" stroke="#9a9a92" stroke-width="2"');g.R(2,2,MW-4,MH-4,'rx="5" fill="none" stroke="#d6d6cf" stroke-width="1.2"');
+  for(const[x,y]of[[6,6],[336,6],[6,344],[336,344],[171,344]])g.P.push(`<circle cx="${x}" cy="${y}" r="2.4" fill="#c9c9c2" stroke="#8a8a84" stroke-width=".6"/>`);
+  g.tx(14,18,'YF',11,'start','font-style="italic" font-weight="900" fill="#1f4aa8"');g.tx(33,13,'YILDIRIM',8,'start','font-weight="800"');g.tx(33,20,'ELEKTRONİK',4.6,'start');
   g.tx(330,18,code,8,'end');g.box(8,24,326,318,1.3);
   const Jk=(cid,name,label,x,y,pos)=>{const id=cid?`m${n}:${cid}:${name}`:`m${n}:${name}`;const i=mkJack(el,'jack s',id,`M${n} ${label.replace(/<[^>]+>/g,'')}`,null,`left:${x}px;top:${y}px`);
     if(pos){const ovl=label.startsWith('~'),t=ovl?label.slice(1):label,f=ovl?g.ov:g.tx;
@@ -874,7 +874,7 @@ function ffBox(g,Jk,M,cid,x,y,mode,lab,cp,sw){ // cp: 'top'|'bot' CLR/PRST yeri;
   else{p.d=Jk(cid,'d','D',x-26,y+8,'l');p.clk=Jk(cid,'clk','CLK',x-26,y+24,'l');g.ln(x-20,y+8,x,y+8);g.ln(x-20,y+24,x,y+24);g.pa(`M${x} ${y+21}L${x+4} ${y+24}L${x} ${y+27}`)}
   p.q=Jk(cid,'q','Q',x+90,y+6,'r');p.qn=Jk(cid,'qn','~Q',x+90,y+24,'r');g.ln(x+56,y+6,x+84,y+6);g.ln(x+56,y+24,x+84,y+24);
   const yy=cp==='top'?y-8:y+38,xc=sw?x+44:x+12,xp=sw?x+12:x+44;p.clr=Jk(cid,'clr','~CLR',xc,yy,sw?'r':'l');p.pre=Jk(cid,'pre','~PRST',xp,yy,sw?'l':'r');
-  const by=cp==='top'?y-2:y+32,bub=(cx,cy)=>g.P.push(`<circle cx="${cx}" cy="${cy}" r="1.8" fill="#030303" stroke="#e9ecef" stroke-width=".9"/>`);
+  const by=cp==='top'?y-2:y+32,bub=(cx,cy)=>g.P.push(`<circle cx="${cx}" cy="${cy}" r="1.8" fill="#ffffff" stroke="#1c1d1f" stroke-width=".9"/>`);
   g.ln(x+12,cp==='top'?yy+6:by+2,x+12,cp==='top'?by-2:yy-6);g.ln(x+44,cp==='top'?yy+6:by+2,x+44,cp==='top'?by-2:yy-6);bub(x+12,by);bub(x+44,by);bub(x+58,y+24);
   M.comps.push(new JK(M,p,mode));return p}
 function icPins(g,Jk,cid,x,y,w,hh,left,right,xl,xr,label,label2){ // pin adları IC içine
@@ -919,7 +919,7 @@ makeModule(2,'Y-0016/002D','ttl',(M,g,Jk,pwr)=>{
   pwr(19,36,19,332)});
 // ---------------- MODÜL 3: FLİP-FLOPLAR ----------------
 makeModule(3,'Y-0016/003D','ttl',(M,g,Jk,pwr)=>{
-  const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.8" fill="#e9ecef"/>`);
+  const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.8" fill="#1c1d1f"/>`);
   g.ln(171,24,171,342);g.ln(8,183,334,183);
   g.tx(90,36,'RS FLIP-FLOP',6.5);
   const latch=(type,id,yA,names,labels)=>{const yB=yA+32,xi=type==='NOR'?2:0,p={};
@@ -957,7 +957,7 @@ makeModule(4,'Y-0016/004D','ttl',(M,g,Jk,pwr)=>{
   pwr(16,30,16,172)});
 // ---------------- MODÜL 5: TOPLAYICI / ÇIKARICI ----------------
 makeModule(5,'Y-0016/005D','ttl',(M,g,Jk,pwr,led)=>{
-  const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.8" fill="#e9ecef"/>`);
+  const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.8" fill="#1c1d1f"/>`);
   g.ln(171,24,171,342);g.ln(8,183,334,183);
   g.tx(90,46,'HALF ADDER',6.5);
   let p={a:Jk('ha','a','A',30,84,'l'),b:Jk('ha','b','B',30,124,'l')};const ha=new LOGIC(M,p,'ha');M.comps.push(ha);
@@ -974,7 +974,7 @@ makeModule(5,'Y-0016/005D','ttl',(M,g,Jk,pwr,led)=>{
   led(138,250,'',()=>hs.r[0]);led(138,278,'',()=>hs.r[1]);g.tx(147,252,'DIFF',5.5,'start');g.tx(147,280,'BORROW',5.5,'start');
   g.tx(252,205,'FULL SUBTRACTOR',6.5);
   p={a:Jk('fs','a','A',186,234,'l'),b:Jk('fs','b','B',186,262,'l'),c:Jk('fs','c','C',186,304,'l')};const fs=new LOGIC(M,p,'fs');M.comps.push(fs);
-  const sub=(x,y,w,hh,t)=>{g.R(x,y,w,hh,'fill="#030303" stroke="#e9ecef" stroke-width="1.1"');g.tx(x+w/2,y+hh/2-1,'HALF',5.5);g.tx(x+w/2,y+hh/2+6,t,5.5)};
+  const sub=(x,y,w,hh,t)=>{g.R(x,y,w,hh,'fill="#ffffff" stroke="#1c1d1f" stroke-width="1.1"');g.tx(x+w/2,y+hh/2-1,'HALF',5.5);g.tx(x+w/2,y+hh/2+6,t,5.5)};
   sub(202,224,30,46,'SUB I');sub(250,276,30,36,'SUB II');
   g.pa('M192 234H202M192 262H202M192 304H250M232 262H240V284H250');
   gsym(g,'OR',294,238,[null,null],0,328);g.pa('M232 234H296M280 284H288V242H296M280 304H318');
@@ -1021,9 +1021,9 @@ makeModule(8,'Y-0016/008D','ttl',(M,g,Jk,pwr)=>{
   g.tx(150,32,'OBTAINING SLIDING LETTERS AND NUMBERS BY USING',5.6);g.tx(150,40,'CHARACTER GENERATORS AND POINT MATRIX',5.6);g.tx(263,44,'ASCII CHARACTER CODE',4.6);
   const cin=[0,1,2,3,4,5].map(k=>Jk('cg','c'+k,'B'+(k+1),40,56+14*k,'l'));g.tx(40,48,'ROW DATA',5);
   g.ic(60,50,54,80,'ASCII','CHAR. GEN.');g.ic(122,50,42,80,'ROW','DECODER');for(let k=0;k<6;k++)g.ln(46,56+14*k,60,56+14*k);
-  g.R(170,46,54,72,'rx="2" fill="#050505" stroke="#e9ecef"');g.ln(114,90,122,90);g.ln(164,90,170,90);
+  g.R(170,46,54,72,'rx="2" fill="#ffffff" stroke="#1c1d1f"');g.ln(114,90,122,90);g.ln(164,90,170,90);
   const dots=[];for(let r=0;r<7;r++)for(let c=0;c<5;c++){const l=mkLed(M.el,179+9*c,55+9*r,'sm');dots.push(l)}
-  g.R(232,46,62,46,'rx="2" fill="#2a2a2a" stroke="#e9ecef"');const sg=cvIn(M.el,235,49,56,40);
+  g.R(232,46,62,46,'rx="2" fill="#2a2a2a" stroke="#1c1d1f"');const sg=cvIn(M.el,235,49,56,40);
   g.ic(170,124,54,14,'ROW DRIVER');g.ic(232,98,62,14,'DIGIT DRIVER');g.ln(197,118,197,124);g.ln(263,92,263,98);
   g.pa('M87 130V150H197V138M143 130V150');g.pa('M224 131H263V112');
   const names=['LINE DOWN','LINE UP','CHAR LEFT','CHAR RIGHT','OK'],arrows=['⇩','⇧','⇦','⇨','↵'];
@@ -1076,7 +1076,7 @@ makeModule(9,'Y-0016/009D','ttl',(M,g,Jk,pwr)=>{
 makeModule(10,'Y-0016/010D','ttl',(M,g,Jk,pwr,led,jled)=>{
   // katalog: üstte ADC0804 (P1/P2 potlar, S1, ANALOG INPUT, sağda DIGITAL OUTPUTS soket+LED), başlıklar bölüm altında;
   // altta DAC0800 (D0–D7 üstten), 741 çıkış katı, ±12V ve 0 solda
-  const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.5" fill="#e9ecef"/>`);
+  const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.5" fill="#1c1d1f"/>`);
   g.ln(8,208,334,208);
   g.tx(171,203,'ANALOG TO DIGITAL CONVERTER',6.5);
   g.P.push(`<circle cx="48" cy="134" r="17" fill="none" stroke="#9aa0a8" stroke-width="2.4" stroke-dasharray="1 1.4"/><circle cx="108" cy="116" r="17" fill="none" stroke="#9aa0a8" stroke-width="2.4" stroke-dasharray="1 1.4"/>`);
@@ -1108,8 +1108,8 @@ makeModule(10,'Y-0016/010D','ttl',(M,g,Jk,pwr,led,jled)=>{
 // ---------------- MODÜL 11: 555 ----------------
 makeModule(11,'Y-0016/011D','555',(M,g,Jk,pwr,led,jled)=>{
   // katalog: üstte ASTABLE (sol) / MONOSTABLE (sağ), ortada BISTABLE (tam genişlik), altta 555 FREE APPLICATIONS
-  const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.6" fill="#e9ecef"/>`);
-  const res=(x,y1,y2)=>{const m=(y1+y2)/2,hh=Math.min(6,(y2-y1)/2-1);g.ln(x,y1,x,m-hh);g.ln(x,m+hh,x,y2);g.R(x-2.5,m-hh,5,2*hh,'fill="none" stroke="#e9ecef" stroke-width=".9"')};
+  const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.6" fill="#1c1d1f"/>`);
+  const res=(x,y1,y2)=>{const m=(y1+y2)/2,hh=Math.min(6,(y2-y1)/2-1);g.ln(x,y1,x,m-hh);g.ln(x,m+hh,x,y2);g.R(x-2.5,m-hh,5,2*hh,'fill="none" stroke="#1c1d1f" stroke-width=".9"')};
   const cap=(x,y1,y2)=>{const m=(y1+y2)/2;g.ln(x,y1,x,m-2);g.ln(x,m+2,x,y2);g.ln(x-4,m-2,x+4,m-2,1.3);g.ln(x-4,m+2,x+4,m+2,1.3)};
   const ring=(x,y,r)=>g.P.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#9aa0a8" stroke-width="2.2" stroke-dasharray="1 1.4"/>`);
   g.ln(171,24,171,124);g.ln(8,124,334,124);g.ln(8,225,334,225);
@@ -1143,7 +1143,7 @@ makeModule(11,'Y-0016/011D','555',(M,g,Jk,pwr,led,jled)=>{
   // 555 FREE APPLICATIONS (555, pot, dirençler, kondansatörler görsel; LED ve buton çalışır)
   g.tx(51,234,'555',6);g.tx(51,242,'FREE APPLICATIONS',6);
   g.P.push(`<circle cx="104" cy="256" r="13" fill="#1b1c1f" stroke="#9aa0a8" stroke-width="2"/><circle cx="104" cy="256" r="7" fill="#d9dcdf" stroke="#555"/><line x1="104" y1="256" x2="108" y2="250" stroke="#222" stroke-width="1.6"/>`);g.tx(86,258,'1M',5,'end');
-  g.ring(141,238);g.ring(141,254);g.ring(141,270);g.pa('M136 238H133V246M133 262V270H136');g.R(130.5,246,5,16,'fill="none" stroke="#e9ecef" stroke-width=".9"');g.pa('M136 254H137.5M136 252L136 256L139 254Z');
+  g.ring(141,238);g.ring(141,254);g.ring(141,270);g.pa('M136 238H133V246M133 262V270H136');g.R(130.5,246,5,16,'fill="none" stroke="#1c1d1f" stroke-width=".9"');g.pa('M136 254H137.5M136 252L136 256L139 254Z');
   g.ring(196,238);g.ring(196,270);res(196,243,265);g.tx(188,256,'10K',4.8,'end');
   g.ic(221,262,60,36,'555');
   [8,7,6,5].forEach((n,i)=>{const x=228+15.5*i;g.ring(x,245);g.tx(x,236,n,5);g.ln(x,250,x,262)});[1,2,3,4].forEach((n,i)=>{const x=228+15.5*i;g.ring(x,316);g.tx(x,330,n,5);g.ln(x,298,x,311)});
