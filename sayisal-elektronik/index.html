@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Y-0016 Sayısal Tasarım Laboratuvarı</title>
+<title>Y-0016 Elektronik Laboratuvarı</title>
 <style>
 :root{
   --bg:#0d1117;--panel:#161b22;--panel2:#1c232d;--line:#2d3744;--txt:#e6edf3;--mut:#8b98a8;--acc:#f2b705;--ok:#3fb950;--bad:#f85149;
@@ -53,13 +53,18 @@ body.wide #right{display:none}
 #mods{flex:1;overflow:auto;padding:12px;scroll-behavior:smooth}
 #dock{flex:0 0 auto;display:flex;gap:10px;padding:8px;background:var(--panel);border-top:1px solid var(--line);align-items:stretch}
 .inst{background:#0b0f15;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
-#dmm{width:210px;flex:0 0 auto}
+#dmm{width:218px;flex:0 0 auto}
 #dmm .rd{font:600 26px/1.1 ui-monospace,Menlo,Consolas,monospace;color:#7CFC8A;background:#06100a;border-radius:4px;padding:4px 8px;text-align:right;letter-spacing:1px;margin:4px 0}
 #dmm .row{display:flex;gap:4px;flex-wrap:wrap}
 .pk{font-size:11px;padding:2px 7px}
 .pk.red{border-color:#b33}
 #scopeBox{flex:1;min-width:0}
-#scope{width:100%;height:96px;display:block;background:#04100a;border-radius:4px}
+#scope{width:100%;height:112px;display:block;background:#04100a;border-radius:4px;margin-top:3px}
+.pk.ch1{border-color:#b89a12}.pk.ch2{border-color:#1b8fb0}.ch1t{color:#f5d742}.ch2t{color:#3fd0ff}
+#dmm select,#scopeBox select{background:#111;border:1px solid #444;border-radius:4px;padding:1px 3px;font-size:11.5px}
+#tabs .set{background:#0f1720;border-color:#3b4b60}#tabs .set.act{background:#4b78c2;border-color:#4b78c2;color:#fff}
+#tabs .sep{width:1px;background:var(--line);margin:0 4px;flex:0 0 auto}
+.orow.dcinfo{display:block;line-height:1.45;color:#c9d4e2;font-size:12px}.dcinfo b{color:var(--acc)}.dcinfo table{border-collapse:collapse;margin-top:4px}.dcinfo td{border:1px solid var(--line);padding:1px 6px;font-size:11.5px}
 .row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 svg#wires{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:20;overflow:visible}
 svg#wires .h{pointer-events:all;cursor:pointer}
@@ -144,7 +149,7 @@ body.pick,body.pick *{cursor:crosshair!important}
 </defs></svg>
 
 <div id="top">
-  <h1>Y-0016 Temel Elektrik-Elektronik Eğitim Seti<small>Sayısal Tasarım Deney Simülatörü · Dijital Devreler Modülleri (Y-0016 DIG)</small></h1>
+  <h1>Y-0016 Temel Elektrik-Elektronik Eğitim Seti<small>Deney simülatörü · Dijital Devreler (Y-0016 DIG) ve DC Devreler (Y-0016-DC) modülleri</small></h1>
   <div class="sp"></div>
   <span class="lbl">Kablo rengi</span>
   <div class="sw" id="swatches"></div>
@@ -161,23 +166,28 @@ body.pick,body.pick *{cursor:crosshair!important}
     <div id="mods"></div>
     <div id="dock">
       <div class="inst" id="dmm">
-        <div class="row"><b>Voltmetre</b><span class="lbl" id="dmmInfo">(−uç: GND)</span></div>
+        <div class="row"><b>Multimetre</b><select id="dmmMode" title="Ölçüm türü"></select></div>
         <div class="rd" id="dmmRd">— V</div>
         <div class="row">
-          <button class="btn pk red" id="dmmP">+ uç seç</button>
-          <button class="btn pk" id="dmmN">− uç seç</button>
-          <button class="btn pk" id="dmmMode">DC</button>
+          <button class="btn pk red" id="dmmP" title="Kırmızı ucu takmak için tıklayın, sonra sokete tıklayın · sağ tık: ucu çıkar">+ uç</button>
+          <button class="btn pk" id="dmmN" title="Siyah ucu takmak için tıklayın, sonra sokete tıklayın · sağ tık: ucu çıkar (GND)">− uç</button>
         </div>
+        <div class="lbl" id="dmmInfo">(−uç: GND)</div>
       </div>
       <div class="inst" id="scopeBox">
         <div class="row"><b>Osiloskop</b>
-          <button class="btn pk" id="scP">Prob seç</button>
-          <span class="lbl" id="scInfo">—</span>
+          <button class="btn pk ch1" id="scP" title="CH1 probu · sağ tık: çıkar">CH1</button><span class="lbl" id="scInfo">—</span>
+          <button class="btn pk ch2" id="scP2" title="CH2 probu · sağ tık: çıkar">CH2</button><span class="lbl" id="scInfo2">—</span>
           <span class="sp"></span>
+          <button class="btn pk" id="scAC" title="Giriş kuplajı: DC / AC (ortalama çıkarılır)">DC</button>
+        </div>
+        <div class="row">
           <span class="lbl">Zaman/böl</span>
-          <select id="scT"><option value="0.0001">0.1 ms</option><option value="0.001">1 ms</option><option value="0.01">10 ms</option><option value="0.1">100 ms</option><option value="0.5" selected>500 ms</option><option value="1">1 s</option></select>
-          <span class="lbl">V/böl</span>
-          <select id="scV"><option>0.5</option><option>1</option><option selected>2</option><option>5</option></select>
+          <select id="scT"><option value="0.00001">10 µs</option><option value="0.00002">20 µs</option><option value="0.00005">50 µs</option><option value="0.0001">0.1 ms</option><option value="0.0002">0.2 ms</option><option value="0.0005">0.5 ms</option><option value="0.001">1 ms</option><option value="0.002">2 ms</option><option value="0.005">5 ms</option><option value="0.01">10 ms</option><option value="0.02">20 ms</option><option value="0.05">50 ms</option><option value="0.1">100 ms</option><option value="0.5" selected>500 ms</option><option value="1">1 s</option></select>
+          <span class="lbl ch1t">CH1 V/böl</span>
+          <select id="scV"><option>0.01</option><option>0.02</option><option>0.05</option><option>0.1</option><option>0.2</option><option>0.5</option><option>1</option><option selected>2</option><option>5</option><option>10</option></select>
+          <span class="lbl ch2t">CH2 V/böl</span>
+          <select id="scV2"><option>0.01</option><option>0.02</option><option>0.05</option><option>0.1</option><option>0.2</option><option>0.5</option><option>1</option><option selected>2</option><option>5</option><option>10</option></select>
         </div>
         <canvas id="scope" width="720" height="192"></canvas>
       </div>
@@ -188,6 +198,9 @@ body.pick,body.pick *{cursor:crosshair!important}
 <div id="tip"></div>
 <div id="toast"></div>
 
+<script src="dc-cozucu.js"></script>
+<script src="dc-moduller.js"></script>
+<script src="dc-moduller-liste.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -321,7 +334,7 @@ svg.innerHTML=P.join('');TR.prepend(svg);
 
 
 /* ---------------- sim state ---------------- */
-const ST={power:false,auto:true,trip:{ttl:false,v12:false},t:0,ratio:1,adjShort:false};
+const ST={power:false,auto:true,trip:{ttl:false,v12:false},t:0,ratio:1,adjShort:false,analog:false};
 const K={coarse:0.147,fine:0,current:0.5,pot1:.5,pot2:.5,pot3:.5,fgf:.3,fga:.5,fgr:2,one:.4,m10pot:.5};
 const SW={fgr:2,bin:Array(12).fill(0),sw1:0,sw2:1,fgon:0,oscon:0,fgwave:0,sr1:0,sr2:0};
 const BTN={pulse:0};
@@ -335,7 +348,7 @@ function mkJack(parent,cls,id,label,node,css){
   const i=J.length;jid[id]=i;J.push({i,id,el:d,node:node||id,label:label||id,wired:0});return i}
 const ji=id=>{if(!(id in jid))throw new Error('soket yok: '+id);return jid[id]};
 let netOf=new Int32Array(0),netN=0,netV=new Float64Array(0),netK=new Int8Array(0),netG=new Uint8Array(0),netOwn=new Int8Array(0),netNom=new Float64Array(0),dirty=true;
-const comps=[],obs=[],fast=[],links=[];
+const comps=[],obs=[],fast=[],links=[];window.comps_=comps;
 function buildNets(){
   const n=J.length,p=Array.from({length:n},(_,i)=>i);
   const f=x=>{while(p[x]!==x){p[x]=p[p[x]];x=p[x]}return x},u=(a,b)=>{a=f(a);b=f(b);if(a!==b)p[a]=b};
@@ -347,7 +360,9 @@ function buildNets(){
   netN=map.size;netV=new Float64Array(netN);netK=new Int8Array(netN);netG=new Uint8Array(netN);netOwn=new Int8Array(netN);netNom=new Float64Array(netN);dirty=false}
 const OWN={gnd:0,ttl:1,v12:2,ac:3,adj:4,fg:5};
 const confl=[0,0,0,0,0,0];
-function resolve(){
+/* DC modülü takılıyken yalnız eğitim setinin kendi bileşenleri (kaynaklar, anahtarlar…) hesaplanır */
+let CL=null,TCOMPS=null;const trainerComps=()=>TCOMPS||(TCOMPS=comps.filter(c=>!MODS.some(M=>M.comps.includes(c))));
+function resolve(){const comps=CL||window.comps_;
   netV.fill(NaN);netK.fill(-1);netG.fill(0);netOwn.fill(-1);
   for(let c=0;c<comps.length;c++){const os=comps[c].outs;if(!os)continue;
     for(let k=0;k<os.length;k++){const o=os[k];if(o.v===null)continue;const n=netOf[o.i];
@@ -359,7 +374,7 @@ function resolve(){
       if(o.k>netK[n]){netK[n]=o.k;netV[n]=o.v}
       else if(o.k===netK[n]&&o.v!==netV[n]&&o.k<2)netV[n]=Math.min(netV[n],o.v)}}}
 const prevV=new Float64Array(0);let pV=prevV;
-function settle(){
+function settle(){const comps=CL||window.comps_;
   if(dirty){buildNets();pV=new Float64Array(netN)}
   for(let it=0;it<14;it++){
     resolve();
@@ -407,7 +422,7 @@ function drawWires(){
   }}
 
 /* ---------------- interaction: wiring / probing ---------------- */
-let pick=null;const probe={dmmP:-1,dmmN:-1,sc:-1};let drag=null,pend=-1;
+let pick=null;const probe={dmmP:-1,dmmN:-1,sc:-1,sc2:-1};let drag=null,pend=-1;
 const tip=$('#tip');
 function jackAt(x,y){let e=document.elementFromPoint(x,y);return e&&e.closest&&e.closest('[data-j]')}
 document.addEventListener('pointerdown',e=>{
@@ -432,7 +447,8 @@ document.addEventListener('pointerup',e=>{
   else{pend=d.from;J[d.from].el.style.outline='2px solid #ffd54f';toast('Şimdi bağlanacak ikinci soketi seçin (iptal: Esc)',2500)}});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){if(pend>=0){J[pend].el.style.outline='';pend=-1}setPick(null)}});
 document.addEventListener('contextmenu',e=>{const jk=e.target.closest&&e.target.closest('[data-j]');if(jk){e.preventDefault();const i=jid[jk.dataset.j];[...wires].filter(w=>w.a===i||w.b===i).forEach(removeWire)}});
-function setPick(k){pick=k;document.body.classList.toggle('pick',!!k);['dmmP','dmmN','scP'].forEach(id=>$('#'+id).classList.toggle('on',pick===(id==='scP'?'sc':id)));if(k)toast('Ölçmek istediğiniz soketin üzerine tıklayın',3000)}
+const PICKID={dmmP:'dmmP',dmmN:'dmmN',scP:'sc',scP2:'sc2'};
+function setPick(k){pick=k;document.body.classList.toggle('pick',!!k);Object.entries(PICKID).forEach(([id,v])=>$('#'+id).classList.toggle('on',pick===v));if(k)toast('Ölçmek istediğiniz soketin üzerine tıklayın',3000)}
 
 /* ---------------- audio ---------------- */
 let AC=null,buzz=null,spk=null;
@@ -571,6 +587,7 @@ let lastV='',lastA='';
 // --- potansiyometreler
 mkKnob('pot1',210,248,17,{title:'1K'});mkKnob('pot2',263,249,17,{title:'10K'});mkKnob('pot3',316,251,17,{title:'100K'});
 const pots=['pot1','pot2','pot3'].map(p=>{const o=O(ji(p+'.w'),0);const c={outs:[o],step(){
+  if(ST.analog){o.v=null;return}
   const l=rdV(ji(p+'.l')),r=rdV(ji(p+'.r'));let vl=l,vr=r;
   if(vl!==vl&&vr!==vr){o.v=null;return}if(vl!==vl)vl=vr;if(vr!==vr)vr=vl;o.v=vl+(vr-vl)*K[p]}};comps.push(c);return c});
 
@@ -640,7 +657,7 @@ function clickSound(){if(!AC)return;const o=AC.createOscillator(),g=AC.createGai
 const lampEls=[455,487,520].map((x,n)=>{const d=h('div',{class:'lamp',style:`left:${x}px;top:260px`});TR.append(d);return d});
 const lampB=[0,0,0].map((_,n)=>{const a=ji(`lp${n+1}.a1`),b=ji(`lp${n+1}.b1`);const o={acc:0,fn:()=>{const A=rdV(a),B=rdV(b);if(A!==A||B!==B)return 0;const d=A-B;return clamp(d*d/144,0,2.2)},set(v){const k=clamp(v,0,1.6);lampEls[n].style.background=k<.02?'transparent':`radial-gradient(circle,#fffbe0 0,#ffe27a ${20+k*15}%,#ffa600 55%,transparent 75%)`;lampEls[n].style.opacity=clamp(.25+k,0,1);lampEls[n].style.boxShadow=k>.1?`0 0 ${8+k*14}px ${k*5}px rgba(255,190,40,${Math.min(.8,k*.7)})`:'none'}};obs.push(o);return o});
 let buzzOn=0,spkF=0,spkA=0;const buzzO={acc:0,fn:()=>{const p=rdV(ji('buz.p')),n=rdV(ji('buz.n'));return(p===p&&n===n&&p-n>=3)?1:0},set(v){buzzOn=v>.5}};obs.push(buzzO);
-const spkS={cross:0,mx:-1e9,mn:1e9,prev:0,sn(){const p=rdV(ji('spk.p')),n=rdV(ji('spk.n'));if(p!==p||n!==n)return;const v=p-n;if(v>0&&this.prev<=0)this.cross++;this.prev=v;if(v>this.mx)this.mx=v;if(v<this.mn)this.mn=v}};
+const spkS={cross:0,mx:-1e9,mn:1e9,prev:0,sn(){const dv=DCX.spkV();let v;if(dv===dv)v=dv;else{const p=rdV(ji('spk.p')),n=rdV(ji('spk.n'));if(p!==p||n!==n)return;v=p-n}if(v>0&&this.prev<=0)this.cross++;this.prev=v;if(v>this.mx)this.mx=v;if(v<this.mn)this.mn=v}};
 const buzzLed=trLed(598,260,'y');
 const indLeds=[7,6,5,4,3,2,1,0].map((k,n)=>{const l=trLed([569,587,606,624,643,661,680,698][n],299);const i=ji('ind.'+k);const o={acc:0,fn:()=>lvl(i),set:b=>l.set(ST.power?b:0)};obs.push(o);return l});
 const gHex=mkCanvas(450,302,47,36);
@@ -803,17 +820,18 @@ function makeModule(n,code,fam,build){
   if(fam!=='555'&&![7,8,10].includes(n)){const fs=h('select');fs.innerHTML='<option value="ttl">TTL (74LS serisi)</option><option value="cmos">CMOS (40xx serisi)</option>';fs.onchange=()=>M.fam=fs.value;
     M.opts.prepend(h('div',{class:'orow'},h('span',{class:'lbl'},'Entegre ailesi (gerilim seviyeleri)'),fs))}
   $('#mods').append(M.opts);return M}
-const gate2=(M,g,Jk,cid,type,x0,gy,xin,xout,Mp)=>{const a=Jk(cid,'a','',xin,gy-6),b=Jk(cid,'b','',xin,gy+6),y=Jk(cid,'y','',xout,gy);gsym(g,type,x0,gy,[gy-6,gy+6],xin,xout);M.comps.push(new Gate(Mp||M,[a,b],y,type))};
+const gate2=(M,g,Jk,cid,type,x0,gy,xin,xout,Mp,d=6)=>{const a=Jk(cid,'a','',xin,gy-d),b=Jk(cid,'b','',xin,gy+d),y=Jk(cid,'y','',xout,gy);gsym(g,type,x0,gy,[gy-d,gy+d],xin,xout);M.comps.push(new Gate(Mp||M,[a,b],y,type))};
 const gate1=(M,g,Jk,cid,type,x0,gy,xin,xout,Mp)=>{const a=Jk(cid,'a','',xin,gy),y=Jk(cid,'y','',xout,gy);if(type==='NAND'){gsym(g,'NAND',x0,gy,[gy,gy],xin,xout);M.comps.push(new Gate(Mp||M,[a,a],y,'NAND'))}else{gsym(g,'NOT',x0,gy,[gy],xin,xout);M.comps.push(new Gate(Mp||M,[a],y,'NOT'))}};
-const gate3=(M,g,Jk,cid,type,x0,gy,xin,xout)=>{const a=Jk(cid,'a','',xin,gy-12),b=Jk(cid,'b','',xin,gy),c=Jk(cid,'c','',xin,gy+12),y=Jk(cid,'y','',xout,gy);gsym(g,type,x0,gy,[gy-12,gy,gy+12],xin,xout);M.comps.push(new Gate(M,[a,b,c],y,type))};
-function ffBox(g,Jk,M,cid,x,y,mode,lab,cp){ // cp: 'top'|'bot' CLR/PRST yeri
+const gate3=(M,g,Jk,cid,type,x0,gy,xin,xout,d=12)=>{const a=Jk(cid,'a','',xin,gy-d),b=Jk(cid,'b','',xin,gy),c=Jk(cid,'c','',xin,gy+d),y=Jk(cid,'y','',xout,gy);gsym(g,type,x0,gy,[gy-d,gy,gy+d],xin,xout);M.comps.push(new Gate(M,[a,b,c],y,type))};
+function ffBox(g,Jk,M,cid,x,y,mode,lab,cp,sw){ // cp: 'top'|'bot' CLR/PRST yeri; sw: PRST solda, CLR sağda (7474 paneli)
   g.ic(x,y,56,30,lab);const p={};
   if(mode==='JK'){p.j=Jk(cid,'j','J',x-26,y+3,'l');p.clk=Jk(cid,'clk','CLK',x-26,y+15,'l');p.k=Jk(cid,'k','K',x-26,y+27,'l');
     for(const[yy]of[[y+3],[y+15],[y+27]])g.ln(x-20,yy,x,yy);g.pa(`M${x} ${y+12}L${x+4} ${y+15}L${x} ${y+18}`)}
   else{p.d=Jk(cid,'d','D',x-26,y+8,'l');p.clk=Jk(cid,'clk','CLK',x-26,y+24,'l');g.ln(x-20,y+8,x,y+8);g.ln(x-20,y+24,x,y+24);g.pa(`M${x} ${y+21}L${x+4} ${y+24}L${x} ${y+27}`)}
   p.q=Jk(cid,'q','Q',x+90,y+6,'r');p.qn=Jk(cid,'qn','~Q',x+90,y+24,'r');g.ln(x+56,y+6,x+84,y+6);g.ln(x+56,y+24,x+84,y+24);
-  const yy=cp==='top'?y-8:y+38;p.clr=Jk(cid,'clr','~CLR',x+12,yy,cp==='top'?'l':'l');p.pre=Jk(cid,'pre','~PRST',x+44,yy,'r');
-  g.ln(x+12,cp==='top'?yy+6:y+30,x+12,cp==='top'?y:yy-6);g.ln(x+44,cp==='top'?yy+6:y+30,x+44,cp==='top'?y:yy-6);
+  const yy=cp==='top'?y-8:y+38,xc=sw?x+44:x+12,xp=sw?x+12:x+44;p.clr=Jk(cid,'clr','~CLR',xc,yy,sw?'r':'l');p.pre=Jk(cid,'pre','~PRST',xp,yy,sw?'l':'r');
+  const by=cp==='top'?y-2:y+32,bub=(cx,cy)=>g.P.push(`<circle cx="${cx}" cy="${cy}" r="1.8" fill="#030303" stroke="#e9ecef" stroke-width=".9"/>`);
+  g.ln(x+12,cp==='top'?yy+6:by+2,x+12,cp==='top'?by-2:yy-6);g.ln(x+44,cp==='top'?yy+6:by+2,x+44,cp==='top'?by-2:yy-6);bub(x+12,by);bub(x+44,by);bub(x+58,y+24);
   M.comps.push(new JK(M,p,mode));return p}
 function icPins(g,Jk,cid,x,y,w,hh,left,right,xl,xr,label,label2){ // pin adları IC içine
   g.ic(x,y,w,hh,label,label2);const p={};const nl=left.length,nr=right.length;
@@ -840,20 +858,21 @@ makeModule(1,'Y-0016/001D','ttl',(M,g,Jk,pwr)=>{
   const Mc={id:'1c',fam:'cmos',vcc:0,gnd:0,host:M,on:false,vccV:0,hi:5,lo:.02,thr:2.5};
   g.tx(171,33,'LOGIC GATES',6.5);g.ln(8,37,334,37);g.ln(117,37,117,342);g.ln(226,37,226,342);g.ln(8,139,334,139);g.ln(8,241,334,241);
   const S2=[['AND GATE','7408','AND','and'],['OR GATE','7432','OR','or'],['NAND GATE','7400','NAND','nand'],['NOR GATE','7402','NOR','nor'],['EX-OR GATE','7486','XOR','xor'],['EX-NOR GATE','74266','XNOR','xnor']];
-  S2.forEach(([t,ic,ty,id],k)=>{const x0=8+109*(k%3),y0=37+102*Math.floor(k/3);g.tx(x0+54,y0+13,t,6);g.tx(x0+54,y0+95,ic,7);
-    gate2(M,g,Jk,id+'1',ty,x0+44,y0+36,x0+18,x0+92);gate2(M,g,Jk,id+'2',ty,x0+44,y0+68,x0+18,x0+92)});
+  // katalog fotoğrafı: kapı adı iki kapının arasında, entegre numarası hücre altında, kapı gövdesinde A/B harfi
+  S2.forEach(([t,ic,ty,id],k)=>{const x0=8+109*(k%3),y0=37+102*Math.floor(k/3),lx=x0+44+(ty==='AND'||ty==='NAND'?7:9);g.tx(x0+54,y0+58,t,6);g.tx(x0+54,y0+95,ic,7);
+    gate2(M,g,Jk,id+'1',ty,x0+44,y0+38,x0+18,x0+92,M,7);gate2(M,g,Jk,id+'2',ty,x0+44,y0+75,x0+18,x0+92,M,7);g.tx(lx,y0+40,'A',4.5);g.tx(lx,y0+77,'B',4.5)});
   const S1=[['TTL INVERTER','7404','NOT','not',M],['NAND INVERTER','7400','NAND','ninv',M],['CMOS INVERTER','4069','NOT','cinv',Mc]];
-  S1.forEach(([t,ic,ty,id,Mp],k)=>{const x0=8+109*k,y0=241;g.tx(x0+54,y0+12,t,6);g.tx(x0+54,y0+97,ic,7);
-    for(let i=0;i<3;i++)gate1(M,g,Jk,id+(i+1),ty,x0+44,y0+28+24*i,x0+18,x0+92,Mp)});
+  S1.forEach(([t,ic,ty,id,Mp],k)=>{const x0=8+109*k,y0=241;g.tx(x0+54,y0+12,t,6);g.tx(x0+54,y0+93,ic,7);
+    for(let i=0;i<3;i++)gate1(M,g,Jk,id+(i+1),ty,x0+44,y0+30+21*i,x0+18,x0+92,Mp)});
   pwr(17,46,17,333);Mc.vcc=M.vcc;Mc.gnd=M.gnd;PW.push(Mc)});
 // ---------------- MODÜL 2: BOOLE CEBRİ ----------------
 makeModule(2,'Y-0016/002D','ttl',(M,g,Jk,pwr)=>{
-  g.tx(171,33,'BOOLE ALGEBRA THEOREMS & DE MORGAN',6.5);g.ln(8,37,334,37);
-  [58,92,126,160].forEach((y,i)=>{gate2(M,g,Jk,'and'+(i+1),'AND',52,y,28,104);gate2(M,g,Jk,'or'+(i+1),'OR',158,y,134,210)});
-  gate3(M,g,Jk,'and3a','AND',268,66,242,318);gate3(M,g,Jk,'and3b','AND',268,128,242,318);gate3(M,g,Jk,'or3a','OR',268,200,242,318);gate3(M,g,Jk,'or3b','OR',268,268,242,318);
-  [214,244,274].forEach((y,i)=>{gate1(M,g,Jk,'not'+(i+1),'NOT',52,y,28,104);gate1(M,g,Jk,'not'+(i+4),'NOT',158,y,134,210)});
-  g.tx(66,186,'AND',6);g.tx(172,186,'OR',6);g.tx(119,300,'INVERTER',6);
-  pwr(17,46,17,333)});
+  // katalog: başlık +5V ile aynı satırda, ayrı çerçeve çizgisi yok; 4×AND, 4×OR, 2×3 inverter, sağda 3 girişli AND/OR
+  g.tx(176,36,'BOOLEN ALGEBRA AND DEMORGAN\'S THEOREM',6.2);
+  [64,104,144,184].forEach((y,i)=>{gate2(M,g,Jk,'and'+(i+1),'AND',64,y,36,108,M,9);gate2(M,g,Jk,'or'+(i+1),'OR',166,y,140,212,M,9)});
+  gate3(M,g,Jk,'and3a','AND',276,89,250,316,19);gate3(M,g,Jk,'and3b','AND',276,159,250,316,19);gate3(M,g,Jk,'or3a','OR',276,230,250,316,19);gate3(M,g,Jk,'or3b','OR',276,300,250,316,19);
+  [245,265,285].forEach((y,i)=>{gate1(M,g,Jk,'not'+(i+1),'NOT',62,y,36,104);gate1(M,g,Jk,'not'+(i+4),'NOT',166,y,140,212)});
+  pwr(19,36,19,332)});
 // ---------------- MODÜL 3: FLİP-FLOPLAR ----------------
 makeModule(3,'Y-0016/003D','ttl',(M,g,Jk,pwr)=>{
   const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.8" fill="#e9ecef"/>`);
@@ -875,19 +894,22 @@ makeModule(3,'Y-0016/003D','ttl',(M,g,Jk,pwr)=>{
   g.pa('M296 66V74L254 110V118H264');g.pa('M304 122V114L248 78V70H264');dot(296,66);dot(304,122);
   g.tx(256,152,'NAND',6);M.comps.push(new SRC(M,p));
   g.tx(90,195,'TTL J-K FLIP-FLOP',6.5);ffBox(g,Jk,M,'jk1',56,216,'JK','FF-1','top');ffBox(g,Jk,M,'jk2',56,270,'JK','FF-2','bot');g.tx(84,262,'7476',6.5);
-  g.tx(252,195,'TTL D FLIP-FLOP',6.5);ffBox(g,Jk,M,'dff1',220,216,'D','FF-1','top');ffBox(g,Jk,M,'dff2',220,270,'D','FF-2','bot');g.tx(248,262,'7474',6.5);
+  g.tx(252,195,'TTL D FLIP-FLOP',6.5);ffBox(g,Jk,M,'dff1',220,216,'D','FF-1','top',1);ffBox(g,Jk,M,'dff2',220,270,'D','FF-2','bot',1);g.tx(248,262,'7474',6.5);
   pwr(16,30,16,334)});
 // ---------------- MODÜL 4: SAYICILAR ----------------
 makeModule(4,'Y-0016/004D','ttl',(M,g,Jk,pwr)=>{
   g.ln(171,24,171,183);g.ln(8,183,334,183);
+  // katalog: entegre numarası gövdenin altında, saat girişlerinde ok; alt bölüm "4 STAGE JK FF" (sol sütun FF-1/FF-2, sağ sütun FF-3/FF-4)
+  const clk=(x,y)=>g.pa(`M${x-6} ${y-3}L${x-1} ${y}L${x-6} ${y+3}`);
   g.tx(96,36,'BINARY COUNTER',6.5);
-  let p=icPins(g,Jk,'c93',62,46,52,116,[['cka','CKA'],['ckb','CKB'],['r1','R0(1)'],['r2','R0(2)']],[['qa','QA'],['qb','QB'],['qc','QC'],['qd','QD']],34,146,'7493');
-  M.comps.push(new C93(M,p));
+  let p=icPins(g,Jk,'c93',66,48,50,112,[['cka','CKA'],['ckb','CKB'],['r1','R0(1)'],['r2','R0(2)']],[['qa','QA'],['qb','QB'],['qc','QC'],['qd','QD']],38,146,'');
+  g.tx(91,154,'7493',6.5);clk(66,62);clk(66,90);M.comps.push(new C93(M,p));
   g.tx(252,36,'7 RIPPLE BINARY COUNTER',6.5);
-  p=icPins(g,Jk,'c4024',226,46,52,116,[['clk','CLK'],['rst','RST']],[1,2,3,4,5,6,7].map(k=>['q'+k,'Q'+k]),198,306,'4024');M.comps.push(new C4024(M,p));
-  g.tx(171,195,'J-K FLIP-FLOP',6.5);
-  [[52,214,'jk1','FF-1','top'],[214,214,'jk2','FF-2','top'],[52,282,'jk3','FF-3','bot'],[214,282,'jk4','FF-4','bot']].forEach(([x,y,id,l,cp])=>ffBox(g,Jk,M,id,x,y,'JK',l,cp));
-  g.tx(80,258,'7476',6);g.tx(242,258,'7476',6);
+  p=icPins(g,Jk,'c4024',222,46,50,124,[['clk','CLK'],['rst','RST']],[1,2,3,4,5,6,7].map(k=>['q'+k,'Q'+k]),200,302,'');
+  g.tx(247,164,'4024',6.5);clk(222,77);M.comps.push(new C4024(M,p));
+  g.tx(171,194,'4 STAGE JK FF',6.5);
+  [[52,214,'jk1','FF-1','top'],[52,282,'jk2','FF-2','bot'],[214,214,'jk3','FF-3','top'],[214,282,'jk4','FF-4','bot']].forEach(([x,y,id,l,cp])=>ffBox(g,Jk,M,id,x,y,'JK',l,cp));
+  g.tx(80,262,'7476',6.5);g.tx(242,262,'7476',6.5);
   pwr(16,30,16,172)});
 // ---------------- MODÜL 5: TOPLAYICI / ÇIKARICI ----------------
 makeModule(5,'Y-0016/005D','ttl',(M,g,Jk,pwr,led)=>{
@@ -898,8 +920,9 @@ makeModule(5,'Y-0016/005D','ttl',(M,g,Jk,pwr,led)=>{
   gsym(g,'XOR',88,92,[null,null],0,138);gsym(g,'AND',88,120,[null,null],0,138);
   g.pa('M36 84H62V116H88M62 88H85');dot(62,88);g.pa('M36 124H88M74 124V96H85');dot(74,124);
   led(138,92,'',()=>ha.r[0]);led(138,120,'',()=>ha.r[1]);g.tx(147,94,'SUM',5.5,'start');g.tx(147,122,'CARRY',5.5,'start');
-  p=icPins(g,Jk,'add4',224,36,54,140,[['a1','A1'],['a2','A2'],['a3','A3'],['a4','A4'],['b1','B1'],['b2','B2'],['b3','B3'],['b4','B4'],['ci','C0']],[['s1','Σ1'],['s2','Σ2'],['s3','Σ3'],['s4','Σ4'],['co','C4']],192,310,'FULL','ADDER');
-  g.tx(251,172,'7483',6);M.comps.push(new ADD4(M,p));
+  // katalog: 7483 ortada, C0 üstten girer, çıkışlar sağda
+  p=icPins(g,Jk,'add4',220,46,58,126,[['a1','A1'],['a2','A2'],['a3','A3'],['a4','A4'],['b1','B1'],['b2','B2'],['b3','B3'],['b4','B4']],[['s1','Σ1'],['s2','Σ2'],['s3','Σ3'],['s4','Σ4'],['co','C4']],194,310,'FULL ADDER');
+  p.ci=Jk('add4','ci','C0',194,33,'l');g.pa('M200 33H249V46');g.tx(249,52,'C0',5);g.tx(249,164,'7483',6.5);M.comps.push(new ADD4(M,p));
   g.tx(90,205,'HALF SUBTRACTOR',6.5);
   p={a:Jk('hs','a','A',30,242,'l'),b:Jk('hs','b','B',30,282,'l')};const hs=new LOGIC(M,p,'hs');M.comps.push(hs);
   gsym(g,'XOR',90,250,[null,null],0,138);gsym(g,'AND',90,278,[null,null],0,138);gsym(g,'NOT',56,274,[null],0,96);
@@ -917,12 +940,12 @@ makeModule(5,'Y-0016/005D','ttl',(M,g,Jk,pwr,led)=>{
 makeModule(6,'Y-0016/006D','ttl',(M,g,Jk,pwr)=>{
   g.ln(8,176,334,176);g.ln(171,176,171,342);
   g.tx(171,36,'4 BIT SHIFT REGISTER',6.5);
-  for(let k=0;k<4;k++){const x0=12+80*k,id='d'+(k+1);g.ic(x0+22,74,36,28,'');g.tx(x0+40,90,'FF'+(k+1),6);
+  for(let k=0;k<4;k++){const x0=12+80*k,id='d'+(k+1);g.ic(x0+22,74,36,28,'');g.tx(x0+40,90,'FF'+(k%2+1),6);
     const p={d:Jk(id,'d','D',x0+10,80),clk:Jk(id,'clk','CLK',x0+10,96),q:Jk(id,'q','Q',x0+70,80),qn:Jk(id,'qn','~Q',x0+70,96),pre:Jk(id,'pre','~PR',x0+40,58,'r'),clr:Jk(id,'clr','~CLR',x0+40,118,'r')};
     g.tx(x0+24,82,'D',5,'start');g.tx(x0+24,98,'›',6,'start');g.tx(x0+56,82,'Q',5,'end');g.ov(x0+56,98,'Q',5,'end');
     g.ln(x0+16,80,x0+22,80);g.ln(x0+16,96,x0+22,96);g.ln(x0+58,80,x0+64,80);g.ln(x0+58,96,x0+64,96);g.ln(x0+40,64,x0+40,74);g.ln(x0+40,102,x0+40,112);
     M.comps.push(new JK(M,p,'D'))}
-  g.tx(92,150,'7474',6.5);g.tx(252,150,'7474',6.5);
+  g.tx(132,160,'7474',6.5);g.tx(292,160,'7474',6.5);
   g.tx(90,188,'SERIAL/PARALLEL SHIFT REGISTER',6);
   let p=icPins(g,Jk,'s195',60,196,52,138,[['j','J'],['kn','~K'],['a','A'],['b','B'],['c','C'],['d','D'],['sh','SH/~LD']],[['clk','CLK'],['clr','~CLR'],['qa','QA'],['qb','QB'],['qc','QC'],['qd','QD'],['qdn','~QD']],30,144,'');
   g.tx(86,270,'74195',6.5);M.comps.push(new S195(M,p));
@@ -933,11 +956,16 @@ makeModule(6,'Y-0016/006D','ttl',(M,g,Jk,pwr)=>{
 // ---------------- MODÜL 7: HAFIZA ----------------
 makeModule(7,'Y-0016/007D','ttl',(M,g,Jk,pwr)=>{
   g.ln(8,183,334,183);
-  const mk=(id,y0,title,ic,rom,mem)=>{g.tx(171,y0+12,title,6.5);g.tx(70,y0+12,'ADDRESS',5,'middle');g.tx(272,y0+12,'DATA',5,'middle');
-    const p=icPins(g,Jk,id,128,y0+20,86,112,[0,1,2,3,4,5,6,7].map(k=>['a'+k,'A'+k]),[0,1,2,3,4,5,6,7].map(k=>['d'+k,'D'+k]),46,296,ic,rom?'EEPROM':'SRAM');
-    for(let k=0;k<8;k++){const yy=y0+20+112*(k+.5)/8;g.tx(38,yy+2,'A'+k,5,'end');g.tx(304,yy+2,'D'+k,5,'start')}
-    const cl=rom?'CE':'CS';p.cs=Jk(id,'cs','~'+cl,146,y0+144,'b');p.we=Jk(id,'we','~WE',171,y0+144,'b');p.oe=Jk(id,'oe','~OE',196,y0+144,'b');
-    for(const x of[146,171,196])g.ln(x,y0+132,x,y0+138);
+  // katalog: dar/uzun bellek entegresi ortada (altında 74244 tamponu), adres soketleri solda, veri sağda,
+  // üç kontrol soketi entegrenin sol altında, hatları gövdenin altından girer
+  const mk=(id,y0,title,ic,rom,mem)=>{g.tx(171,y0+9,title,6.5);
+    g.ic(146,y0+14,58,130,'');g.tx(175,y0+76,ic,7);g.tx(175,y0+85,rom?'EEPROM':'SRAM',5);g.tx(175,y0+138,'74244',6);const p={};
+    for(let k=0;k<8;k++){const yy=y0+22+15*k;
+      p['a'+k]=Jk(id,'a'+k,'A'+k,74,yy,'l');g.ln(80,yy,146,yy);g.tx(149,yy+2,'A'+k,5,'start');
+      p['d'+k]=Jk(id,'d'+k,'D'+k,276,yy,'r');g.ln(204,yy,270,yy);g.tx(201,yy+2,'D'+k,5,'end')}
+    g.tx(44,y0+75,'ADDRESS',5.5,'middle',`transform="rotate(-90 44 ${y0+75})"`);g.tx(302,y0+75,'DATA',5.5,'middle',`transform="rotate(90 302 ${y0+75})"`);
+    const cl=rom?'CE':'CS';p.cs=Jk(id,'cs','~'+cl,94,y0+140,'t');p.we=Jk(id,'we','~WE',114,y0+140,'t');p.oe=Jk(id,'oe','~OE',134,y0+140,'t');
+    [[94,156,186],[114,152,175],[134,148,164]].forEach(([x,yb,xi])=>g.pa(`M${x} ${y0+146}V${y0+yb}H${xi}V${y0+144}`));
     const c=new MEM(M,p,rom,mem);M.comps.push(c);return c};
   const ram=mk('ram',24,'RAM MEMORY WRITE AND READ','6116',false,new Array(256).fill(0));
   const rom=mk('rom',183,'EEPROM MEMORY WRITE AND READ','2816',true,new Array(256).fill(255));
@@ -946,13 +974,13 @@ makeModule(7,'Y-0016/007D','ttl',(M,g,Jk,pwr)=>{
   M.render=()=>{for(const c of[ram,rom])if(c.ui&&(c.dirty||frameN%10===0)){c.ui();c.dirty=false}}});
 // ---------------- MODÜL 8: KARAKTER JENERATÖRÜ ----------------
 makeModule(8,'Y-0016/008D','ttl',(M,g,Jk,pwr)=>{
-  g.tx(171,33,'GENERATING SLIDING LETTERS AND NUMBERS BY USING CHARACTER GENERATOR',5.2);
-  const cin=[0,1,2,3,4,5].map(k=>Jk('cg','c'+k,'B'+(k+1),40,56+14*k,'l'));g.tx(40,48,'DATA',5);
+  g.tx(150,32,'OBTAINING SLIDING LETTERS AND NUMBERS BY USING',5.6);g.tx(150,40,'CHARACTER GENERATORS AND POINT MATRIX',5.6);g.tx(263,44,'ASCII CHARACTER CODE',4.6);
+  const cin=[0,1,2,3,4,5].map(k=>Jk('cg','c'+k,'B'+(k+1),40,56+14*k,'l'));g.tx(40,48,'ROW DATA',5);
   g.ic(60,50,54,80,'ASCII','CHAR. GEN.');g.ic(122,50,42,80,'ROW','DECODER');for(let k=0;k<6;k++)g.ln(46,56+14*k,60,56+14*k);
   g.R(170,46,54,72,'rx="2" fill="#050505" stroke="#e9ecef"');g.ln(114,90,122,90);g.ln(164,90,170,90);
   const dots=[];for(let r=0;r<7;r++)for(let c=0;c<5;c++){const l=mkLed(M.el,179+9*c,55+9*r,'sm');dots.push(l)}
   g.R(232,46,62,46,'rx="2" fill="#2a2a2a" stroke="#e9ecef"');const sg=cvIn(M.el,235,49,56,40);
-  g.ic(170,124,54,14,'ROW COUNTER');g.ic(232,98,62,14,'DIGIT DRIVER');g.ln(197,118,197,124);g.ln(263,92,263,98);
+  g.ic(170,124,54,14,'ROW DRIVER');g.ic(232,98,62,14,'DIGIT DRIVER');g.ln(197,118,197,124);g.ln(263,92,263,98);
   g.pa('M87 130V150H197V138M143 130V150');g.pa('M224 131H263V112');
   const names=['LINE DOWN','LINE UP','CHAR LEFT','CHAR RIGHT','OK'],arrows=['⇩','⇧','⇦','⇨','↵'];
   names.forEach((nm,i)=>{const y=176+30*i;g.tx(66,y+2,nm,5.5,'end');g.tx(80,y+3,arrows[i],9,'middle');g.ln(122,y,150,y);
@@ -982,75 +1010,108 @@ makeModule(8,'Y-0016/008D','ttl',(M,g,Jk,pwr)=>{
       seg7(sg,6,5,18,30,on?(code>>4):8,on?'#ff3b30':'#2a0707','#2a0707');seg7(sg,32,5,18,30,on?(code&15):8,on?'#ff3b30':'#2a0707','#2a0707')}}});
 // ---------------- MODÜL 9: MUX / DEMUX ----------------
 makeModule(9,'Y-0016/009D','ttl',(M,g,Jk,pwr)=>{
-  g.ln(8,176,334,176);
+  // katalog: MUX girişleri soldan sağa D7…D0, seçme girişleri solda "DATA SELECT", Ē/Y/Ȳ altta; DEMUX'ta Ē/Y/Ȳ üstte, çıkışlar altta
+  g.ln(8,185,334,185);
   const pu=[];
-  const sel=(cid,y0,obj,tag)=>{g.tx(48,y0-11,'+5V',5.5);g.pa(`M38 ${y0-7}V${y0+28}`);
-    ['s0','s1','s2'].forEach((s,k)=>{const y=y0+14*k;g.pa(`M38 ${y}H43`);pu.push(Jk('pu',tag+k,'+5V',48,y));obj[s]=Jk(cid,s,s.toUpperCase(),76,y,'l');g.ln(82,y,104,y)});
-    g.tx(62,y0+44,'DATA SELECT',5.5)};
-  g.tx(171,36,'8 CHANNELS MULTIPLEXER',6.5);g.ic(104,80,196,40,'74151');
-  const p={};for(let k=0;k<8;k++){const x=118+24*k;p['i'+k]=Jk('mux','i'+k,'D'+k,x,58,'t');g.ln(x,64,x,80)}
-  sel('mux',86,p,'a');
-  p.e=Jk('mux','e','~E',140,148,'b');p.y=Jk('mux','y','Y',202,148,'b');p.w=Jk('mux','w','~W',264,148,'b');for(const x of[140,202,264])g.ln(x,120,x,142);
+  const sel=(cid,y0,obj,tag)=>{g.tx(34,y0-9,'+5V',5);g.pa(`M26 ${y0-5}V${y0+34}`);
+    ['s0','s1','s2'].forEach((s,k)=>{const y=y0+17*k;g.pa(`M26 ${y}H30`);pu.push(Jk('pu',tag+k,'+5V',36,y));obj[s]=Jk(cid,s,s.toUpperCase(),74,y,'l');g.ln(80,y,102,y)});
+    g.tx(62,y0+48,'DATA SELECT',5.5)};
+  g.tx(171,34,'8 CHANNELS MULTIPLEXER',6.5);g.ic(102,80,140,46,'74151');
+  const p={};for(let k=0;k<8;k++){const x=232-16.5*k;p['i'+k]=Jk('mux','i'+k,'D'+k,x,58,'t');g.ln(x,64,x,80)}
+  sel('mux',88,p,'a');
+  p.e=Jk('mux','e','~E',130,150,'b');p.y=Jk('mux','y','Y',168,150,'b');p.w=Jk('mux','w','~W',213,150,'b');for(const x of[130,168,213])g.ln(x,126,x,144);
   M.comps.push(new MUX(M,p));
-  g.tx(171,188,'8 CHANNELS DEMULTIPLEXER',6.5);g.ic(104,220,196,40,'74237');
-  const q={d:Jk('demux','d','G1',140,204,'r'),e:Jk('demux','e','~G2',202,204,'r'),le:Jk('demux','le','LE',264,204,'r')};for(const x of[140,202,264])g.ln(x,210,x,220);
-  sel('demux',226,q,'b');
-  for(let k=0;k<8;k++){const x=118+24*k;q['y'+k]=Jk('demux','y'+k,'Q'+k,x,290,'b');g.ln(x,260,x,284)}
+  g.tx(171,196,'8 CHANNELS DEMULTIPLEXER',6.5);g.ic(102,238,140,46,'74237');
+  const q={d:Jk('demux','d','G1',130,216,'r'),e:Jk('demux','e','~G2',168,216,'r'),le:Jk('demux','le','LE',213,216,'r')};for(const x of[130,168,213])g.ln(x,222,x,238);
+  sel('demux',244,q,'b');
+  for(let k=0;k<8;k++){const x=116.5+16.5*k;q['y'+k]=Jk('demux','y'+k,'Q'+k,x,306,'b');g.ln(x,284,x,300)}
   M.comps.push(new DEMUX(M,q));
   M.comps.push({outs:pu.map(i=>O(i,1)),step(){for(const o of this.outs)o.v=M.on?M.vccV:null}});
-  pwr(318,34,318,334,'l','l')});
+  pwr(290,42,290,334)});
 // ---------------- MODÜL 10: ADC / DAC ----------------
 makeModule(10,'Y-0016/010D','ttl',(M,g,Jk,pwr,led,jled)=>{
-  g.ln(8,183,334,183);
-  g.tx(171,36,'ANALOG TO DIGITAL CONVERTER',6.5);
-  g.P.push(`<circle cx="54" cy="96" r="17" fill="none" stroke="#9aa0a8" stroke-width="2.4" stroke-dasharray="1 1.4"/><circle cx="106" cy="76" r="17" fill="none" stroke="#9aa0a8" stroke-width="2.4" stroke-dasharray="1 1.4"/>`);
-  mkKnob('m10p1',54,96,13,{title:'P1 – Vref/2 ayarı (tam skala)',parent:M.el});mkKnob('m10p2',106,76,13,{title:'P2 – analog giriş gerilimi',parent:M.el});
-  g.tx(54,122,'P1 (Vref/2)',5.5);g.tx(106,102,'P2 (Vin)',5.5);
-  const p=icPins(g,Jk,'adc',176,44,56,128,[['vin','VIN'],['sc','~WR']],[7,6,5,4,3,2,1,0].map(k=>['d'+k,'D'+k]),142,256,'');
-  g.tx(204,178,'ADC0804',6);g.tx(142,100,'ANALOG',5);g.tx(142,106,'INPUT',5);g.tx(142,158,'START',5);
-  g.pa('M106 93V108H136');
-  for(let k=0;k<8;k++){const yy=44+128*(7-k+.5)/8;jled(286,yy,p['d'+k]);g.tx(296,yy+2,'D'+k,5,'start')}
+  // katalog: üstte ADC0804 (P1/P2 potlar, S1, ANALOG INPUT, sağda DIGITAL OUTPUTS soket+LED), başlıklar bölüm altında;
+  // altta DAC0800 (D0–D7 üstten), 741 çıkış katı, ±12V ve 0 solda
+  const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.5" fill="#e9ecef"/>`);
+  g.ln(8,208,334,208);
+  g.tx(171,203,'ANALOG TO DIGITAL CONVERTER',6.5);
+  g.P.push(`<circle cx="48" cy="134" r="17" fill="none" stroke="#9aa0a8" stroke-width="2.4" stroke-dasharray="1 1.4"/><circle cx="108" cy="116" r="17" fill="none" stroke="#9aa0a8" stroke-width="2.4" stroke-dasharray="1 1.4"/>`);
+  mkKnob('m10p1',48,134,13,{title:'P1 – Vref/2 ayarı (tam skala)',parent:M.el});mkKnob('m10p2',108,116,13,{title:'P2 – analog giriş gerilimi',parent:M.el});
+  g.tx(48,160,'P1',6);g.tx(48,167,'VR/2',5);g.tx(108,142,'P2',6);g.tx(108,149,'VIN',5);
+  g.ic(196,58,62,122,'');g.tx(227,188,'ADC0804',6.5);
+  const p={vin:Jk('adc','vin','ANALOG INPUT',172,123),sc:Jk('adc','sc','START',172,92,'t')};
+  g.tx(156,134,'ANALOG',5);g.tx(156,140,'INPUT',5);g.ln(178,123,196,123);g.ln(178,92,196,92);g.tx(199,125,'VIN',5,'start');g.ov(199,94,'WR',5,'start');
+  g.ln(126,116,166,116);g.pa('M166 116V123');
+  dot(93,71);dot(121,71);g.ln(94,71,117,64);g.tx(107,60,'S1',5.5);g.pa('M123 71H150V92H166');
+  g.pa('M28 38H227V58');g.pa('M28 193H300');g.pa('M48 117V38M48 151V193');dot(48,38);dot(48,193);
+  g.tx(290,52,'DIGITAL OUTPUTS',5.5);
+  for(let k=0;k<8;k++){const yy=67+15.2*(7-k);p['d'+k]=Jk('adc','d'+k,'D'+k,270,yy);g.ln(258,yy,264,yy);g.tx(255,yy+2,'D'+k,5,'end');g.tx(289,yy+2,'D'+k,5);jled(310,yy,p['d'+k]);g.ln(276,yy,282,yy)}
   const adc=new ADC(M,p);M.comps.push(adc);
-  g.tx(171,195,'DIGITAL TO ANALOG CONVERTER',6.5);g.tx(160,205,'DIGITAL INPUTS',5);
-  const q={};for(let k=0;k<8;k++){const x=96+18*k;q['d'+k]=Jk('dac','d'+k,'D'+k,x,216,'');g.tx(x,228,'D'+k,4.8);g.ln(x,231,x,240)}
-  g.ic(90,240,140,40,'DAC0800');g.pa('M246 244V292L284 268Z',1.2);g.tx(258,271,'OP',5.5);g.pa('M230 260H246');
-  q.vout=Jk('dac','vout','ANALOG OUT',308,268,'b');g.ln(284,268,302,268);
-  q.p12=Jk('dac','p12','+12V',24,220,'r');q.m12=Jk('dac','m12','-12V',24,320,'r');g.pa('M24 226V244H90M24 314V276H90');
+  g.tx(171,337,'DIGITAL TO ANALOG CONVERTER',6.5);g.tx(155,231,'DIGITAL INPUTS',5.5);
+  const q={};for(let k=0;k<8;k++){const x=108+13*k;q['d'+k]=Jk('dac','d'+k,'D'+k,x,248,'t');g.ln(x,254,x,262)}
+  g.ic(100,262,110,48,'');g.tx(155,321,'DAC0800',6.5);
+  g.ic(250,266,30,22,'741');g.pa('M210 286H250');g.pa('M262 266V256H286V276H280');g.tx(274,253,'Rf',4.6);
+  q.vout=Jk('dac','vout','ANALOG OUT',312,290,'t');g.pa('M280 277H300V290H306');
+  g.pa('M312 300V308M305 308H319M307.5 311H316.5M310 314H314');
+  q.p12=Jk('dac','p12','+12V',21,223,'t');q.m12=Jk('dac','m12','-12V',21,327,'t');g.pa('M27 223H240V272H250M27 327H240V282H250M150 223V262M150 310V327');
+  g.pa('M21 270V276M14 276H28M16.5 279H25.5M19 282H23');g.tx(30,272,'0',5.5,'start');
+  dot(49,252);dot(49,276);g.tx(46,262,'+',5,'end');g.tx(46,272,'−',5,'end');g.tx(56,266,'5V VRef',4.6,'start');g.pa('M51 252H70V276H100M51 276H64');
   const dac=new DAC(M,q);M.comps.push(dac);
-  pwr(16,30,16,172);
+  pwr(22,38,22,193,'t','t');
   const r=h('div',{class:'orow'}),t=h('span',{class:'dacv'});r.append(h('span',{class:'lbl'},'Ölçümler'),t);M.opts.append(r);
   M.opts.append(h('div',{class:'lbl orow'},'ANALOG INPUT soketi boşsa ADC girişi P2 potansiyometresinden alınır. DAC çıkışı 0–5 V (Vref = 5 V). Kabloyla besleme modunda DAC için ±12 V bağlanmalıdır.'));
   M.render=()=>{if(frameN%6)return;t.textContent=`Vin = ${adc.vin.toFixed(2)} V · ADC kodu = ${adc.code} (${adc.code.toString(2).padStart(8,'0')}b) · tam skala = ${(5*(0.5+K.m10p1)).toFixed(2)} V · DAC çıkışı = ${dac.v.toFixed(2)} V`}});
 // ---------------- MODÜL 11: 555 ----------------
 makeModule(11,'Y-0016/011D','555',(M,g,Jk,pwr,led,jled)=>{
-  g.ln(196,24,196,342);g.ln(8,124,196,124);g.ln(8,226,196,226);g.ln(196,256,334,256);
-  g.tx(102,36,'ASTABLE MULTIVIBRATOR',6.5);g.ic(78,52,40,40,'555');
-  g.P.push(`<circle cx="40" cy="72" r="15" fill="none" stroke="#9aa0a8" stroke-width="2.2" stroke-dasharray="1 1.4"/>`);mkKnob('astR',40,72,11,{title:'R2 (astable frekans)',parent:M.el});g.tx(40,96,'R2',5.5);
-  let p={out:Jk('ast','out','OUT',150,62,'r'),vc:Jk('ast','vc','Vc',40,110,'r')};const oa=p.out;jled(150,92,oa);g.ln(118,62,144,62);g.pa('M150 68V87');g.pa('M46 110H98V92');
+  // katalog: üstte ASTABLE (sol) / MONOSTABLE (sağ), ortada BISTABLE (tam genişlik), altta 555 FREE APPLICATIONS
+  const dot=(x,y)=>g.P.push(`<circle cx="${x}" cy="${y}" r="1.6" fill="#e9ecef"/>`);
+  const res=(x,y1,y2)=>{const m=(y1+y2)/2,hh=Math.min(6,(y2-y1)/2-1);g.ln(x,y1,x,m-hh);g.ln(x,m+hh,x,y2);g.R(x-2.5,m-hh,5,2*hh,'fill="none" stroke="#e9ecef" stroke-width=".9"')};
+  const cap=(x,y1,y2)=>{const m=(y1+y2)/2;g.ln(x,y1,x,m-2);g.ln(x,m+2,x,y2);g.ln(x-4,m-2,x+4,m-2,1.3);g.ln(x-4,m+2,x+4,m+2,1.3)};
+  const ring=(x,y,r)=>g.P.push(`<circle cx="${x}" cy="${y}" r="${r}" fill="none" stroke="#9aa0a8" stroke-width="2.2" stroke-dasharray="1 1.4"/>`);
+  g.ln(171,24,171,124);g.ln(8,124,334,124);g.ln(8,225,334,225);
+  // ASTABLE
+  g.tx(89,34,'ASTABLE MULTIVIBRATOR',6);g.pa('M39 42H160M39 112H160');
+  res(76,42,62);dot(76,42);ring(76,78,12);mkKnob('astR',76,78,9,{title:'R2 (astable frekans)',parent:M.el});g.tx(60,80,'R2',5.5,'end');
+  g.pa('M76 62V66M76 90V95');cap(76,95,112);dot(76,95);dot(76,62);dot(76,112);g.pa('M76 62H92M76 95H86V76H92');dot(86,95);g.tx(70,106,'C1',5,'end');
+  g.ic(92,52,34,30,'555');g.pa('M109 42V52M120 82V112');dot(109,42);dot(120,112);
+  let p={out:Jk('ast','out','OUT',148,48,'r'),vc:Jk('ast','vc','Vc',104,98,'b')};g.pa('M86 95V98H98.5');
+  g.pa('M126 67H148V53.5M148 67V75');dot(148,67);jled(148,80,p.out);res(148,88,112);dot(148,112);
   M.comps.push(new AST(M,p));
-  g.tx(102,136,'MONOSTABLE MULTIVIBRATOR',6.5);g.ic(80,150,40,34,'555');
-  p={trig:Jk('mono','trig','~TRIG',40,154,'r'),out:Jk('mono','out','OUT',160,160,'r')};jled(160,192,p.out);g.ln(120,160,154,160);g.pa('M160 166V187');
-  mPress(M.el,40,194,10,()=>BTN.m11t=1,()=>BTN.m11t=0,'TETİK butonu',true);g.tx(40,214,'TRIG',5.5);g.pa('M46 154H80M50 194H66V174H80');
-  g.P.push(`<circle cx="100" cy="206" r="13" fill="none" stroke="#9aa0a8" stroke-width="2.2" stroke-dasharray="1 1.4"/>`);mkKnob('monoR',100,206,9,{title:'R (darbe genişliği)',parent:M.el});g.tx(122,214,'R',5.5);
+  // MONOSTABLE
+  g.tx(252,34,'MONOSTABLE MULTIVIBRATOR',6);g.tx(177,39,'+5V',4.6,'start');g.tx(177,116,'0',4.6,'start');g.pa('M184 42H320M184 112H320');dot(184,42);dot(184,112);
+  ring(232,62,11);mkKnob('monoR',232,62,8,{title:'R (darbe genişliği)',parent:M.el});g.tx(246,56,'R',5.5,'start');g.pa('M232 42V51M232 73V88');cap(232,88,112);dot(232,42);dot(232,112);
+  g.pa('M232 80H250');dot(232,80);g.tx(238,102,'C',5,'start');
+  g.ic(250,54,34,30,'555');g.pa('M267 42V54M278 84V112');dot(267,42);dot(278,112);
+  p={trig:Jk('mono','trig','~TRIG',203,103,'l'),out:Jk('mono','out','OUT',312,48,'l')};
+  mPress(M.el,203,78,9,()=>BTN.m11t=1,()=>BTN.m11t=0,'TETİK butonu',true);g.tx(190,80,'S1',5,'end');g.pa('M203 87V97.5M208.5 103H246V70H250');
+  g.pa('M284 67H312V53.5M312 67V75');dot(312,67);jled(312,80,p.out);res(312,88,112);dot(312,112);
   M.comps.push(new MONO(M,p));
-  g.tx(102,238,'BISTABLE MULTIVIBRATOR',6.5);g.ic(118,256,40,34,'555');
-  p={trig:Jk('bi','trig','~SET',40,258,'r'),rst:Jk('bi','rst','~RESET',84,258,'r'),out:Jk('bi','out','OUT',178,262,'t')};jled(178,296,p.out);g.ln(158,262,172,262);g.pa('M178 268V291');
-  mPress(M.el,40,300,10,()=>BTN.m11s=1,()=>BTN.m11s=0,'SET butonu',true);mPress(M.el,84,300,10,()=>BTN.m11r=1,()=>BTN.m11r=0,'RESET butonu',true);
-  g.tx(40,320,'SET',5.5);g.tx(84,320,'RESET',5.5);g.pa('M40 264V290M84 264V290M50 300H62V270H118M94 300H104V280H118');
+  // BISTABLE
+  g.tx(171,134,'BISTABLE MULTIVIBRATOR',6);g.tx(56,145,'+5V',5,'end');g.tx(56,216,'0',5,'end');g.pa('M62 142H290M62 213H290');dot(62,142);dot(62,213);
+  res(121,142,154);res(172,142,154);dot(121,142);dot(172,142);
+  p={trig:Jk('bi','trig','~SET',121,170,'r'),rst:Jk('bi','rst','~RESET',172,170,'r'),out:Jk('bi','out','OUT',276,150,'r')};
+  g.pa('M121 154V164.5M172 154V164.5');dot(121,158);dot(172,163);g.pa('M121 158H202V166H212M172 163H198V178H212');
+  mPress(M.el,100,190,9,()=>BTN.m11s=1,()=>BTN.m11s=0,'SET butonu',true);mPress(M.el,150,190,9,()=>BTN.m11r=1,()=>BTN.m11r=0,'RESET butonu',true);
+  g.tx(100,207,'SET',5);g.tx(150,207,'RESET',5);g.pa('M109 190H121V175.5M159 190H172V175.5M100 199V213M150 199V213');dot(100,213);dot(150,213);
+  g.ic(212,158,36,30,'555');g.pa('M230 142V158M238 188V213');dot(230,142);dot(238,213);
+  g.pa('M248 172H276V155.5M276 172V177');dot(276,172);jled(276,182,p.out);res(276,190,213);dot(276,213);
   M.comps.push(new BISTAB(M,p));
-  // serbest uygulama (görsel)
-  g.tx(265,36,'555 FREE APPLICATION',6.5);g.ic(232,68,66,30,'555');
-  [8,7,6,5].forEach((n,i)=>{const x=240+16.5*i;g.ring(x,54);g.tx(x,46,n,5);g.ln(x,59,x,68)});[1,2,3,4].forEach((n,i)=>{const x=240+16.5*i;g.ring(x,112);g.tx(x,124,n,5);g.ln(x,98,x,107)});
-  g.P.push(`<circle cx="228" cy="160" r="14" fill="#1b1c1f" stroke="#9aa0a8" stroke-width="2"/>`);g.ring(212,184);g.ring(228,190);g.ring(244,184);g.tx(228,204,'1M',5.5);
-  [['1K',270],['10K',290]].forEach(([l,x])=>{g.ring(x,146);g.ring(x,206);g.R(x-3,160,6,32,'fill="none" stroke="#e9ecef"');g.tx(x,220,l,5)});
-  [['10nF',308],['1µF',322]].forEach(([l,x],i)=>{g.ring(x,146);g.ring(x,206);g.ln(x-4,174,x+4,174);g.ln(x-4,178,x+4,178);g.ln(x,151,x,174);g.ln(x,178,x,201);g.tx(x,220+8*i,l,5)});
-  g.tx(265,240,'* bu bölüm görseldir (simüle edilmez)',4.6);
-  // LED + buton (çalışır)
-  const la=Jk('fl','a','LED A',214,280,'l'),lk=Jk('fl','k','LED K',214,312,'l');led(244,296,'',()=>{const a=rdV(la),k=rdV(lk);return a===a&&k===k&&a-k>=1.8?1:0});g.pa('M214 286V290H238M214 306V302H238');g.tx(244,312,'LED',5);
-  const b1=Jk('fb','b1','BUTON',288,280,'l'),b2=Jk('fb','b2','BUTON',288,312,'l');let pressed=0;
-  mPress(M.el,314,296,10,()=>{pressed=1;dirty=true},()=>{pressed=0;dirty=true},'Basmalı buton (iki ucu birleştirir)',true);g.pa('M288 286V290H304M288 306V302H304');
+  // 555 FREE APPLICATIONS (555, pot, dirençler, kondansatörler görsel; LED ve buton çalışır)
+  g.tx(51,234,'555',6);g.tx(51,242,'FREE APPLICATIONS',6);
+  g.P.push(`<circle cx="104" cy="256" r="13" fill="#1b1c1f" stroke="#9aa0a8" stroke-width="2"/><circle cx="104" cy="256" r="7" fill="#d9dcdf" stroke="#555"/><line x1="104" y1="256" x2="108" y2="250" stroke="#222" stroke-width="1.6"/>`);g.tx(86,258,'1M',5,'end');
+  g.ring(141,238);g.ring(141,254);g.ring(141,270);g.pa('M136 238H133V246M133 262V270H136');g.R(130.5,246,5,16,'fill="none" stroke="#e9ecef" stroke-width=".9"');g.pa('M136 254H137.5M136 252L136 256L139 254Z');
+  g.ring(196,238);g.ring(196,270);res(196,243,265);g.tx(188,256,'10K',4.8,'end');
+  g.ic(221,262,60,36,'555');
+  [8,7,6,5].forEach((n,i)=>{const x=228+15.5*i;g.ring(x,245);g.tx(x,236,n,5);g.ln(x,250,x,262)});[1,2,3,4].forEach((n,i)=>{const x=228+15.5*i;g.ring(x,316);g.tx(x,330,n,5);g.ln(x,298,x,311)});
+  g.ring(305,238);g.ring(305,270);res(305,243,265);g.tx(313,256,'330Ω',4.6,'start');
+  [['10nF',30],['100nF',50],['1µF',70]].forEach(([l,x])=>{g.ring(x,286);g.ring(x,326);cap(x,291,321);g.tx(x,338,l,4.6)});
+  [['1K',102],['10K',121],['100K',141]].forEach(([l,x])=>{g.ring(x,286);g.ring(x,326);res(x,291,321);g.tx(x,338,l,4.6)});
+  const la=Jk('fl','a','LED A',305,291,'l'),lk=Jk('fl','k','LED K',305,321,'l');led(321,306,'',()=>{const a=rdV(la),k=rdV(lk);return a===a&&k===k&&a-k>=1.8?1:0});g.pa('M305 296.5V300H321M305 315.5V312H321');g.tx(321,338,'LED',4.6);
+  const b1=Jk('fb','b1','BUTON',197,291),b2=Jk('fb','b2','BUTON',197,321);let pressed=0;
+  mPress(M.el,167,306,10,()=>{pressed=1;dirty=true},()=>{pressed=0;dirty=true},'Basmalı buton (iki ucu birleştirir)',true);g.pa('M177 300H186V291H191.5M177 312H186V321H191.5');g.tx(167,328,'BUTON',4.8);
   comps.push({outs:[],step(){},links(){return pressed?[[b1,b2]]:[]}});
-  pwr(16,30,16,334);
+  M.opts.append(h('div',{class:'lbl orow'},'555 FREE APPLICATIONS bölümündeki 555, potansiyometre, direnç ve kondansatör soketleri yalnızca görseldir (simüle edilmez); LED ve buton soketleri çalışır.'));
+  pwr(33,42,33,112,'l','l');
   if(MSTATE.astC===undefined){MSTATE.astC=2;MSTATE.monoC=2}
   const fa=capRow(M,'Astable C','astC'),fm=capRow(M,'Monostable C','monoC');
   M.render=()=>{if(frameN%6)return;const a=M.comps.find(c=>c instanceof AST).per();fa.textContent=`R2 = ${fmtR(a.R2)} · f ≈ ${fmtF(1/a.T)}`;
@@ -1181,17 +1242,28 @@ function relightTogs(){document.dispatchEvent(new Event('relight'))}
 
 /* ---------- modül takma / deney paneli ---------- */
 let mounted=0;
+const modBy=n=>MODS.find(m=>m.id===n);
 function mount(n){
   if(mounted!==n){
-    if(mounted){const pre=`m${mounted}:`,O_=MODS[mounted-1];const rm=wires.filter(w=>J[w.a].id.startsWith(pre)||J[w.b].id.startsWith(pre));rm.forEach(removeWire);
-      O_.el.style.display='none';O_.opts.style.display='none';O_.mounted=false;if(rm.length)toast(`Modül ${mounted} çıkarıldı; ona bağlı ${rm.length} kablo söküldü.`,2500)}
-    mounted=n;const M=MODS[n-1];M.el.style.display='';M.opts.style.display='';M.mounted=true;
-    $$('#tabs button').forEach((b,i)=>b.classList.toggle('act',i===n-1))}
+    if(mounted){const O_=modBy(mounted),pre=O_.fam==='dc'?`dc${O_.dcn}:`:`m${mounted}:`;const rm=wires.filter(w=>J[w.a].id.startsWith(pre)||J[w.b].id.startsWith(pre));rm.forEach(removeWire);
+      for(const k in probe)if(probe[k]>=0&&J[probe[k]].id.startsWith(pre))probe[k]=-1;updProbeUI();
+      O_.el.style.display='none';O_.opts.style.display='none';O_.mounted=false;if(rm.length)toast(`${O_.fam==='dc'?'DC modül '+O_.dcn:'Modül '+mounted} çıkarıldı; ona bağlı ${rm.length} kablo söküldü.`,2500)}
+    mounted=n;const M=modBy(n);M.el.style.display='';M.opts.style.display='';M.mounted=true;
+    $$('#tabs button[data-n]').forEach(b=>b.classList.toggle('act',+b.dataset.n===n));setSet(M.fam==='dc'?'dc':'dig')}
   renderExp()}
-function buildTabs(){const t=$('#tabs');t.append(h('span',{class:'lbl',style:'align-self:center;margin-right:4px;white-space:nowrap'},'Protoboard\'a takılı modül:'));
-  for(let n=1;n<=11;n++){const b=h('button',{title:CAT[n][0]},'Modül '+n);b.onclick=()=>mount(n);t.append(b)}}
+function setSet(k){$$('#tabs .set').forEach(b=>b.classList.toggle('act',b.dataset.set===k));$$('#tabs button[data-n]').forEach(b=>b.style.display=((+b.dataset.n>100)===(k==='dc'))?'':'none')}
+function buildTabs(){const t=$('#tabs');
+  [['dig','Dijital (DIG)'],['dc','DC Devreler']].forEach(([k,l])=>{const b=h('button',{class:'set','data-set':k,title:k==='dc'?'Y-0016-DC DC Devreler Uygulama Modülleri (14 modül)':'Y-0016 DIG Dijital Devreler Modülleri (11 modül)'},l);b.onclick=()=>{if((k==='dc')!==(mounted>100))mount(k==='dc'?101:1);else setSet(k)};t.append(b)});
+  t.append(h('span',{class:'sep'}));
+  for(const M of MODS){const dc=M.fam==='dc';const b=h('button',{'data-n':M.id,title:dc?M.title:CAT[M.id][0]},dc?'DC '+M.dcn:'Modül '+M.id);b.onclick=()=>mount(M.id);t.append(b)}}
 function renderExp(){
-  const n=mounted,e=$('#exp');e.innerHTML='';
+  const n=mounted,M=modBy(n),e=$('#exp');e.innerHTML='';
+  if(M.fam==='dc'){
+    e.append(h('h3',{},`DC Modül ${M.dcn} – ${M.title} (${M.code})`));
+    e.append(h('div',{class:'lbl',style:'margin:2px 0 4px'},'Y-0016-DC kataloğundaki deneyler  (⚡ = hazır bağlantıyı kur, ölçü aletlerini ayarla)'));
+    const chips=h('div',{class:'chips'});
+    M.cat.forEach(c=>{const ch=h('span',{class:'chip'+(c.pre?' pre':'')},c.t);ch.onclick=()=>{if(!c.pre){toast('Bu deney için hazır bağlantı yok; soketleri kendiniz bağlayın.',3500);return}loadPreset({m:M.id,...c.pre},c.t)};chips.append(ch)});
+    e.append(chips,h('div',{id:'note'}));return}
   e.append(h('h3',{},`Modül ${n} – Y-0016 DIG kataloğundaki deneyler`),h('ul',{class:'cat'},CAT[n].map(x=>h('li',{},x))));
   const bk=BOOK[n];e.append(h('div',{class:'lbl',style:'margin:2px 0 4px'},'Deney kitabı: '+bk.ch+'  (⚡ = hazır bağlantıyı kur)'));
   const chips=h('div',{class:'chips'});
@@ -1200,12 +1272,14 @@ function renderExp(){
   e.append(chips,h('div',{id:'note'}))}
 function loadPreset(P,title){
   mount(P.m);clearWires();ST.power=true;ST.trip.ttl=false;ST.trip.v12=false;SW.bin.fill(0);powerUI();
+  if(modBy(P.m).fam==='dc'){for(const k in probe)probe[k]=-1;DCX.DM.mode='VDC';DCX.DM.ohmR=3000;SW.fgon=0;DCX.need()}
   for(const[a,b,c]of P.w)addWire(ji(a),ji(b),c);
   P.after&&P.after();relightTogs();
   for(const k of['astC','monoC']){const b=MSTATE[k+'Btns'];if(b)$$('button',b).forEach((y,j)=>y.classList.toggle('sel',j===MSTATE[k]))}
-  const nt=$('#note');if(nt)nt.textContent=title+' — '+(P.n||'Anahtarları çevirerek çıkışı gözleyin.')}
+  updProbeUI();
+  const nt=$('#note');if(nt)nt.innerHTML='<b>'+title+'</b> — '+(P.n||'Anahtarları çevirerek çıkışı gözleyin.')}
 
-buildModules();
+buildModules();DCX.buildAll();
 for(const M of MODS)comps.push(...M.comps);
 
 /* ---------- araç çubuğu ---------- */
@@ -1216,18 +1290,20 @@ for(const M of MODS)comps.push(...M.comps);
  $('#bClear').onclick=()=>clearWires();
  $('#bAuto').onclick=e=>{ST.auto=!ST.auto;e.target.classList.toggle('on',ST.auto);e.target.textContent='Modül beslemesi: '+(ST.auto?'otomatik':'kabloyla (+5V/GND)')};
  $('#bHelp').onclick=()=>toast('Soketten sokete sürükleyerek kablo bağlayın · kablonun ortasındaki × ile silin · sağ tık = soketteki kabloları kaldır · anahtar/düğmelere tıklayın, düğmeleri sürükleyin · önce POWER anahtarını açın',9000)}
-$('#dmmP').onclick=()=>setPick(pick==='dmmP'?null:'dmmP');$('#dmmN').onclick=()=>setPick(pick==='dmmN'?null:'dmmN');$('#scP').onclick=()=>setPick(pick==='sc'?null:'sc');
-let dmmAC=false;$('#dmmMode').onclick=e=>{dmmAC=!dmmAC;e.target.textContent=dmmAC?'AC (RMS)':'DC'};
-function updProbeUI(){$('#dmmInfo').textContent=`(+: ${probe.dmmP>=0?J[probe.dmmP].label:'—'} · −: ${probe.dmmN>=0?J[probe.dmmN].label:'GND'})`;$('#scInfo').textContent=probe.sc>=0?J[probe.sc].label:'—'}
+Object.entries(PICKID).forEach(([id,v])=>{const b=$('#'+id);b.onclick=()=>setPick(pick===v?null:v);b.oncontextmenu=e=>{e.preventDefault();probe[v]=-1;setPick(null);updProbeUI()}});
+{const ms=$('#dmmMode');DCX.MODES.forEach(([k,l])=>ms.append(h('option',{value:k},l)));ms.onchange=()=>{DCX.DM.mode=ms.value;DCX.DM.ohmR=3000}}
+let scAC=false;$('#scAC').onclick=e=>{scAC=!scAC;e.target.textContent=scAC?'AC':'DC';e.target.classList.toggle('on',scAC)};
+function updProbeUI(){$('#dmmInfo').textContent=`+: ${probe.dmmP>=0?J[probe.dmmP].label:'—'} · −: ${probe.dmmN>=0?J[probe.dmmN].label:'GND'}`;$('#scInfo').textContent=probe.sc>=0?J[probe.sc].label:'—';$('#scInfo2').textContent=probe.sc2>=0?J[probe.sc2].label:'—';$('#dmmMode').value=DCX.DM.mode}
 
 /* =====================================================================
    ANA DÖNGÜ
    ===================================================================== */
-const scope={t:new Float64Array(240000),v:new Float32Array(240000),i:0,n:0};
+const scope={t:new Float64Array(240000),v:new Float32Array(240000),v2:new Float32Array(240000),i:0,n:0};
 const scx=$('#scope').getContext('2d');
 let last=performance.now(),dmmAcc={s:0,q:0,n:0},dmmShow=0,frameN=0;
 function adjFrame(){
   const vset=Math.min(36,K.coarse*34+K.fine*2),Ilim=K.current;
+  if(DCX.psu()){adj.vset=vset;return}
   let G=0;const pn=netOf[jPsuP];
   if(ST.power){for(const L of loads){const na=netOf[L.a],nb=netOf[L.b];if(na===pn&&(netG[nb]||nb===netOf[ji('psu.n1')])||nb===pn&&(netG[na]||na===netOf[ji('psu.n1')]))G+=1/L.R}}
   const shorted=confl[OWN.adj]===1;
@@ -1247,16 +1323,20 @@ function frame(ts){
   // zaman adımı
   let fmax=0;for(const f of fast){if(J[f.j]&&J[f.j].wired>0){const q=f.f();if(q>fmax)fmax=q}}
   let N=1,dts=dtReal;if(fmax>0){dts=Math.min(dtReal,1/(fmax*16));N=Math.min(1200,Math.max(1,Math.ceil(dtReal/dts)))}
+  const apl=DCX.plan(dtReal,fmax);if(apl){N=apl.N;dts=apl.dts}
   ST.ratio=N*dts/dtReal;
   if(dirty){buildNets();pV=new Float64Array(netN)}
   spkS.cross=0;spkS.mx=-1e9;spkS.mn=1e9;
-  const scOn=probe.sc>=0;const dP=probe.dmmP,dN=probe.dmmN;dmmAcc.s=dmmAcc.q=0;dmmAcc.n=0;
+  const scOn=probe.sc>=0||probe.sc2>=0;const dP=probe.dmmP,dN=probe.dmmN;dmmAcc.s=dmmAcc.q=0;dmmAcc.n=0;
+  const tq0=performance.now();
   for(let s=0;s<N;s++){
-    ST.t+=dts;for(const M of PW)modPower(M);settle();
+    ST.t+=dts;if(apl){CL=trainerComps();settle();CL=null}else{for(const M of PW)modPower(M);settle()}
+    if(apl)DCX.step(dts);
     for(let k=0;k<obs.length;k++)obs[k].acc+=obs[k].fn();
     spkS.sn();
-    if(dP>=0){const a=rdV(dP);let b=dN>=0?rdV(dN):0;if(b!==b)b=0;if(a===a){const d=a-b;dmmAcc.s+=d;dmmAcc.q+=d*d;dmmAcc.n++}}
-    if(scOn){const v=rdV(probe.sc);scope.t[scope.i]=ST.t;scope.v[scope.i]=v!==v?0:v;scope.i=(scope.i+1)%240000;if(scope.n<240000)scope.n++}}
+    if(dP>=0){const d=DCX.dmmSample(dP,dN);if(d===d){dmmAcc.s+=d;dmmAcc.q+=d*d;dmmAcc.n++}}
+    if(scOn){const v=probe.sc>=0?rdV(probe.sc):0,v2=probe.sc2>=0?rdV(probe.sc2):0;scope.t[scope.i]=ST.t;scope.v[scope.i]=v!==v?0:v;scope.v2[scope.i]=v2!==v2?0:v2;scope.i=(scope.i+1)%240000;if(scope.n<240000)scope.n++}}
+  if(apl)DCX.tune(N,performance.now()-tq0);
   const o2=obs.length;for(let k=0;k<o2;k++){const o=obs[k];o.set(o.acc/N);o.acc=0}
   const spkDur=N*dts;audioSet(buzzOn&&ST.power,spkS.cross/spkDur,spkS.mx-spkS.mn);
   render();
@@ -1278,21 +1358,34 @@ function render(){
   drawHex();
   for(const M of MODS)if(M.mounted&&M.render)M.render()}
 function renderInst(){
-  // voltmetre
-  const rd=$('#dmmRd');
-  if(probe.dmmP<0)rd.textContent='— V';else if(dmmAcc.n===0)rd.textContent='boşta';
-  else{const m=dmmAcc.s/dmmAcc.n,r=Math.sqrt(dmmAcc.q/dmmAcc.n);const v=dmmAC?r:m;rd.textContent=(Math.abs(v)<0.005?0:v).toFixed(2)+' V'}
-  // osiloskop
+  $('#dmmRd').textContent=DCX.dmmText(dmmAcc);
+  // osiloskop (CH1 sarı, CH2 camgöbeği); ≤ 25 ms/böl: CH1'in (yoksa CH2'nin) yükselen kenarında tetiklenir
   const cv=$('#scope'),W=cv.width,H=cv.height;scx.fillStyle='#04100a';scx.fillRect(0,0,W,H);
   scx.strokeStyle='#103a22';scx.lineWidth=1;scx.beginPath();for(let i=0;i<=10;i++){const x=i*W/10;scx.moveTo(x,0);scx.lineTo(x,H)}for(let j=0;j<=8;j++){const y=j*H/8;scx.moveTo(0,y);scx.lineTo(W,y)}scx.stroke();
-  scx.strokeStyle='#1c6a3c';scx.beginPath();scx.moveTo(0,H/2);scx.lineTo(W,H/2);scx.stroke();
-  if(probe.sc<0||scope.n===0)return;
-  const td=+$('#scT').value,vd=+$('#scV').value,win=td*10,t1=ST.t,t0=t1-win;
-  const mn=new Float32Array(W).fill(1e9),mx=new Float32Array(W).fill(-1e9);let any=false;
-  for(let k=0;k<scope.n;k++){const idx=(scope.i-1-k+240000)%240000,t=scope.t[idx];if(t<t0)break;const x=Math.min(W-1,Math.floor((t-t0)/win*W));const v=scope.v[idx];if(v<mn[x])mn[x]=v;if(v>mx[x])mx[x]=v;any=true}
-  scx.strokeStyle='#5dff8f';scx.lineWidth=1.6;scx.beginPath();let first=true,py=0;
-  for(let x=0;x<W;x++){if(mn[x]>1e8)continue;const y1=H/2-mx[x]/vd*(H/8),y2=H/2-mn[x]/vd*(H/8);if(first){scx.moveTo(x,y1);first=false}else scx.lineTo(x,y1);if(Math.abs(y2-y1)>0.5)scx.lineTo(x,y2)}
-  scx.stroke();scx.fillStyle='#5dff8f';scx.font='11px monospace';scx.fillText(ST.ratio<.98?`simülasyon hızı: gerçek zamanın %${(ST.ratio*100).toFixed(0)}'i`:'',8,14)}
+  scx.strokeStyle='#1c6a3c';scx.beginPath();scx.moveTo(0,H/2);scx.lineTo(W,H/2);scx.moveTo(W/2,0);scx.lineTo(W/2,H);scx.stroke();
+  if((probe.sc<0&&probe.sc2<0)||scope.n===0)return;
+  const NB=240000,td=+$('#scT').value,win=td*10,t1=ST.t,trig=win<=0.25,span=trig?2.2*win:win;
+  let cnt=0;for(let k=0;k<scope.n;k++){if(scope.t[(scope.i-1-k+NB)%NB]<t1-span)break;cnt++}
+  const at=k=>(scope.i-1-k+NB)%NB;
+  const chs=[[probe.sc,scope.v,+$('#scV').value,'#f5d742','CH1'],[probe.sc2,scope.v2,+$('#scV2').value,'#3fd0ff','CH2']].filter(c=>c[0]>=0);
+  const st=chs.map(([,b])=>{let mx=-1e9,mn=1e9,sm=0;for(let k=0;k<cnt;k++){const v=b[at(k)];if(v>mx)mx=v;if(v<mn)mn=v;sm+=v}return{mx,mn,mean:cnt?sm/cnt:0}});
+  let t0=t1-win;
+  if(trig&&cnt>4){const b=chs[0][1],lv=(st[0].mx+st[0].mn)/2;if(st[0].mx-st[0].mn>1e-3)
+    for(let k=1;k<cnt;k++){const ia=at(k),ib=at(k-1);if(scope.t[ia]>t1-win)continue;if(b[ia]<lv&&b[ib]>=lv){t0=scope.t[ia];break}}}
+  scx.font='11px monospace';
+  chs.forEach(([,b,vd,col,nm],ci)=>{const s0=st[ci],off=scAC?s0.mean:0;
+    const mn=new Float32Array(W).fill(1e9),mx=new Float32Array(W).fill(-1e9);
+    for(let k=0;k<cnt;k++){const ix=at(k),t=scope.t[ix];if(t<t0)break;if(t>t0+win)continue;const x=Math.min(W-1,Math.floor((t-t0)/win*W)),v=b[ix]-off;if(v<mn[x])mn[x]=v;if(v>mx[x])mx[x]=v}
+    scx.strokeStyle=col;scx.lineWidth=1.5;scx.beginPath();let first=true;
+    const Y=v=>clamp(H/2-v/vd*(H/8),1,H-1);
+    for(let x=0;x<W;x++){if(mn[x]>1e8)continue;const y1=Y(mx[x]),y2=Y(mn[x]);if(first){scx.moveTo(x,y1);first=false}else scx.lineTo(x,y1);if(Math.abs(y2-y1)>0.5)scx.lineTo(x,y2)}
+    scx.stroke();
+    // ölçümler: Vpp, ortalama, frekans
+    let f='';if(s0.mx-s0.mn>0.02){const lv=(s0.mx+s0.mn)/2;let tf=-1,tl=-1,nc=0;for(let k=cnt-2;k>=0;k--){const ia=at(k+1),ib=at(k);if(b[ia]<lv&&b[ib]>=lv){if(tf<0)tf=scope.t[ib];tl=scope.t[ib];nc++}}
+      if(nc>=2&&tl>tf){const fr=(nc-1)/(tl-tf);f=fr>=1e3?(fr/1e3).toFixed(fr>=1e4?1:2)+' kHz':fr.toFixed(fr>=100?0:1)+' Hz'}}
+    scx.fillStyle=col;scx.fillText(`${nm} ${vd} V/böl  Vpp ${(s0.mx-s0.mn).toFixed(2)} V  ort ${s0.mean.toFixed(2)} V  ${f}`,6,13+ci*13)});
+  scx.fillStyle='#5dff8f';const tdl=td>=1?td+' s':td>=1e-3?(td*1e3)+' ms':(td*1e6)+' µs';
+  scx.fillText(`${tdl}/böl${trig?'  ⟋ tetik':''}${ST.ratio<.98?`  ·  simülasyon hızı %${(ST.ratio*100).toFixed(ST.ratio<.1?1:0)}`:''}`,6,H-6)}
 
 /* anahtar widget'larını preset sonrası yeniden çizmek için basit yöntem: sayfa içindeki .tog'ların upd olayı */
 buildTabs();mount(1);

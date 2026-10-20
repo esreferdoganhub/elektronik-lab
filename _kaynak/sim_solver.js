@@ -96,6 +96,76 @@ function Mos(g,d,s,p,st){
     },
     accept(x){st.vgs=this.vgs;const vgs=x[g]-Math.min(x[d],x[s]),vds=Math.abs(x[d]-x[s]),vov=vgs-p.Vth;let id=0;if(vov>0)id=vds<vov?p.K*(vov*vds-vds*vds/2):p.K/2*vov*vov;this.id=id;}};
 }
+/* Bipolar transistör (Ebers-Moll taşıma modeli, Early etkisi çıkış iletkenliğiyle).
+   p: {pol:+1 NPN / −1 PNP, Is, bf, br, vaf} */
+function Bjt(cN,bN,eN,p,st){
+  const nvt=VT,vcrit=nvt*Math.log(nvt/(Math.SQRT2*p.Is)),pol=p.pol||1;
+  if(st.vbe===undefined){st.vbe=0;st.vbc=0;}
+  return {nl:true,st,vbe:st.vbe,vbc:st.vbc,ic:0,ib:0,nodes:[cN,bN,eN],
+    dyn(c,x){
+      const vber=pol*(x[bN]-x[eN]),vbcr=pol*(x[bN]-x[cN]);
+      let vbe=pnjlim(vber,this.vbe,nvt,vcrit),vbc=pnjlim(vbcr,this.vbc,nvt,vcrit);
+      if(vbe<-60)vbe=-60;if(vbc<-60)vbc=-60;
+      this.lim=Math.abs(vbe-vber)>1e-4||Math.abs(vbc-vbcr)>1e-4;this.vbe=vbe;this.vbc=vbc;
+      const ef=Math.exp(Math.min(vbe/nvt,80)),er=Math.exp(Math.min(vbc/nvt,80));
+      const itf=p.Is*(ef-er),gf=p.Is*ef/nvt,gr=p.Is*er/nvt;
+      const Ic=itf-p.Is/p.br*(er-1),Ib=p.Is/p.bf*(ef-1)+p.Is/p.br*(er-1);
+      const A1=gf,A2=-gr-gr/p.br,B1=gf/p.bf,B2=gr/p.br;
+      // c→e akımı (ic) ve b→e akımı (ib); PNP'de pol=−1 ile işaret döner, türevler aynı kalır
+      c.A(cN,bN,A1+A2);c.A(cN,eN,-A1);c.A(cN,cN,-A2);c.A(eN,bN,-(A1+A2));c.A(eN,eN,A1);c.A(eN,cN,A2);
+      c.A(bN,bN,B1+B2);c.A(bN,eN,-B1);c.A(bN,cN,-B2);c.A(eN,bN,-(B1+B2));c.A(eN,eN,B1);c.A(eN,cN,B2);
+      c.I(cN,eN,pol*(Ic-A1*vbe-A2*vbc));c.I(bN,eN,pol*(Ib-B1*vbe-B2*vbc));
+      const go=p.vaf?Math.max(0,itf)/p.vaf:0;c.G(cN,eN,go+GMIN);c.G(bN,eN,GMIN);c.G(bN,cN,GMIN);
+    },
+    accept(x){st.vbe=this.vbe;st.vbc=this.vbc;const ef=Math.exp(Math.min(this.vbe/nvt,80)),er=Math.exp(Math.min(this.vbc/nvt,80));
+      const itf=p.Is*(ef-er);this.ic=pol*(itf-p.Is/p.br*(er-1)+(p.vaf?Math.max(0,itf)/p.vaf*pol*(x[cN]-x[eN]):0));this.ib=pol*(p.Is/p.bf*(ef-1)+p.Is/p.br*(er-1));}};
+}
+/* Bağımsız akım kaynağı: a'dan çıkıp eleman içinden b'ye akan i(t) */
+function Isrc(a,b,fn){return {a,b,fn,i:0,nodes:[a,b],pre(t){this.i=fn(t);},dyn(c){c.I(a,b,this.i);},cur(){return this.i;}};}
+/* Dinamik direnç / potansiyometre: değer her Newton yinelemesinde okunur */
+function Rdyn(a,b,fr){return {a,b,mdyn:true,nodes:[a,b],r:1,dyn(c){this.r=fr();c.G(a,b,1/this.r);},cur(x){return (x[a]-x[b])/this.r;}};}
+/* Dinamik Norton kaynağı (b'ye göre a): fn() → {v, r} ya da null (açık devre) */
+function Vdyn(a,b,fn){return {a,b,mdyn:true,v:0,r:1,on:false,nodes:[a,b],
+  pre(){const s=fn();this.on=!!s;if(s){this.v=s.v;this.r=s.r;}},
+  dyn(c){if(this.on){c.G(a,b,1/this.r);c.I(b,a,this.v/this.r);}else c.G(a,b,1e-12);},
+  cur(x){return this.on?(this.v-(x[a]-x[b]))/this.r:0;}};}
+/* İşlemsel kuvvetlendirici / ses kuvvetlendirici entegresi.
+   vo = orta + yarı·tanh(A·(v+ − v−)/yarı); raylar besleme uçlarından (vp, vn) alınır.
+   mid: 'rail' → (Vp+Vn)/2 (ör. LM386 / TBA820 tek beslemeli), sayı → sabit. Çıkış Rout üzerinden sürülür. */
+function OpAmp(ip,im,o,vp,vn,p){
+  const A=p.A||1e5,Ro=p.Ro||50,hd=p.head||1.5;
+  return {nl:true,nodes:[ip,im,o,vp,vn],vd:0,
+    dyn(c,x){
+      const hi=x[vp]-hd,lo=x[vn]+hd;let half=(hi-lo)/2,mid=(hi+lo)/2;
+      if(half<0.05){half=0.05;}
+      if(p.mid!=='rail')mid=Math.min(hi,Math.max(lo,0));
+      const vdr=x[ip]-x[im],k=A/half,ur=k*vdr,uo=k*this.vd;let u=ur;
+      // doğrusal bölgede adım ±2 ile sınırlı; doyumdan çıkarken doğrudan bölge kenarına atla
+      if(Math.abs(uo)>6){if(!(Math.abs(ur)>6&&ur*uo>0))u=Math.max(-6,Math.min(6,ur));}
+      else if(u>uo+2)u=uo+2;else if(u<uo-2)u=uo-2;
+      const vd=u/k;this.lim=Math.abs(u-ur)>1e-6;this.vd=vd;
+      const th=Math.tanh(A*vd/half),vo=mid+half*th,g=A*(1-th*th);
+      const G=1/Ro;c.G(o,0,G);c.A(o,ip,-g*G);c.A(o,im,g*G);c.I(0,o,(vo-g*vd)*G);
+      c.G(ip,im,p.Gin||1e-9);
+    },accept(){}};
+}
+/* Kuplajlı bobinler (trafo, Hartley bobini): [v1 v2] = L·d[i1 i2]/dt, L=[[L1,M],[M,L2]], M=k·√(L1L2).
+   Γ=L⁻¹; BE: i = i1 + dt·Γv ; BDF2: i = (4i1 − i2)/3 + (2/3)dt·Γv */
+function Xfmr(a1,b1,a2,b2,L1,L2,k,st){
+  const M=k*Math.sqrt(L1*L2),det=L1*L2-M*M,G11=L2/det,G22=L1/det,G12=-M/det;
+  if(st.i1===undefined){st.i1=0;st.i2=0;}
+  const stamp=(c,s)=>{const g=[[G11*s,G12*s],[G12*s,G22*s]],P=[[a1,b1],[a2,b2]];
+    for(let r=0;r<2;r++)for(let q=0;q<2;q++){const[ra,rb]=P[r],[qa,qb]=P[q],v=g[r][q];c.A(ra,qa,v);c.A(ra,qb,-v);c.A(rb,qa,-v);c.A(rb,qb,v);}};
+  return {st,nodes:[a1,b1,a2,b2],be:true,h1:0,h2:0,s:0,
+    lin(c){stamp(c,c.be?c.dt:2*c.dt/3);},
+    dyn(c){this.be=c.be;
+      if(c.be){this.s=c.dt;this.h1=st.i1;this.h2=st.i2;}
+      else{this.s=2*c.dt/3;this.h1=(4*st.i1-(st.i1b??st.i1))/3;this.h2=(4*st.i2-(st.i2b??st.i2))/3;}
+      c.I(a1,b1,this.h1);c.I(a2,b2,this.h2);},
+    accept(x){const v1=x[a1]-x[b1],v2=x[a2]-x[b2],s=this.s;
+      const i1=this.h1+s*(G11*v1+G12*v2),i2=this.h2+s*(G12*v1+G22*v2);st.i1b=st.i1;st.i2b=st.i2;st.i1=i1;st.i2=i2;},
+    cur(){return st.i1;}};
+}
 /* ---- Seyrek LU: minimum derece sıralaması + sembolik dolgu, yoğun dizide yalnız dokunulan konumlar işlenir ---- */
 function symbolic(n,adj){ // adj: Set dizisi (0 tabanlı, simetrik desen). Dönüş: {ord, nb[k]: Int32Array, touch}
   const alive=new Uint8Array(n).fill(1),ord=new Int32Array(n),nb=new Array(n);
@@ -138,7 +208,7 @@ class Sim{
     const old=this.x;this.x=new Float64Array(N+1);if(this.keep&&old.length===N+1)this.x.set(old);
     const mk=be=>{
       const M=new Float64Array(n*n);
-      const ctx={dt,be,G:(a,b,g)=>{if(a)M[(a-1)*n+a-1]+=g;if(b)M[(b-1)*n+b-1]+=g;if(a&&b){M[(a-1)*n+b-1]-=g;M[(b-1)*n+a-1]-=g;}}};
+      const ctx={dt,be,G:(a,b,g)=>{if(a)M[(a-1)*n+a-1]+=g;if(b)M[(b-1)*n+b-1]+=g;if(a&&b){M[(a-1)*n+b-1]-=g;M[(b-1)*n+a-1]-=g;}},A:(r,c,v)=>{if(r&&c)M[(r-1)*n+c-1]+=v;}};
       for(let k=1;k<=n;k++)M[(k-1)*n+k-1]+=GMIN;
       els.forEach(e=>e.lin&&e.lin(ctx));
       return M;
@@ -229,7 +299,13 @@ const P={
   zener:(vz)=>({Is:2.5e-9,n:1.75,Vz:vz,Ib:5e-3,nz:1}),
   led:(col)=>({Is:0.01/Math.exp(LEDV[col]/(2*VT)),n:2}),
   irfz44n:{Vth:3.0,K:20,lam:0.01},
-  body:{Is:1e-12,n:1.0}
+  body:{Is:1e-12,n:1.0},
+  bc238:{pol:1,Is:1.8e-14,bf:250,br:5,vaf:80},
+  bd139:{pol:1,Is:2e-13,bf:120,br:4,vaf:100},
+  bd140:{pol:-1,Is:2e-13,bf:120,br:4,vaf:100},
+  bf246:{Vth:-4,K:2*0.04/16,lam:0.02},       // N-kanal JFET (Shichman-Hodges, IDSS=40 mA, VP=−4 V)
+  irf740:{Vth:3.6,K:2.8,lam:0.01},
+  d1n4148:{Is:2.5e-9,n:1.75}
 };
 /* ---- SI önekli değer ayrıştırıcı: "4.7k", "2.2µ"/"2u2", "470n", "1M", "10m", "1e-6" ---- */
 const SIP={T:1e12,G:1e9,M:1e6,k:1e3,K:1e3,m:1e-3,u:1e-6,'µ':1e-6,'μ':1e-6,n:1e-9,p:1e-12,f:1e-15};
@@ -246,6 +322,6 @@ function parseSI(s,unit){
   if(m)return r12(parseFloat(m[1]+'.'+m[3])*(m[2]==='R'?1:SIP[m[2]]));
   return NaN;
 }
-return {Sim,R,Vsrc,Vlim,Cap,Ind,Diode,Mos,P,LEDV,VT,parseSI};
+return {Sim,R,Vsrc,Vlim,Cap,Ind,Diode,Mos,Bjt,Isrc,Rdyn,Vdyn,OpAmp,Xfmr,P,LEDV,VT,parseSI};
 })();
 if(typeof module!=='undefined')module.exports=Solver;
