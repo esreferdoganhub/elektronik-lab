@@ -8,6 +8,15 @@
 'use strict';
 const TZ=(()=>{
 const KEY='y16-tezgah-v1';
+{const st=document.createElement('style');st.textContent=`
+.tcard .tbar{top:0!important;height:18px!important;border-radius:6px 6px 0 0!important;opacity:0!important;pointer-events:none!important;z-index:6}
+body.tz-edit .tcard .tbar,.tcard.drag .tbar,.tcard.inst .tbar.tbar-show{opacity:1!important;pointer-events:auto!important}
+.jack{z-index:12!important}
+.tog,.knob,.btn3,.pw,.hot{z-index:11!important}
+.tz-guide{position:absolute;pointer-events:none;z-index:35;display:none}
+.tz-guide.x{width:0;border-left:1.5px dashed #1d6fa5;box-shadow:0 0 4px #1d6fa588}
+.tz-guide.y{height:0;border-top:1.5px dashed #1d6fa5;box-shadow:0 0 4px #1d6fa588}
+`;document.head.append(st)}
 /* setin bölümleri: [kimlik, başlık, x, y, g, y (panel koordinatı), varsayılan gizli] */
 const SECS=[
   ['power','Güç anahtarı',50,42,60,158],['logo','Logo',110,46,114,154,1],
@@ -32,11 +41,61 @@ function mkCard(id,title,w,h,kind){
   rb.onclick=e=>{e.stopPropagation();rotate(c)};xb.onclick=e=>{e.stopPropagation();setHidden(c,true)};
   bar.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;e.preventDefault();e.stopPropagation();bar.setPointerCapture(e.pointerId);
     const s=VW.s0*VW.z,st={x:e.clientX,y:e.clientY,cx:c.x,cy:c.y};el.classList.add('drag');
-    const mv=ev=>{c.x=Math.round((st.cx+(ev.clientX-st.x)/s)/4)*4;c.y=Math.round((st.cy+(ev.clientY-st.y)/s)/4)*4;place(c)};
-    const up=()=>{bar.removeEventListener('pointermove',mv);bar.removeEventListener('pointerup',up);el.classList.remove('drag');save();bounds(false)};
-    bar.addEventListener('pointermove',mv);bar.addEventListener('pointerup',up)});
+    const mv=ev=>{
+      let rx=st.cx+(ev.clientX-st.x)/s,ry=st.cy+(ev.clientY-st.y)/s;
+      if(ev.altKey){c.x=Math.round(rx);c.y=Math.round(ry);hideGuides();place(c);return}
+      const sn=snapPos(c,rx,ry);c.x=sn.x;c.y=sn.y;place(c);
+    };
+    const up=()=>{bar.removeEventListener('pointermove',mv);bar.removeEventListener('pointerup',up);el.classList.remove('drag');hideGuides();save();bounds(false)};
+    bar.addEventListener('pointermove',mv);bar.addEventListener('pointerup',up);bar.addEventListener('pointercancel',up)});
+  if(kind==='inst'){
+    el.addEventListener('pointermove',e=>{const r=el.getBoundingClientRect();bar.classList.toggle('tbar-show',e.clientY-r.top<=20)});
+    el.addEventListener('pointerleave',()=>bar.classList.remove('tbar-show'));
+  }
   return c}
 const h_=(t,p,...k)=>h(t,p,...k);
+let gX=null,gY=null;
+function ensureGuides(){if(!gX){gX=h_('div',{class:'tz-guide x'});gY=h_('div',{class:'tz-guide y'});TR.append(gX,gY)}}
+function hideGuides(){if(gX){gX.style.display='none';gY.style.display='none'}}
+function snapPos(c,rx,ry){
+  ensureGuides();
+  const[W,H]=rot(c),TH=10;
+  let bx=null,by=null,dxMin=TH,dyMin=TH,gx=null,gy=null,gxSpan=null,gySpan=null;
+  const tryX=(tx,lineX,y0,y1)=>{const d=Math.abs(rx-tx);if(d<dxMin){dxMin=d;bx=tx;gx=lineX;gxSpan=[Math.min(ry,y0)-12,Math.max(ry+H,y1)+12]}};
+  const tryY=(ty,lineY,x0,x1)=>{const d=Math.abs(ry-ty);if(d<dyMin){dyMin=d;by=ty;gy=lineY;gySpan=[Math.min(rx,x0)-12,Math.max(rx+W,x1)+12]}};
+  // Kendi varsayılan yuvasına (orijinal konumuna) mıknatıslanma
+  const defX=c.sx!==undefined?c.sx:(DEF[c.id]?DEF[c.id][0]:null),defY=c.sy!==undefined?c.sy:(DEF[c.id]?DEF[c.id][1]:null);
+  if(defX!==null&&c.r===0){tryX(defX,defX,defY,defY+H);tryY(defY,defY,defX,defX+W)}
+  // Diğer görünür kartların kenarlarına ve hizalarına mıknatıslanma
+  const gap=c.kind==='sec'?2:10;
+  for(const k in C){
+    const o=C[k];if(o===c||o.hid)continue;
+    const[oW,oH]=rot(o),ox=o.x,oy=o.y,ox2=ox+oW,oy2=oy+oH;
+    const nearY=Math.max(ry-oy2,oy-(ry+H))<120,nearX=Math.max(rx-ox2,ox-(rx+W))<120;
+    // Sol-sol, sağ-sağ, merkez-merkez hizalamaları
+    tryX(ox,ox,oy,oy2);
+    tryX(ox2-W,ox2,oy,oy2);
+    tryX(Math.round(ox+oW/2-W/2),Math.round(ox+oW/2),oy,oy2);
+    // Üst-üst, alt-alt, merkez-merkez hizalamaları
+    tryY(oy,oy,ox,ox2);
+    tryY(oy2-H,oy2,ox,ox2);
+    tryY(Math.round(oy+oH/2-H/2),Math.round(oy+oH/2),ox,ox2);
+    // Yan yana bitişik yapışma (kenar kenara + standart boşluklu)
+    if(nearY){
+      tryX(ox2+gap,ox2,oy,oy2);tryX(ox2,ox2,oy,oy2);
+      tryX(ox-W-gap,ox,oy,oy2);tryX(ox-W,ox,oy,oy2);
+    }
+    // Alt-üst bitişik yapışma (kenar kenara + standart boşluklu)
+    if(nearX){
+      tryY(oy2+gap,oy2,ox,ox2);tryY(oy2,oy2,ox,ox2);
+      tryY(oy-H-gap,oy,ox,ox2);tryY(oy-H,oy,ox,ox2);
+    }
+  }
+  const fx=bx!==null?bx:Math.round(rx/4)*4,fy=by!==null?by:Math.round(ry/4)*4;
+  if(gx!==null){gX.style.display='block';gX.style.left=gx+'px';gX.style.top=gxSpan[0]+'px';gX.style.height=(gxSpan[1]-gxSpan[0])+'px'}else gX.style.display='none';
+  if(gy!==null){gY.style.display='block';gY.style.top=gy+'px';gY.style.left=gySpan[0]+'px';gY.style.width=(gySpan[1]-gySpan[0])+'px'}else gY.style.display='none';
+  return{x:fx,y:fy};
+}
 function place(c){const[W,H]=rot(c);const s=c.el.style;s.left=c.x+'px';s.top=c.y+'px';s.width=W+'px';s.height=H+'px';s.display=c.hid?'none':'';
   const i=c.inn.style;i.width=c.w+'px';i.height=c.h+'px';i.left=(W-c.w)/2+'px';i.top=(H-c.h)/2+'px';i.transform=c.r?`rotate(${c.r}deg)`:''}
 /* alt alta duran yazı satırlarını (aynı hizalı, ≤12 px aralıklı) tek blok say; blok kendi merkezinde döner */
@@ -66,6 +125,9 @@ let menu=null;
 function menuSync(){if(!menu)return;menu.querySelectorAll('input[data-k]').forEach(i=>i.checked=!C[i.dataset.k].hid)}
 function buildMenu(){
   const zb=$('#zoombar');const btn=h_('button',{title:'Setin bölümlerini ve cihazları göster / gizle, düzeni sıfırla'},'▦ Bölümler');zb.insertBefore(btn,zb.children[4]);
+  const eb=h_('button',{title:'Kart başlıklarını aç/kapat (bölümleri taşımak, döndürmek veya gizlemek için)'},'✥ Kartları Taşı');
+  eb.onclick=e=>{e.stopPropagation();const on=document.body.classList.toggle('tz-edit');eb.classList.toggle('act',on)};
+  zb.insertBefore(eb,btn.nextSibling);
   const ib=h_('button',{title:'Gerçek cihazlara odaklan','data-r':'ins'},'Cihazlar');ib.onclick=e=>{e.stopPropagation();focusReg('ins')};zb.insertBefore(ib,btn.nextSibling);
   menu=h_('div',{id:'tzmenu'});
   const sec=(t,list)=>{menu.append(h_('div',{class:'tzh'},t));const g=h_('div',{class:'tzg'});list.forEach(([k])=>{const c=C[k],i=h_('input',{type:'checkbox','data-k':k});i.checked=!c.hid;i.onchange=()=>setHidden(c,!i.checked);g.append(h_('label',{},i,' '+c.title))});menu.append(g)};
@@ -181,7 +243,7 @@ function instruments(){
   const G=C.gen,Sc=C.scope,Mm=C.mm;
   [0,1].forEach(i=>{const o=GEN.outEl(i);placeJack(G,'gen.o'+(i+1),'Jeneratör CH'+(i+1)+' çıkış','gen.o'+(i+1),o);placeJack(G,'gen.g'+(i+1),'Jeneratör CH'+(i+1)+' toprak (şase)','gnd',o,18)});
   [1,2].forEach(i=>{const o=$(`#scopeRoot [data-si="bnc${i}"] circle`);placeJack(Sc,'sc.ch'+i,'Osiloskop CH'+i+' girişi','sc.ch'+i,o)});
-  placeJack(Sc,'sc.g','Osiloskop prob toprağı (şase)','gnd',$('#scopeRoot [data-si="bnc1"] circle'),24);
+  placeJack(Sc,'sc.g','Osiloskop prob toprağı (şase)','gnd',$('#scopeRoot #scGnd circle')||$('#scopeRoot [data-si="bnc1"] circle'),$('#scopeRoot #scGnd circle')?0:24);
   placeJack(Mm,'mm.com','Multimetre COM (siyah)','mm.com',$('#jk-COM circle'));placeJack(Mm,'mm.vo','Multimetre VΩmA (kırmızı)','mm.vo',$('#jk-vo circle'));placeJack(Mm,'mm.10a','Multimetre 10A (kırmızı)','mm.10a',$('#jk-10A circle'));
   // jeneratör çıkışı: dijital modda kaynak çıkışı, DC modülde 50 Ω iç dirençli kaynak
   const o1=O(J_['gen.o1'],1),o2=O(J_['gen.o2'],1);

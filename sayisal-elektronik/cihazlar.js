@@ -132,8 +132,9 @@ function build(){
   ${Object.keys(KN).map(knobSvg).join('')}
   <g data-sc="power" data-si="power" class="scb"><rect x="60" y="402" width="52" height="38" rx="8" fill="#dcdad1" stroke="#9c9a90" stroke-width="2"/><circle id="pwLed" cx="86" cy="421" r="8" fill="none" stroke="#555" stroke-width="2.5"/><line x1="86" y1="411" x2="86" y2="420" stroke="#555" stroke-width="2.5"/></g>
   <rect x="124" y="404" width="26" height="36" rx="3" fill="#cfcdc5" stroke="#8e8b80" stroke-width="2"/><rect x="130" y="410" width="14" height="14" fill="#444"/>
-  ${[0,1,2].map(i=>`<g data-si="${['bnc1','bnc2','ext'][i]}"><circle cx="${BNCX[i]}" cy="${BNCY}" r="25" fill="#d6d3c9" stroke="#8e8b80" stroke-width="2"/><circle cx="${BNCX[i]}" cy="${BNCY}" r="17" fill="#c2c0b8" stroke="#6e6b62" stroke-width="3"/><circle cx="${BNCX[i]}" cy="${BNCY}" r="6" fill="#222"/><text x="${BNCX[i]}" y="${BNCY-30}" font-size="9" font-weight="800" fill="${i<2?COL[i]:'#777'}" text-anchor="middle" stroke="#00000030" stroke-width=".5">${['CH1','CH2','EXT'][i]}</text></g>`).join('')}
-  ${[0,1].map(i=>`<g data-sc="probe${i+1}" data-si="probe${i+1}" class="scb"><rect x="${BNCX[i]-22}" y="428" width="44" height="18" rx="9" fill="#fff" stroke="#8e8b80" stroke-width="1.5"/><text id="pbt${i}" x="${BNCX[i]}" y="441" font-size="9" font-weight="800" fill="#444" text-anchor="middle" pointer-events="none">1X</text></g>`).join('')}
+  ${[0,1,2].map(i=>`<g data-si="${['bnc1','bnc2','ext'][i]}"><circle cx="${BNCX[i]}" cy="${BNCY}" r="25" fill="#d6d3c9" stroke="#8e8b80" stroke-width="2"/><circle cx="${BNCX[i]}" cy="${BNCY}" r="17" fill="#c2c0b8" stroke="#6e6b62" stroke-width="3"/><circle cx="${BNCX[i]}" cy="${BNCY}" r="6" fill="#222"/><text x="${i<2?BNCX[i]-20:BNCX[i]}" y="${BNCY-33}" font-size="9" font-weight="800" fill="${i<2?COL[i]:'#777'}" text-anchor="middle" stroke="#00000030" stroke-width=".5">${['CH1','CH2','EXT'][i]}</text></g>`).join('')}
+  <g id="scGnd" data-si="bnc1"><circle cx="576" cy="438" r="11" fill="#d6d3c9" stroke="#6e6b62" stroke-width="1.8"/><text x="576" y="462" font-size="8" font-weight="800" fill="#555" text-anchor="middle">⏚ ŞASE</text></g>
+  ${[0,1].map(i=>`<g data-sc="probe${i+1}" data-si="probe${i+1}" class="scb"><rect x="${BNCX[i]-4}" y="343" width="42" height="18" rx="9" fill="#fff" stroke="${COL[i]}" stroke-width="1.8"/><text id="pbt${i}" x="${BNCX[i]+17}" y="356" font-size="9" font-weight="800" fill="#333" text-anchor="middle" pointer-events="none">1X</text></g>`).join('')}
   <text x="780" y="476" font-size="7" fill="#777">CAT I</text>
   <g data-sc="comp" data-si="comp" class="scb"><circle cx="918" cy="352" r="9" fill="#d6d3c9" stroke="#8e8b80" stroke-width="2"/><circle cx="918" cy="352" r="3" fill="#222"/><path d="M906 336 h5 v-7 h6 v7 h6" fill="none" stroke="#666" stroke-width="1.4"/><circle cx="918" cy="400" r="9" fill="#d6d3c9" stroke="#8e8b80" stroke-width="2"/><circle cx="918" cy="400" r="3" fill="#222"/><path d="M910 416 h16 M913 420 h10 M916 424 h4" stroke="#666" stroke-width="1.4"/></g>
   <g id="halos" fill="none">
@@ -149,7 +150,7 @@ function build(){
    <circle class="halo" data-h="tlevel" cx="903" cy="230" r="28"/>
    <rect class="halo" data-h="tmode" x="882" y="168" width="60" height="30" rx="8"/><rect class="halo" data-h="tmenu" x="882" y="258" width="60" height="30" rx="8"/><rect class="halo" data-h="force" x="882" y="292" width="60" height="30" rx="8"/>
    <circle class="halo" data-h="bnc1" cx="633" cy="390" r="36"/><circle class="halo" data-h="bnc2" cx="735" cy="390" r="36"/>
-   <rect class="halo" data-h="probe1" x="607" y="424" width="52" height="26" rx="10"/><rect class="halo" data-h="probe2" x="709" y="424" width="52" height="26" rx="10"/>
+   <rect class="halo" data-h="probe1" x="625" y="339" width="50" height="26" rx="10"/><rect class="halo" data-h="probe2" x="727" y="339" width="50" height="26" rx="10"/>
    <rect class="halo" data-h="comp" x="900" y="322" width="36" height="112" rx="10"/>
    <rect class="halo" data-h="power" x="56" y="398" width="60" height="46" rx="10"/>
   </g>`;
