@@ -11,9 +11,10 @@ const S=Solver;
 /* hazır bağlantı yardımcıları */
 const FGM_=[1,10,100,1e3,1e4];
 function PR(o){return{n:o.n,w:o.w||[],after(){
-  if(o.dmm){DCX.DM.mode=o.dmm[0];probe.dmmP=o.dmm[1]?ji(o.dmm[1]):-1;probe.dmmN=o.dmm[2]?ji(o.dmm[2]):-1}
-  if(o.sc)probe.sc=ji(o.sc);if(o.sc2)probe.sc2=ji(o.sc2);
-  if(o.T)$('#scT').value=String(o.T);if(o.V)$('#scV').value=String(o.V);if(o.V2)$('#scV2').value=String(o.V2);
+  /* gerçek cihazlar: multimetre (UT136B+) ve osiloskop (RIGOL) kablolarla bağlanır; endüktans için basit LCR metre */
+  if(o.dmm){if(o.dmm[0]==='IND'||!(typeof TZ==='object')||!TZ.meter(o.dmm[0],o.dmm[1],o.dmm[2])){DCX.DM.mode=o.dmm[0];probe.dmmP=o.dmm[1]?ji(o.dmm[1]):-1;probe.dmmN=o.dmm[2]?ji(o.dmm[2]):-1;if((typeof TZ==='object'))TZ.show('basic')}}
+  if(o.sc)TZ.probeTo(1,o.sc);if(o.sc2)TZ.probeTo(2,o.sc2);
+  if(o.T||o.V||o.V2)TZ.scopeSet({T:o.T,V:o.V,V2:o.V2,ac:false});
   if(o.psu!=null){K.coarse=Math.min(1,o.psu/34);K.fine=0;K.current=o.ilim||0.5}
   if(o.fg){const f=o.fg.f||1e3;let r=0;while(r<4&&f>=FGM_[r]*10)r++;SW.fgr=r;K.fgf=clamp((f/FGM_[r]-1)/9,0,1);K.fga=clamp((o.fg.a||1)/10,0,1);SW.fgwave=o.fg.w==='tri'?1:0;SW.fgon=1}
   if(o.k)Object.assign(K,o.k);if(o.after)o.after();DCX.need()}}}
@@ -148,9 +149,9 @@ def(5,'Diyot ve doğrultmaçlar',[
     n:'Köprü çıkışı topraktan yalıtılmıştır: multimetre RL\'nin iki ucunda (tam dalga, iki diyot düşümü kadar eksik). CH2 toprağa göre + ucunu gösterir.'})},
   {t:'Kondansatörlü filtre',pre:PR({w:[[ACA,'dc5:hwa','red'],[AC0,'dc5:hw0','black'],['dc5:hj1a','dc5:hj1b','yellow'],['dc5:hj2a','dc5:hj2b','yellow'],['dc5:hj4a','dc5:hj4b','yellow']],sc:'dc5:hsc1',sc2:'dc5:hsc2',T:0.005,V:10,V2:5,dmm:['VDC','dc5:hsc2'],
     n:'J1 ile C1 (470 µF) bağlı: kondansatör tepe değerine dolar, çıkış neredeyse düz DC olur. Osiloskobu AC kuplaja alıp dalgalanmaya (ripple) bakın.'})},
-  {t:'Yük akımının filtreye etkisi',pre:PR({w:[[ACA,'dc5:hwa','red'],[AC0,'dc5:hw0','black'],['dc5:hj1a','dc5:hj1b','yellow'],['dc5:hj2a','dc5:hj2b','yellow'],['dc5:hj4a','dc5:hj4b','yellow'],['dc5:hj5a','dc5:hj5b','orange']],sc:'dc5:hsc2',T:0.005,V:2,dmm:['VDC','dc5:hsc2'],after(){scAC=true;$('#scAC').textContent='AC';$('#scAC').classList.add('on')},
+  {t:'Yük akımının filtreye etkisi',pre:PR({w:[[ACA,'dc5:hwa','red'],[AC0,'dc5:hw0','black'],['dc5:hj1a','dc5:hj1b','yellow'],['dc5:hj2a','dc5:hj2b','yellow'],['dc5:hj4a','dc5:hj4b','yellow'],['dc5:hj5a','dc5:hj5b','orange']],sc:'dc5:hsc2',T:0.005,V:2,dmm:['VDC','dc5:hsc2'],after(){TZ.scopeSet({ac:true})},
     n:'RL2 (330 Ω) da bağlanınca yük akımı artar: dalgalanma büyür, DC çıkış düşer. J5 köprüsünü çıkarıp takarak karşılaştırın (osiloskop AC kuplajda).'})},
-  {t:'π tipi filtre',pre:PR({w:[[ACA,'dc5:hwa','red'],[AC0,'dc5:hw0','black'],['dc5:hj1a','dc5:hj1b','yellow'],['dc5:hj3a','dc5:hj3b','yellow'],['dc5:hj4a','dc5:hj4b','yellow'],['dc5:hj5a','dc5:hj5b','orange']],sc:'dc5:hsc2',T:0.005,V:0.5,dmm:['VDC','dc5:hsc2'],after(){scAC=true;$('#scAC').textContent='AC';$('#scAC').classList.add('on')},
+  {t:'π tipi filtre',pre:PR({w:[[ACA,'dc5:hwa','red'],[AC0,'dc5:hw0','black'],['dc5:hj1a','dc5:hj1b','yellow'],['dc5:hj3a','dc5:hj3b','yellow'],['dc5:hj4a','dc5:hj4b','yellow'],['dc5:hj5a','dc5:hj5b','orange']],sc:'dc5:hsc2',T:0.005,V:0.5,dmm:['VDC','dc5:hsc2'],after(){TZ.scopeSet({ac:true})},
     n:'C1 – L (200 mH) – C2: π filtre. J2 köprüsü yok, akım bobinden geçer. Aynı yükte dalgalanma kondansatörlü filtreye göre çok daha küçük.'})}],
 D=>{
   D.sub(8,24,130,98,'EXPERIMENT 1','DIODES');
@@ -264,7 +265,7 @@ def(8,'Zener diyot ve regülatörler',[
     n:'Şönt regülatör: çıkış ≈ VZ + VBE ≈ 6,2 V. Fazla akımı BD139 toprağa akıtır. Girişi 9…15 V arasında değiştirin.'})},
   {t:'Seri regüleli doğrultmaç',pre:PR({psu:12,w:[[PSU,'dc8:sip','red'],[PSU0,'dc8:sin','black']],dmm:['VDC','dc8:svp','dc8:svn'],
     n:'Seri regülatör: çıkış ≈ VZ − VBE ≈ 5,6 V. Seri transistör (BD139) gerilim farkını üstlenir; VMZ soketlerinde zener gerilimini ölçün.'})},
-  {t:'İdeal seri regüleli doğrultmaç',pre:PR({w:[[ACA,'dc8:ra','red'],[AC0,'dc8:r0','black'],[ACB,'dc8:rb','blue']],dmm:['VDC','dc8:rvp','dc8:rvn'],sc:'dc8:rvp',T:0.005,V:2,after(){scAC=true;$('#scAC').textContent='AC';$('#scAC').classList.add('on')},
+  {t:'İdeal seri regüleli doğrultmaç',pre:PR({w:[[ACA,'dc8:ra','red'],[AC0,'dc8:r0','black'],[ACB,'dc8:rb','blue']],dmm:['VDC','dc8:rvp','dc8:rvn'],sc:'dc8:rvp',T:0.005,V:2,after(){TZ.scopeSet({ac:true})},
     n:'Orta uçlu tam dalga doğrultmaç + C3 filtresi + zener referanslı seri regülatör: çıkış ≈ 5,6 V, dalgalanma (osiloskop AC kuplajda) çok küçük.'})}],
 D=>{
   D.sub(8,24,326,100,'EXPERIMENT 1/2','EXAMINATION OF ZENER DIODE');
@@ -356,7 +357,7 @@ D=>{
 <b>C sınıfı:</b> 180°'den az iletir; verim yüksek, çıkış darbelidir — rezonans devresiyle sinüse dönüştürülür.`);
 
 /* =========================== MODÜL 11 =========================== */
-const ACK=()=>{scAC=true;$('#scAC').textContent='AC';$('#scAC').classList.add('on')};
+const ACK=()=>{TZ.scopeSet({ac:true})};
 def(11,'Ses kuvvetlendiricileri',[
   {t:'Transistörlü ses kuvvetlendiricisi (0,25 W)',pre:PR({w:[[P12,'dc11:a1v','red'],[Z12,'dc11:a1g','black'],[FG,'dc11:a1fg','yellow']],fg:{f:500,a:1},k:{m11p1:.5},sc:'dc11:a1s1',sc2:'dc11:a1s2',T:0.001,V:0.5,V2:2,after:ACK,
     n:'Sürücü TR1 + tamamlayıcı simetrik çıkış (BD139/BD140), D1-D2 geçiş bozulmasını önler. P (ses) düğmesiyle seviyeyi değiştirin; hoparlörden sesi duyabilirsiniz (sayfaya bir kez tıklayın). Çok açınca çıkış kırpılır.'})},

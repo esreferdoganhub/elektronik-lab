@@ -36,7 +36,38 @@ button,select{font:inherit;color:inherit}
 #zpct{min-width:44px;text-align:center;font:12px ui-monospace,monospace;color:var(--mut)}
 #zhint{position:absolute;right:8px;bottom:8px;z-index:40;font-size:11px;color:var(--mut);background:#0d1117c0;padding:3px 8px;border-radius:6px;pointer-events:none}
 body.wide #right{display:none}
-#trainer{position:absolute;left:0;top:0;width:768px;height:799px;background:#14297a;border-radius:14px;transform-origin:0 0;user-select:none;-webkit-user-select:none;touch-action:none}
+#trainer{position:absolute;left:0;top:0;width:1px;height:1px;transform-origin:0 0;user-select:none;-webkit-user-select:none;touch-action:none}
+/* ===== tezgâh kartları ===== */
+.tcard{position:absolute;border-radius:7px;background:#0b0c0f;box-shadow:0 8px 22px #000b,0 0 0 1.5px #2f3640}
+.tcard.inst{background:#d9d6cc}
+.tcard.drag{box-shadow:0 14px 34px #000d,0 0 0 2px var(--acc);z-index:5}
+.tin{position:absolute;transform-origin:50% 50%;border-radius:7px;overflow:hidden}
+.tin>svg.tslice{position:absolute;left:0;top:0;pointer-events:none}
+.tinst>svg{position:absolute;left:0;top:0;display:block;user-select:none;touch-action:none}
+.tbar{position:absolute;left:0;right:0;top:-21px;height:19px;display:flex;align-items:center;gap:4px;padding:0 5px;font-size:11px;color:#dfe7f0;background:#22324ae8;border-radius:6px 6px 0 0;opacity:0;transition:opacity .15s;cursor:grab;white-space:nowrap;overflow:hidden;z-index:6}
+.tcard:hover .tbar,.tcard.drag .tbar{opacity:1}
+.tbar b{flex:1;overflow:hidden;text-overflow:ellipsis;font-weight:600}
+.tbar button{border:0;background:#3a5274;color:#fff;border-radius:4px;font-size:11px;padding:0 6px;cursor:pointer;height:15px;line-height:15px}
+.tbar button:hover{background:var(--acc);color:#111}
+.ijack{opacity:.9}
+#tzmenu{position:absolute;left:8px;z-index:45;display:none;background:#0d1117f2;border:1px solid var(--line);border-radius:10px;padding:8px 10px;max-width:min(560px,calc(100% - 16px));box-shadow:0 12px 30px #000c}
+#tzmenu.open{display:block}
+#tzmenu .tzh{font-size:11px;color:var(--acc);font-weight:700;margin:4px 0 3px;text-transform:uppercase;letter-spacing:.04em}
+#tzmenu .tzg{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:2px 10px}
+#tzmenu label{font-size:12px;display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+#tzmenu .tzr{display:flex;gap:5px;margin-top:8px;flex-wrap:wrap}
+#tzmenu .tzr button{font-size:12px;padding:3px 9px;border-radius:5px;border:1px solid var(--line);background:var(--panel2);cursor:pointer}
+#tzmenu .tzr button:hover{border-color:var(--acc)}
+#tzmenu .tzi{font-size:11px;color:var(--mut);margin-top:6px}
+#dock.indock{width:540px;height:176px;border:0;padding:6px;background:#111720}
+#devinfo{flex:0 0 auto;max-height:150px;overflow:auto;padding:8px 10px;background:#0f141b;border-top:1px solid var(--line);font-size:12px;color:#c9d4e2}
+#devinfo h4{margin:0 0 2px;color:var(--acc);font-size:12px}#devinfo h2{margin:0 0 2px;color:var(--acc);font-size:12px}#devinfo p{margin:0}#devinfo .stepno{display:none}
+#fb{font-size:12px;margin-bottom:4px;color:#9fc6ff}#fb.ok{color:#7ee787}#fb.warn{color:#f2cc60}#fb.bad{color:#ff7b72}#fb:empty{display:none}
+[data-btn],[data-row],[data-chsel]{cursor:pointer}[data-btn]{transition:transform .08s,filter .08s}[data-btn].pressed{transform:translate(0,2.5px);filter:brightness(.78)}
+.blink{animation:bl 1s steps(2,start) infinite}@keyframes bl{50%{opacity:0}}
+.knobwrap{cursor:grab}.scb{cursor:pointer;transition:transform .08s,filter .08s}.scb.scp{transform:translate(0,2px);filter:brightness(.8)}.scknob{cursor:grab}
+.meter-label{font:700 12px "Segoe UI",Arial,sans-serif;fill:#e8e8e8}.clickable{cursor:pointer}.beepicon{animation:bp .25s infinite alternate}@keyframes bp{to{opacity:.25}}
+.halo{display:none}
 #right{flex:0 0 clamp(360px,33vw,540px);min-width:0;display:flex;flex-direction:column;border-left:1px solid var(--line);background:#0a0e14}
 #tabs{display:flex;gap:4px;padding:6px 8px;overflow-x:auto;background:var(--panel);border-bottom:1px solid var(--line);flex:0 0 auto}
 #tabs button{white-space:nowrap;padding:4px 9px;border-radius:5px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;font-size:12px}
@@ -164,6 +195,7 @@ body.pick,body.pick *{cursor:crosshair!important}
     <div id="tabs"></div>
     <div id="exp"></div>
     <div id="mods"></div>
+    <div id="devinfo"><div id="fb"></div><div id="infoCard"><h4>Cihaz bilgisi</h4><p>Gerçek cihazların (osiloskop, jeneratör, multimetre) bir parçasının üzerine gelin veya tıklayın: burada açıklaması görünür.</p></div></div>
     <div id="dock">
       <div class="inst" id="dmm">
         <div class="row"><b>Multimetre</b><select id="dmmMode" title="Ölçüm türü"></select></div>
@@ -194,6 +226,17 @@ body.pick,body.pick *{cursor:crosshair!important}
     </div>
   </div>
 </div>
+<div id="instHold" style="position:absolute;left:-9999px;top:0;width:900px;height:700px"><svg id="genSvg" viewBox="0 0 900 605" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="redglow"><stop offset="0" stop-color="#ff2b2b" stop-opacity=".95"/><stop offset="1" stop-color="#ff2b2b" stop-opacity="0"/></radialGradient>
+            <radialGradient id="knobg" cx="45%" cy="40%"><stop offset="0" stop-color="#ffffff"/><stop offset="1" stop-color="#cfcdc6"/></radialGradient>
+            <radialGradient id="knobin" cx="45%" cy="40%"><stop offset="0" stop-color="#9aa0a8"/><stop offset="1" stop-color="#d7d9dc"/></radialGradient>
+          </defs>
+          <g id="genG" transform="translate(12 10) scale(1.14)"></g><g id="genBench"></g>
+        </svg><svg id="scopeSvg" viewBox="0 0 960 500" xmlns="http://www.w3.org/2000/svg"><g id="scopeRoot"></g></svg><svg id="mmSvg" viewBox="22 0 336 612" xmlns="http://www.w3.org/2000/svg">
+          <defs><linearGradient id="lcdbg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cdeee8"/><stop offset="1" stop-color="#b3e0d9"/></linearGradient></defs>
+          <g id="meterG" transform="translate(30 5)"></g>
+        </svg></div>
 <svg id="wires"></svg>
 <div id="tip"></div>
 <div id="toast"></div>
@@ -201,6 +244,7 @@ body.pick,body.pick *{cursor:crosshair!important}
 <script src="dc-cozucu.js"></script>
 <script src="dc-moduller.js"></script>
 <script src="dc-moduller-liste.js"></script>
+<script src="cihazlar.js"></script>
 <script>
 'use strict';
 /* =====================================================================
@@ -1272,11 +1316,11 @@ function renderExp(){
   e.append(chips,h('div',{id:'note'}))}
 function loadPreset(P,title){
   mount(P.m);clearWires();ST.power=true;ST.trip.ttl=false;ST.trip.v12=false;SW.bin.fill(0);powerUI();
-  if(modBy(P.m).fam==='dc'){for(const k in probe)probe[k]=-1;DCX.DM.mode='VDC';DCX.DM.ohmR=3000;SW.fgon=0;DCX.need()}
+  if(modBy(P.m).fam==='dc'){for(const k in probe)probe[k]=-1;DCX.DM.mode='VDC';DCX.DM.ohmR=3000;SW.fgon=0;DCX.need();if((typeof TZ==='object'))TZ.resetInst()}
   for(const[a,b,c]of P.w)addWire(ji(a),ji(b),c);
   P.after&&P.after();relightTogs();
   for(const k of['astC','monoC']){const b=MSTATE[k+'Btns'];if(b)$$('button',b).forEach((y,j)=>y.classList.toggle('sel',j===MSTATE[k]))}
-  updProbeUI();
+  updProbeUI();if((typeof TZ==='object'))TZ.ensureVisible();
   const nt=$('#note');if(nt)nt.innerHTML='<b>'+title+'</b> — '+(P.n||'Anahtarları çevirerek çıkışı gözleyin.')}
 
 buildModules();DCX.buildAll();
@@ -1333,7 +1377,7 @@ function frame(ts){
     ST.t+=dts;if(apl){CL=trainerComps();settle();CL=null}else{for(const M of PW)modPower(M);settle()}
     if(apl)DCX.step(dts);
     for(let k=0;k<obs.length;k++)obs[k].acc+=obs[k].fn();
-    spkS.sn();
+    spkS.sn();if((typeof TZ==='object'))TZ.sub();
     if(dP>=0){const d=DCX.dmmSample(dP,dN);if(d===d){dmmAcc.s+=d;dmmAcc.q+=d*d;dmmAcc.n++}}
     if(scOn){const v=probe.sc>=0?rdV(probe.sc):0,v2=probe.sc2>=0?rdV(probe.sc2):0;scope.t[scope.i]=ST.t;scope.v[scope.i]=v!==v?0:v;scope.v2[scope.i]=v2!==v2?0:v2;scope.i=(scope.i+1)%240000;if(scope.n<240000)scope.n++}}
   if(apl)DCX.tune(N,performance.now()-tq0);
@@ -1358,6 +1402,7 @@ function render(){
   drawHex();
   for(const M of MODS)if(M.mounted&&M.render)M.render()}
 function renderInst(){
+  if((typeof TZ==='object'))TZ.render();
   $('#dmmRd').textContent=DCX.dmmText(dmmAcc);
   // osiloskop (CH1 sarı, CH2 camgöbeği); ≤ 25 ms/böl: CH1'in (yoksa CH2'nin) yükselen kenarında tetiklenir
   const cv=$('#scope'),W=cv.width,H=cv.height;scx.fillStyle='#04100a';scx.fillRect(0,0,W,H);
@@ -1394,20 +1439,20 @@ buildTabs();mount(1);
 /* =====================================================================
    YAKINLAŞTIRMA / KAYDIRMA (set üzerinde çalışmaya devam edilir)
    ===================================================================== */
-const SWP=$('#stagewrap'),VW={s0:1,z:1,tx:0,ty:0,W:1,H:1,reg:'all'};
+const SWP=$('#stagewrap'),VW={s0:1,z:1,tx:0,ty:0,W:1,H:1,reg:'all'},WS={x:0,y:0,w:768,h:799};
 const REG={all:['Tümü',0,0,768,799],dig:['Dijital çalışma alanı',22,298,730,454],mod:['Anahtarlar + Modül',240,284,512,466],m:['Modül',396,386,350,360],top:['Kaynaklar',22,36,724,164]};
 const zTop=()=>{const z=$('#zoombar');return z?z.offsetHeight+14:44};
-function vApply(){const s=VW.s0*VW.z,cw=768*s,ch=799*s,m=60,T=zTop();
-  VW.tx=cw<=VW.W?(VW.W-cw)/2:clamp(VW.tx,VW.W-cw-m,m);VW.ty=ch<=VW.H-T?T+(VW.H-T-ch)/2:clamp(VW.ty,VW.H-ch-m,T+m);
+function vApply(){const s=VW.s0*VW.z,cw=WS.w*s,ch=WS.h*s,m=60,T=zTop();let L=VW.tx+WS.x*s,Tp=VW.ty+WS.y*s;
+  L=cw<=VW.W?(VW.W-cw)/2:clamp(L,VW.W-cw-m,m);Tp=ch<=VW.H-T?T+(VW.H-T-ch)/2:clamp(Tp,VW.H-ch-m,T+m);VW.tx=L-WS.x*s;VW.ty=Tp-WS.y*s;
   TR.style.transform=`translate(${VW.tx}px,${VW.ty}px) scale(${s})`;$('#zpct').textContent=Math.round(VW.z*100)+'%'}
 function anim(){TR.classList.add('anim');clearTimeout(anim.t);anim.t=setTimeout(()=>TR.classList.remove('anim'),300)}
 function setReg(k){VW.reg=k;$$('#zoombar [data-r]').forEach(b=>b.classList.toggle('act',b.dataset.r===k))}
-function zoomAt(f,cx,cy){const s=VW.s0*VW.z,nz=clamp(VW.z*f,0.8,6),ns=VW.s0*nz;VW.tx=cx-(cx-VW.tx)*ns/s;VW.ty=cy-(cy-VW.ty)*ns/s;VW.z=nz;setReg(null);vApply()}
-function focusReg(k,a=true){const[,x,y,w,hh]=REG[k],T=zTop();const s=Math.min(VW.W/w,(VW.H-T)/hh)*.98;VW.z=clamp(s/VW.s0,0.8,6);const ss=VW.s0*VW.z;
+function zoomAt(f,cx,cy){const s=VW.s0*VW.z,nz=clamp(VW.z*f,0.5,8),ns=VW.s0*nz;VW.tx=cx-(cx-VW.tx)*ns/s;VW.ty=cy-(cy-VW.ty)*ns/s;VW.z=nz;setReg(null);vApply()}
+function focusReg(k,a=true){const[,x,y,w,hh]=REG[k],T=zTop();const s=Math.min(VW.W/w,(VW.H-T)/hh)*.98;VW.z=clamp(s/VW.s0,0.5,8);const ss=VW.s0*VW.z;
   VW.tx=(VW.W-w*ss)/2-x*ss;VW.ty=T+(VW.H-T-hh*ss)/2-y*ss;if(a)anim();setReg(k);vApply();
   if(a&&k!=='all'&&VW.z<1.25&&!document.body.classList.contains('wide'))toast('Daha büyük görünüm için ⇔ Geniş düğmesiyle sağ paneli gizleyebilirsiniz.',3500)}
-function fit(){const narrow=innerWidth<=1000;SWP.style.height=narrow?Math.round((innerWidth-14)*799/768)+'px':'';
-  const r=SWP.getBoundingClientRect();VW.W=r.width;VW.H=r.height;VW.s0=Math.min(VW.W/768,(VW.H-zTop())/799);
+function fit(){const narrow=innerWidth<=1000;SWP.style.height=narrow?Math.round((innerWidth-14)*0.9)+'px':'';
+  const r=SWP.getBoundingClientRect();VW.W=r.width;VW.H=r.height;VW.s0=Math.min(VW.W/WS.w,(VW.H-zTop())/WS.h);
   if(VW.reg)focusReg(VW.reg,false);else vApply()}
 {const zb=h('div',{id:'zoombar'});
  const B=(t,f,ti,r)=>{const b=h('button',{title:ti||''},t);if(r)b.dataset.r=r;b.onclick=e=>{e.stopPropagation();f()};zb.append(b);return b};
@@ -1418,8 +1463,8 @@ function fit(){const narrow=innerWidth<=1000;SWP.style.height=narrow?Math.round(
  B('⇔ Geniş',()=>{document.body.classList.toggle('wide');fit()},'Sağ paneli gizle / göster');
  SWP.append(zb,h('div',{id:'zhint'},'Tekerlek / iki parmak: yakınlaştır · boş yerden sürükle: kaydır · çift tık: yakınlaştır'));
  setTimeout(()=>{const z=$('#zhint');if(z)z.style.display='none'},9000)}
-const NOPAN='[data-j],.knob,.tog,.btn3,.pw,#zoombar,input,select,button';
-SWP.addEventListener('wheel',e=>{if(e.target.closest('.knob'))return;e.preventDefault();const r=SWP.getBoundingClientRect();
+const NOPAN='[data-j],.knob,.tog,.btn3,.pw,#zoombar,#tzmenu,.tinst,.tbar,.indock,input,select,button';
+SWP.addEventListener('wheel',e=>{if(e.target.closest('.knob,[data-knob],.knobwrap,.scknob'))return;e.preventDefault();const r=SWP.getBoundingClientRect();
   zoomAt(Math.exp(-e.deltaY*(e.ctrlKey?0.012:0.0016)),e.clientX-r.left,e.clientY-r.top)},{passive:false});
 const ptr=new Map();let pinch=null;
 SWP.addEventListener('pointerdown',e=>{if(e.target.closest(NOPAN))return;SWP.setPointerCapture(e.pointerId);ptr.set(e.pointerId,{x:e.clientX,y:e.clientY});SWP.classList.add('panning');
@@ -1436,6 +1481,9 @@ window.addEventListener('resize',fit);fit();
 if(location.search.includes('debug'))document.body.classList.add('dbg');
 requestAnimationFrame(frame);
 window.__run=(sec,dt=0.005)=>{const n=Math.ceil(sec/dt);for(let i=0;i<n;i++){if(dirty){buildNets();pV=new Float64Array(netN)}ST.t+=dt;for(const M of PW)modPower(M);settle()}render()};
+</script>
+<script src="tezgah.js"></script>
+<script>
 window.__sim={mount,MSTATE,BTN,one,confl,obs,ST,K,SW,J,jid,wires,addWire,comps,probe,MODS,PRE,loadPreset,netV:()=>netV,netOf:()=>netOf,adj};
 </script>
 </body>

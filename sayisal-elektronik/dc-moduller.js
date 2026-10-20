@@ -21,6 +21,7 @@ const MODES=[['VDC','V ⎓ DC gerilim'],['VAC','V ∿ AC gerilim (RMS)'],['ADC',
 /* ---------------- analog motor ---------------- */
 const E={M:null,sim:new S.Sim(),key:'',netOf:null,need:true,nets:[],N:0,els:[],dt:0,gnet:-1,nmax:300,psu:false,amm:null,ohm:null,spk:null,fails:0};
 const PSU={mode:'cv',i:0,v:0};
+const HOOKS=[];
 const SRC=[['ttl.p51',.05],['ttl.m51',.05],['s12.p1',.1],['s12.n1',.1],['ac.a1',.6],['ac.b1',.6],['fg.st1',50],['fg.ttl1',50],
   ['osc.100k',100],['osc.10k',100],['osc.1k',100],['osc.100',100],['osc.10',100],['osc.1',100],
   ['pulse.p',100],['pulse.n',100],['one.p',100],['one.n',100],['sr.a',100],['sr.b',100],
@@ -47,16 +48,18 @@ function build(M){
   const inc=[];let ch=true;while(ch){ch=false;for(const p of TP){if(inc.includes(p))continue;if(p.js.some(j=>used.has(netOf[j]))){inc.push(p);p.js.forEach(add);ch=true}}}
   const md=DM.mode,pP=probe.dmmP,pN=probe.dmmN,needI=pP>=0&&['ADC','AAC','OHM','DIODE'].includes(md);
   if(needI){add(pP);if(pN>=0)add(pN)}
+  /* dış ölçü aletleri (gerçek multimetre vb.): {js:[soketler], mk:n=>[elemanlar], seed} */
+  const HK=HOOKS.map(f=>f()).filter(Boolean);for(const hk of HK)hk.js.forEach(add);
   const g=netOf[ji('ttl.g0')];E.gnet=g;
   /* beslenmeyen devre parçalarını çıkar: toprak dışındaki bir kaynağa (ya da ölçü aletinin test kaynağına) ulaşmayan elemanlar hesaba katılmaz */
-  const seeds=new Set();for(const[id]of SRC)seeds.add(netOf[ji(id)]);seeds.add(netOf[ji('psu.p1')]);if(needI){seeds.add(netOf[pP]);if(pN>=0)seeds.add(netOf[pN])}
-  const items=[...M.an.map(e=>({e,ns:e.ji.map(j=>netOf[j])})),...inc.map(p=>({p,ns:p.js.map(j=>netOf[j])}))];
+  const seeds=new Set();for(const[id]of SRC)seeds.add(netOf[ji(id)]);for(const hk of HK)if(hk.seed)hk.js.forEach(j=>seeds.add(netOf[j]));seeds.add(netOf[ji('psu.p1')]);if(needI){seeds.add(netOf[pP]);if(pN>=0)seeds.add(netOf[pN])}
+  const items=[...M.an.map(e=>({e,ns:e.ji.map(j=>netOf[j])})),...inc.map(p=>({p,ns:p.js.map(j=>netOf[j])})),...HK.map(k=>({k,ns:k.js.map(j=>netOf[j])}))];
   const adjN=new Map();for(const it of items)for(const a of it.ns)if(a!==g){if(!adjN.has(a))adjN.set(a,new Set());for(const b of it.ns)if(b!==g&&b!==a)adjN.get(a).add(b)}
   const reach=new Set(),q=[];for(const s0 of seeds)if(s0!==g&&adjN.has(s0)){reach.add(s0);q.push(s0)}
   while(q.length){const a=q.pop();for(const b of adjN.get(a)||[])if(!reach.has(b)){reach.add(b);q.push(b)}}
   const live=it=>it.ns.some(a=>reach.has(a));
-  const anL=items.filter(it=>it.e&&live(it)).map(it=>it.e),incL=items.filter(it=>it.p&&live(it)).map(it=>it.p);
-  used.clear();for(const e of anL)for(const j of e.ji)add(j);for(const p of incL)p.js.forEach(add);if(needI){add(pP);if(pN>=0)add(pN)}
+  const anL=items.filter(it=>it.e&&live(it)).map(it=>it.e),incL=items.filter(it=>it.p&&live(it)).map(it=>it.p),hkL=items.filter(it=>it.k&&live(it)).map(it=>it.k);
+  used.clear();for(const e of anL)for(const j of e.ji)add(j);for(const p of incL)p.js.forEach(add);for(const k of hkL)k.js.forEach(add);if(needI){add(pP);if(pN>=0)add(pN)}
   E.nets=[...used].filter(n=>n!==g);const nd=new Map();E.nets.forEach((n,i)=>nd.set(n,i+1));nd.set(g,0);
   const nj=j=>nd.get(netOf[j]);E.N=E.nets.length;const els=[];
   for(const e of anL){const n=e.ji.map(nj),st=e.st||(e.st={});
@@ -74,6 +77,7 @@ function build(M){
       case'LAMP':els.push(S.R(n[0],n[1],e.v));break;
       case'SPK':els.push(S.R(n[0],n[1],8));break}}
   for(const p of incL)els.push(...p.mk(p.js.map(nj)));
+  for(const k of hkL)els.push(...k.mk(k.js.map(nj)));
   for(const[id,r]of SRC){const j=ji(id),nt=netOf[j];if(!used.has(nt)||nt===g)continue;
     els.push(S.Vdyn(nd.get(nt),0,()=>{const v=netV[nt];return netK[nt]>=0&&v===v?{v,r}:null}))}
   const pn=netOf[ji('psu.p1')];E.psu=used.has(pn)&&pn!==g;
@@ -109,9 +113,10 @@ function dmmSample(dP,dN){
   const a=rdV(dP);let b=dN>=0?rdV(dN):0;if(b!==b)b=0;return a===a?a-b:NaN}
 const fmt=(v,u,d=3)=>{const a=Math.abs(v);const P=[[1e6,'M'],[1e3,'k'],[1,''],[1e-3,'m'],[1e-6,'µ'],[1e-9,'n'],[1e-12,'p']];
   for(const[s,p]of P)if(a>=s*0.9995||s===1e-12){const x=v/s;return x.toFixed(Math.max(0,d-Math.floor(Math.log10(Math.max(Math.abs(x),1)))))+' '+p+u}return v.toFixed(d)+' '+u};
-function eqCL(type){
-  const M=E.M||activeM();if(!M||probe.dmmP<0)return NaN;
-  const els=M.an.filter(e=>e.t===type);const nP=netOf[probe.dmmP],nN=probe.dmmN>=0?netOf[probe.dmmN]:netOf[ji('ttl.g0')];
+function eqCL(type){if(probe.dmmP<0)return NaN;return eqCLj(type,probe.dmmP,probe.dmmN>=0?probe.dmmN:ji('ttl.g0'))}
+function eqCLj(type,ja,jb){
+  const M=E.M||activeM();if(!M)return NaN;
+  const els=M.an.filter(e=>e.t===type);const nP=netOf[ja],nN=netOf[jb];
   if(nP===nN)return 0;
   const ids=new Map();const id=n=>{if(!ids.has(n))ids.set(n,ids.size);return ids.get(n)};id(nN);id(nP);
   for(const e of els){id(netOf[e.ji[0]]);id(netOf[e.ji[1]])}
@@ -301,4 +306,4 @@ function def(n,title,cat,build,info){DEFS.push({n,title,cat,build,info})}
 function buildAll(){
   for(const d of DEFS){const M=makeDC(d.n,d.title,d.build);M.cat=d.cat;
     if(d.info)M.opts.append(h('div',{class:'orow dcinfo',html:d.info}))}}
-return{DM,MODES,plan,step,tune,psu,spkV,dmmSample,dmmText,def,buildAll,activeM,E,fmtVal:vlab,need:()=>{E.need=true}}})();
+return{DM,MODES,eqCLj,hook:f=>HOOKS.push(f),addSrc:(id,r)=>SRC.push([id,r]),plan,step,tune,psu,spkV,dmmSample,dmmText,def,buildAll,activeM,E,fmtVal:vlab,need:()=>{E.need=true}}})();

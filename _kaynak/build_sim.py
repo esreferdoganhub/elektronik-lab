@@ -2,35 +2,13 @@ import re, os
 base = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sp = os.path.dirname(os.path.abspath(__file__))
 rd = lambda p: open(p, encoding="utf-8").read()
-gen = rd(base + "/Fonksiyon_Jeneratoru_Egitimi.html")
-mm = rd(base + "/Multimetre_Egitimi.html")
-core = rd(sp + "/scope_core.js")
+import sys
+sys.path.insert(0, sp)
+import cihazlar
+core = cihazlar.scope_js()
 solver = rd(sp + "/sim_solver.js").replace("if(typeof module!=='undefined')module.exports=Solver;", "")
-
-# ---------- Jeneratör (IIFE) ----------
-js = re.search(r"<script>\n(.*?)</script>", gen, re.S).group(1)
-def cut(s, a, b): return s[s.index(a):s.index(b)]
-part0 = js[:js.index("/* ---------- Dalga şekilleri ---------- */")]
-partA = cut(js, "/* ---------- Dalga şekilleri ---------- */", "/* ---------- Osiloskop ---------- */")
-partB = cut(js, "/* ---------- Tuş mantığı ---------- */", "/* ---------- Animasyon döngüsü ---------- */")
-assert "const stage=$('#stage');" in part0
-part0 = part0.replace("const stage=$('#stage');", "const stage=$('#genSvg');")
-assert '<g id="lcdG"></g>' in partA
-partA = partA.replace('<g id="lcdG"></g>', '<g id="genLcdG"></g>')
-for sel in ["#tdm", "#tdp", "#vdm", "#vdp", "#autoBtn", "#muteBtn"]:
-    partB = re.sub(r"\$\('" + re.escape(sel) + r"'\)\.onclick[^\n]*\n", "", partB)
-assert "#tdm" not in partB and "#muteBtn" not in partB
-partB = partB.replace("const b=t.closest('[data-btn]');", "const b=t.closest('#genSvg [data-btn]');")
-GEN = "const GEN=(function(){\n" + part0 + partA + partB + rd(sp + "/gen_new.js") + "\n})();\n"
-
-# ---------- Multimetre (IIFE) ----------
-mjs = re.search(r"<script>\n(.*?)</script>", mm, re.S).group(1)
-consts = mjs[mjs.index("const MX=30"):mjs.index("/* ---------- Sahneler ---------- */")]
-draw = cut(mjs, "/* ---------- Multimetre çizimi ---------- */", "/* ---------- Ölçüm mantığı ---------- */")
-assert '<g id="lcdG"></g>' in draw
-draw = draw.replace('<g id="lcdG"></g>', '<g id="mmLcdG"></g>')
-info = mjs[mjs.index("const INFO=["):mjs.index("function renderInfo(){")]
-MMJ = "const MM=(function(){\nconst $=s=>document.querySelector(s);\n" + consts + draw + info + rd(sp + "/mm_new.js") + "\n})();\n"
+GEN = cihazlar.gen_js()
+MMJ = cihazlar.mm_js()
 
 css = r"""
   :root{--bg:#eef1f5;--panel:#fff;--ink:#1f2933;--sub:#52606d;--accent:#1d6fa5;--accent2:#c0392b;--line:#d9e2ec;
