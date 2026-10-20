@@ -271,7 +271,7 @@ function makeDC(n,title,build){
   /* panel çerçevesi */
   P.push(`<rect x="0" y="0" width="${MW}" height="${MH}" rx="6" fill="${PANEL}" stroke="#9a9a92" stroke-width="2"/>`);
   for(const[x,y]of[[6,6],[336,6],[6,344],[336,344],[171,344],[171,6]])P.push(`<circle cx="${x}" cy="${y}" r="2.4" fill="#c9c9c2" stroke="#8a8a84" stroke-width=".6"/>`);
-  D.t(14,18,'YF',11,'start','font-style="italic" font-weight="900" fill="#1f4aa8"');D.t(33,13,'YILDIRIM',8,'start','font-weight="800"');D.t(33,20,'ELEKTRONİK',4.6,'start');
+  D.raw('<rect x="12" y="8" width="16" height="12" rx="3" fill="#0d3b57"/><path d="M14 14Q16.5 9 19 14T24 14T26 14" fill="none" stroke="#ffd23f" stroke-width="1.6" stroke-linecap="round"/>');D.t(32,13,'EĞİTİM MODÜLÜ',6.4,'start','font-weight="800"');D.t(32,20,'DC DEVRELER',4.6,'start');
   D.t(330,18,code,8,'end');
   build(D);
   /* --- netlist çıkarımı --- */

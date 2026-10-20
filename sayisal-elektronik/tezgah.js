@@ -19,7 +19,7 @@ body.tz-edit .tcard .tbar,.tcard.drag .tbar,.tcard.inst .tbar.tbar-show{opacity:
 `;document.head.append(st)}
 /* setin bölümleri: [kimlik, başlık, x, y, g, y (panel koordinatı), varsayılan gizli] */
 const SECS=[
-  ['power','Güç anahtarı',50,42,60,158],['logo','Logo',110,46,114,154,1],
+  ['power','Güç anahtarı',50,46,60,154],['logo','Logo',110,46,114,154,1],
   ['psu','Ayarlı güç kaynağı',224,46,302,154],['dc12','±12 V simetrik kaynak',526,46,100,154],['ac','AC simetrik kaynak',628,46,112,154],
   ['input','Giriş birimleri',46,201,301,106],['fg','Fonksiyon jeneratörü (set)',46,306,301,82],
   ['output','Çıkış birimleri',346,201,394,89],['hex','Hex kod çözücü',346,288,196,100],['logic','Lojik gösterge',540,288,200,100],
@@ -269,6 +269,7 @@ function resetInst(){GEN.reset();Scope.reset();MM.S.sel=0;MM.S.hold=false;MM.S.f
 splitTrainer();instruments();
 const L=load();layoutDefault();
 if(L)for(const k in L){const c=C[k];if(!c)continue;Object.assign(c,{x:L[k].x,y:L[k].y,r:L[k].r||0,hid:!!L[k].hid})}
+if(L&&L.power&&L.power.x===50&&L.power.y===42)C.power.y=46; // eski varsayılan: güç kartı diğerlerinden 4 px uzundu
 for(const k in C){place(C[k]);counter(C[k])}
 buildMenu();bounds(true);requestAnimationFrame(()=>focusReg('all',false));
 return{C,reading:()=>reading(),sub,render,meter,probeTo,scopeSet,show,ensureVisible,resetInst,reset,pack,RING,J_}})();
