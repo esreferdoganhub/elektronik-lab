@@ -84,6 +84,9 @@ var css=''+
 '.sn-pn .hm{display:flex;align-items:center;justify-content:center;font-size:13.5px;color:#1d6fa5;font-weight:600;white-space:nowrap}'+
 '.sn-pn .ph{visibility:hidden}'+
 '@media (max-width:700px){.sn-pn{grid-template-columns:1fr}.sn-pn .nx{text-align:left}.sn-pn .ph{display:none}}'+
+'.sn-at{max-width:1100px;margin:14px auto 0;padding:0 18px 22px;text-align:center;font-size:13px;color:#647587;font-family:"Inter","Segoe UI","Helvetica Neue",Arial,sans-serif}'+
+'.sn-at a{color:#1d6fa5;font-weight:600;text-decoration:none}'+
+'.sn-at a:hover{text-decoration:underline}'+
 '@media (prefers-reduced-motion:reduce){::view-transition-old(root),::view-transition-new(root){animation:none}.sn-menu{transition:none}}';
 var DK='.sn.dark .sn-menu{background:#161f2a;border-color:#2d3744}.sn.dark .sn-mi{color:#e6edf3}.sn.dark .sn-mi:hover,.sn.dark .sn-mi.on{background:#1f2b38}.sn.dark .sn-mi span{color:#98a9ba}.sn.dark .sn-mi i{background:#1f2b38}.sn.dark .sn-mi i svg{stroke:#5aa9e6}';
 css+=DK;
@@ -99,6 +102,9 @@ var st=document.createElement('style');st.id='site-nav-css';st.textContent=css;(
 function u(h){return base+h;}
 var LOGO='<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="#0d3b57"/><path d="M4 17 Q8 6 12 17 T20 17 T28 17" fill="none" stroke="#ffd23f" stroke-width="3" stroke-linecap="round"/></svg>';
 var CHEV='<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.5 4.5 6 8l3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+/* Kardeş site: İngilizce datasheet ve makale okuyanlar için */
+var AT='<p class="sn-at">İngilizce datasheet, kılavuz ya da makale mi okuyorsun? '+
+  '<a href="https://academictranslate.com/?utm_source=lab&amp;utm_medium=footer">Düzenini bozmadan Türkçeye çevir → Academic Translate</a></p>';
 function build(){
   if(document.querySelector('.sn'))return;
   var h='<header class="sn'+(DARK?' dark':'')+'"><div class="sn-in">'+
@@ -134,7 +140,7 @@ function build(){
       (pv?'<a href="'+u(pv.href)+'"><small>← Önceki</small><b>'+pv.t+'</b></a>':'<a class="ph" aria-hidden="true"></a>')+
       '<a class="hm" href="'+u('index.html')+'">Tüm içerik</a>'+
       (nx?'<a class="nx" href="'+u(nx.href)+'"><small>Sonraki →</small><b>'+nx.t+'</b></a>':'<a class="ph" aria-hidden="true"></a>')+
-      '</div></footer>';
+      '</div>'+AT+'</footer>';
     document.body.insertAdjacentHTML('beforeend',f);
   }
 }

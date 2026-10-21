@@ -156,6 +156,8 @@ html = f"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Deney Simülatörü</title>
+<link rel="canonical" href="https://lab.academictranslate.com/Deney_Simulatoru.html">
+<meta name="description" content="Breadboard deney simülatörü: devreyi kurun, gerçek devre çözücüyle multimetre ve osiloskopla ölçün. Doğrultmaçtan buck dönüştürücüye adım adım deneyler.">
 <style>{css}</style>
 <script src="site-nav.js"></script>
 </head>

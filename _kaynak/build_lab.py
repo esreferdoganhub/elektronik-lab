@@ -47,6 +47,8 @@ html = f"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Laboratuvar: Jeneratör + Osiloskop</title>
+<link rel="canonical" href="https://lab.academictranslate.com/Lab_Jenerator_Osiloskop.html">
+<meta name="description" content="Fonksiyon jeneratörü ve osiloskop birlikte: kabloyla bağlı iki cihazla sinyal üretin ve ölçün.">
 <style>{css}</style>
 <script src="site-nav.js"></script>
 </head>
