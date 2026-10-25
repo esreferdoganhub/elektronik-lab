@@ -1,0 +1,1060 @@
+<!doctype html>
+<html lang="tr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sayısal Tasarım Notları · Elektronik Laboratuvarı</title>
+<script src="../site-nav.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f6fa; --panel:#ffffff; --ink:#1a1e29; --muted:#5b6274; --line:#e1e4ec;
+  --soft:#eef1f7; --accent:#2557d6; --accent-soft:#e6edfc;
+  --hi:#15a34a; --lo:#9aa4b8; --warn:#d42f2f; --warn-soft:#fdeaea;
+  --neg:#d77a06; --neg-soft:#fdf1e1;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#11141b; --panel:#191d27; --ink:#e7eaf2; --muted:#9aa2b5; --line:#2b3140;
+    --soft:#222838; --accent:#6b93ff; --accent-soft:#1f2b4a;
+    --hi:#34d36f; --lo:#566078; --warn:#ff6b6b; --warn-soft:#3a1d22;
+    --neg:#f5a524; --neg-soft:#3a2c15;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#11141b; --panel:#191d27; --ink:#e7eaf2; --muted:#9aa2b5; --line:#2b3140;
+  --soft:#222838; --accent:#6b93ff; --accent-soft:#1f2b4a;
+  --hi:#34d36f; --lo:#566078; --warn:#ff6b6b; --warn-soft:#3a1d22;
+  --neg:#f5a524; --neg-soft:#3a2c15;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 Inter,system-ui,sans-serif}
+code,.mono{font-family:"JetBrains Mono",ui-monospace,monospace}
+.ov{text-decoration:overline}
+a{color:var(--accent)}
+
+header.top{background:var(--panel);border-bottom:1px solid var(--line);padding:18px 24px;display:flex;align-items:center;gap:16px;position:sticky;top:var(--sn-h,0px);z-index:20}
+header.top h1{font-size:19px;margin:0;font-weight:700;letter-spacing:-.01em}
+header.top p{margin:0;color:var(--muted);font-size:14px}
+.logo{width:38px;height:38px;border-radius:9px;background:var(--accent);color:#fff;display:grid;place-items:center;font:600 15px "JetBrains Mono",monospace;flex:none}
+.theme-btn{margin-left:auto}
+
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);max-width:1240px;margin:0 auto;gap:32px;padding:28px 24px 80px}
+nav.toc{position:sticky;top:calc(var(--sn-h,0px) + 96px);align-self:start}
+nav.toc ol{list-style:none;margin:0;padding:0;counter-reset:t}
+nav.toc li a{display:flex;gap:10px;align-items:baseline;padding:7px 10px;border-radius:8px;color:var(--muted);text-decoration:none;font-size:14.5px}
+nav.toc li a span{font:600 12px "JetBrains Mono",monospace;color:var(--lo);min-width:20px}
+nav.toc li a:hover{background:var(--soft);color:var(--ink)}
+nav.toc li a.active{background:var(--accent-soft);color:var(--accent);font-weight:600}
+nav.toc li a.active span{color:var(--accent)}
+
+main section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:30px 32px;margin-bottom:28px;scroll-margin-top:calc(var(--sn-h,0px) + 96px)}
+.eyebrow{font:600 12px "JetBrains Mono",monospace;color:var(--accent);letter-spacing:.08em;text-transform:uppercase}
+main h2{margin:4px 0 12px;font-size:26px;letter-spacing:-.015em}
+main h3{margin:26px 0 10px;font-size:18px}
+main p{margin:0 0 12px}
+.lead{color:var(--muted);font-size:16.5px}
+
+.callout{border-left:3px solid var(--accent);background:var(--accent-soft);padding:12px 16px;border-radius:0 10px 10px 0;margin:16px 0}
+.callout.warn{border-color:var(--warn);background:var(--warn-soft)}
+.callout.neg{border-color:var(--neg);background:var(--neg-soft)}
+.formula{font-family:"JetBrains Mono",monospace;background:var(--soft);padding:2px 8px;border-radius:6px;white-space:nowrap}
+
+table.tt{border-collapse:collapse;font-family:"JetBrains Mono",monospace;font-size:14px;margin:8px 0}
+table.tt th,table.tt td{border:1px solid var(--line);padding:5px 12px;text-align:center}
+table.tt th{background:var(--soft);font-weight:600}
+table.tt tr.on td{background:var(--accent-soft);color:var(--accent);font-weight:600}
+table.tt tr.bad td{background:var(--warn-soft);color:var(--warn)}
+table.tt td.note{text-align:left;font-family:Inter,sans-serif;font-size:13.5px}
+.tbl-wrap{overflow-x:auto}
+
+.btn{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 14px;border-radius:8px;cursor:pointer}
+.btn:hover{border-color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.toggle{font:600 15px "JetBrains Mono",monospace;min-width:84px;border:1.5px solid var(--line);background:var(--soft);color:var(--muted);padding:8px 12px;border-radius:10px;cursor:pointer;transition:.15s}
+.toggle.on{background:var(--hi);border-color:var(--hi);color:#fff}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:14px 0}
+.controls label{font-size:14px;color:var(--muted)}
+select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+
+.led{display:inline-flex;align-items:center;gap:8px;font:600 15px "JetBrains Mono",monospace}
+.led i{width:16px;height:16px;border-radius:50%;background:var(--lo);display:inline-block;box-shadow:inset 0 0 0 2px rgba(0,0,0,.08)}
+.led.on i{background:var(--hi);box-shadow:0 0 10px var(--hi)}
+.led.bad i{background:var(--warn);box-shadow:0 0 10px var(--warn)}
+
+.gate-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px;margin-top:14px}
+.gate{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--bg)}
+.gate .hd{display:flex;justify-content:space-between;align-items:center}
+.gate .hd b{font-size:15px}
+.gate svg{width:100%;height:auto;display:block;margin:6px 0}
+.gate .ex{font:13px "JetBrains Mono",monospace;color:var(--muted)}
+.gate table.tt{font-size:12.5px;width:100%}
+.gate table.tt td,.gate table.tt th{padding:2px 6px}
+
+.sim{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--bg);margin:16px 0}
+.sim-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:22px;align-items:start}
+.sim svg.circuit{width:100%;height:auto;display:block}
+.outs{display:flex;gap:22px;margin:10px 0;flex-wrap:wrap}
+.status{font-size:14px;color:var(--muted);min-height:22px}
+.status b{color:var(--ink)}
+
+.wave{width:100%;height:auto;display:block;user-select:none}
+.wave-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:var(--panel);padding:6px}
+
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:12px 0}
+.cmp > div{border:1px solid var(--line);border-radius:12px;padding:16px;background:var(--bg)}
+.cmp h4{margin:0 0 6px}
+.cmp ul{margin:0;padding-left:18px}
+
+.quiz-q{border:1px solid var(--line);border-radius:12px;padding:16px;margin:12px 0;background:var(--bg)}
+.quiz-q p{font-weight:600}
+.quiz-q .opts{display:grid;gap:8px}
+.quiz-q button{text-align:left;font:inherit;font-size:15px;padding:9px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+.quiz-q button.right{border-color:var(--hi);background:color-mix(in srgb,var(--hi) 14%,var(--panel))}
+.quiz-q button.wrong{border-color:var(--warn);background:var(--warn-soft)}
+.quiz-q .exp{font-size:14px;color:var(--muted);margin-top:8px;display:none}
+.quiz-q.done .exp{display:block}
+.score{font:600 16px "JetBrains Mono",monospace}
+
+.q-head{display:flex;gap:18px;align-items:center;margin:8px 0 14px}
+.q-sym{flex:none;width:170px}
+.q-sym svg{width:100%;height:auto;display:block}
+.q-sol{margin-top:16px;border-top:1px dashed var(--line);padding-top:14px}
+.q-sol ol{margin:6px 0 0;padding-left:22px;font-size:14.5px}
+.q-sol li{margin:3px 0}
+.q-sol table.tt td,.q-sol table.tt th{padding:3px 7px}
+.q-sol table.tt td.y{color:var(--hi);font-weight:600}
+@media (max-width:600px){ .q-head{flex-direction:column;align-items:flex-start} .q-sym{width:140px} }
+
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr);padding:16px}
+  nav.toc{position:sticky;top:calc(var(--sn-h,0px) + 75px);z-index:10;background:var(--bg);margin:0 -16px;padding:6px 16px;border-bottom:1px solid var(--line)}
+  nav.toc ol{display:flex;overflow-x:auto;gap:4px}
+  nav.toc li a{white-space:nowrap}
+  .sim-grid,.cmp{grid-template-columns:minmax(0,1fr)}
+  main section{padding:22px 18px}
+  header.top{padding:14px 16px}
+  header.top p{display:none}
+}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="logo">01</div>
+  <div>
+    <h1>Sayısal Tasarım</h1>
+    <p>Mantık kapılarından flip-flop'lara, etkileşimli ders notları</p>
+  </div>
+  <button class="btn theme-btn" id="themeBtn" title="Tema değiştir">◐ Tema</button>
+</header>
+
+<div class="layout">
+<nav class="toc">
+  <ol>
+    <li><a href="#dogruluk"><span>01</span>Doğruluk Tabloları</a></li>
+    <li><a href="#kapilar"><span>02</span>Mantık Kapıları</a></li>
+    <li><a href="#ardil"><span>03</span>Ardıl Devreler</a></li>
+    <li><a href="#sr"><span>04</span>SR Mandal</a></li>
+    <li><a href="#d"><span>05</span>D Mandal</a></li>
+    <li><a href="#clk"><span>06</span>CLK ve Kenar Tetikleme</a></li>
+    <li><a href="#jk"><span>07</span>JK Flip-Flop</a></li>
+    <li><a href="#ozet"><span>08</span>Özet</a></li>
+    <li><a href="#soru"><span>09</span>Zaman Diyagramı Soruları</a></li>
+    <li><a href="#test"><span>10</span>Kendini Test Et</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- 01 -->
+<section id="dogruluk">
+  <div class="eyebrow">Bölüm 01</div>
+  <h2>Doğruluk Tabloları</h2>
+  <p class="lead">Sayısal devrelerde her sinyal yalnızca iki değer alır: <b>0</b> (düşük, yanlış) ve <b>1</b> (yüksek, doğru). Doğruluk tablosu, bir devrenin girişlerinin <i>tüm</i> olası kombinasyonları için çıkışın ne olacağını listeler.</p>
+  <h3>Nasıl kurulur?</h3>
+  <p><b>n</b> girişli bir fonksiyonun tablosunda <span class="formula">2ⁿ</span> satır bulunur. Satırlar ikili sayma sırasıyla yazılır: 1 giriş → 2 satır, 2 giriş → 4 satır, 3 giriş → 8 satır.</p>
+  <div class="callout">İpucu: En sağdaki sütun her satırda, ortadaki iki satırda bir, en soldaki dört satırda bir değişir (0,1,0,1… / 0,0,1,1… / 0,0,0,0,1,1,1,1).</div>
+  <p>Çıkışın <b>1</b> olduğu satırlara <b>minterim</b> denir. Fonksiyon, bu minterimlerin toplamı olarak yazılabilir: <span class="formula">Y = Σm(…)</span>.</p>
+
+  <div class="sim">
+    <div class="controls">
+      <label for="ttSel">Fonksiyon seç:</label>
+      <select id="ttSel"></select>
+    </div>
+    <div class="tbl-wrap"><table class="tt" id="ttTable"></table></div>
+    <p class="status" id="ttSum"></p>
+  </div>
+</section>
+
+<!-- 02 -->
+<section id="kapilar">
+  <div class="eyebrow">Bölüm 02</div>
+  <h2>Mantık Kapıları</h2>
+  <p class="lead">Mantık kapıları, bir veya daha fazla girişi tek bir çıkışa dönüştüren temel yapı taşlarıdır. Bütün sayısal sistemler bu kapıların birleşiminden oluşur.</p>
+  <p>Aşağıdaki <b>A</b> ve <b>B</b> girişlerini değiştir; tüm kapıların çıkışı ve doğruluk tablolarındaki aktif satır anında güncellenir. Yeşil teller <b>1</b>, gri teller <b>0</b> taşır.</p>
+  <div class="controls">
+    <button class="toggle" id="gA">A = 0</button>
+    <button class="toggle" id="gB">B = 0</button>
+  </div>
+  <div class="gate-grid" id="gateGrid"></div>
+  <div class="callout">NAND ve NOR kapılarına <b>evrensel kapı</b> denir: yalnızca NAND (veya yalnızca NOR) kullanarak diğer tüm kapıları oluşturabilirsin. Bir sonraki bölümlerde mandalları da bu kapılarla kuracağız.</div>
+</section>
+
+<!-- 03 -->
+<section id="ardil">
+  <div class="eyebrow">Bölüm 03</div>
+  <h2>Kombinasyonel ve Ardıl Devreler</h2>
+  <p class="lead">Şu ana kadar gördüğümüz devrelerde çıkış yalnızca o anki girişlere bağlıydı. Ardıl (sıralı, <i>sequential</i>) devrelerde ise çıkış, girişlerle birlikte devrenin <b>geçmişine</b>, yani hafızasına da bağlıdır.</p>
+  <div class="cmp">
+    <div>
+      <h4>Kombinasyonel devre</h4>
+      <ul>
+        <li>Çıkış = f(şimdiki girişler)</li>
+        <li>Hafıza yok, geri besleme yok</li>
+        <li>Örnek: toplayıcı, çoklayıcı (MUX), kod çözücü</li>
+      </ul>
+    </div>
+    <div>
+      <h4>Ardıl devre</h4>
+      <ul>
+        <li>Çıkış = f(şimdiki girişler, mevcut durum)</li>
+        <li>Çıkıştan girişe <b>geri besleme</b> var, bu sayede bilgi saklanır</li>
+        <li>Örnek: mandal, flip-flop, sayıcı, kaydedici</li>
+      </ul>
+    </div>
+  </div>
+  <svg viewBox="0 0 640 170" class="circuit" style="max-width:640px;width:100%;margin:10px 0" role="img" aria-label="Ardıl devre blok şeması">
+    <g fill="none" stroke="var(--ink)" stroke-width="1.6">
+      <rect x="170" y="30" width="170" height="80" rx="10" fill="var(--soft)"/>
+      <rect x="400" y="30" width="140" height="80" rx="10" fill="var(--accent-soft)" stroke="var(--accent)"/>
+      <path d="M40 70 H170" marker-end="url(#ar)"/>
+      <path d="M340 70 H400" marker-end="url(#ar)"/>
+      <path d="M540 70 H610" marker-end="url(#ar)"/>
+      <path d="M470 110 V145 H120 V95 H170" marker-end="url(#ar)" stroke="var(--accent)"/>
+    </g>
+    <defs><marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0 L10 5 L0 10 Z" fill="var(--ink)"/></marker></defs>
+    <g font-family="Inter,sans-serif" font-size="14" fill="var(--ink)" text-anchor="middle">
+      <text x="255" y="66">Kombinasyonel</text><text x="255" y="84">mantık</text>
+      <text x="470" y="66">Hafıza</text><text x="470" y="84">(mandal / FF)</text>
+      <text x="80" y="60">Girişler</text><text x="580" y="60">Çıkışlar</text>
+      <text x="300" y="138" fill="var(--accent)">mevcut durum (geri besleme)</text>
+    </g>
+  </svg>
+  <p>Ardıl devreler ikiye ayrılır:</p>
+  <ul>
+    <li><b>Asenkron</b>: Girişler değiştiği an çıkış değişebilir. <b>Mandallar (latch)</b> bu gruptadır.</li>
+    <li><b>Senkron</b>: Durum yalnızca bir <b>saat (CLK)</b> sinyalinin belirli anlarında değişir. <b>Flip-flop</b>'lar bu gruptadır.</li>
+  </ul>
+</section>
+
+<!-- 04 -->
+<section id="sr">
+  <div class="eyebrow">Bölüm 04</div>
+  <h2>SR Mandal (Set-Reset Latch)</h2>
+  <p class="lead">En basit hafıza elemanıdır. Birbirine çapraz bağlanmış iki NOR kapısından oluşur. <b>S</b> (Set) çıkışı 1 yapar, <b>R</b> (Reset) çıkışı 0 yapar; ikisi de 0 iken mandal son durumunu <b>hatırlar</b>.</p>
+  <div class="sim">
+    <div class="sim-grid">
+      <div>
+        <svg viewBox="0 0 360 200" class="circuit" id="srSvg"></svg>
+        <div class="controls">
+          <button class="toggle" id="srS">S = 0</button>
+          <button class="toggle" id="srR">R = 0</button>
+        </div>
+        <div class="outs">
+          <span class="led" id="srQ"><i></i>Q = 0</span>
+          <span class="led" id="srQb"><i></i><span><span class="ov">Q</span> = 1</span></span>
+        </div>
+        <p class="status" id="srStatus"></p>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tt" id="srTable">
+          <tr><th>S</th><th>R</th><th>Q<sub>+</sub></th><th>Durum</th></tr>
+          <tr data-k="00"><td>0</td><td>0</td><td>Q</td><td class="note">Değişmez (hafıza)</td></tr>
+          <tr data-k="01"><td>0</td><td>1</td><td>0</td><td class="note">Reset</td></tr>
+          <tr data-k="10"><td>1</td><td>0</td><td>1</td><td class="note">Set</td></tr>
+          <tr data-k="11"><td>1</td><td>1</td><td>?</td><td class="note">Geçersiz / yasak</td></tr>
+        </table>
+        <p style="margin-top:12px">Karakteristik denklem:<br><span class="formula">Q<sub>+</sub> = S + <span class="ov">R</span>·Q</span> &nbsp;(SR = 0 koşuluyla)</p>
+      </div>
+    </div>
+  </div>
+  <div class="callout warn"><b>Neden S = R = 1 yasak?</b> NOR tabanlı mandalda iki çıkış da 0 olur, yani Q ve <span class="ov">Q</span> birbirinin tersi olmaz. Ardından S ve R aynı anda 0'a dönerse mandalın hangi duruma düşeceği belirsizdir (yarış durumu).</div>
+  <p>Simülatörde dene: önce S'yi 1 yapıp geri 0'a çek, Q'nun 1'de <b>kaldığını</b> gör. Bu, devrenin bir biti hafızada tuttuğunu gösterir.</p>
+  <p><b>NAND tabanlı SR mandal</b>: Girişleri aktif-düşüktür (<span class="ov">S</span>, <span class="ov">R</span>). 0 uygulanan giriş etkili olur; yasak durum <span class="ov">S</span> = <span class="ov">R</span> = 0'dır.</p>
+</section>
+
+<!-- 05 -->
+<section id="d">
+  <div class="eyebrow">Bölüm 05</div>
+  <h2>D Mandal (D Latch)</h2>
+  <p class="lead">SR mandalın yasak durum sorununu çözmek için tek bir veri girişi <b>D</b> ve bir etkinleştirme girişi <b>EN</b> (bazı kaynaklarda C veya G) kullanılır. İçeride <span class="formula">S = D·EN</span> ve <span class="formula">R = <span class="ov">D</span>·EN</span> üretildiği için S ve R hiçbir zaman aynı anda 1 olamaz.</p>
+  <div class="sim">
+    <div class="sim-grid">
+      <div>
+        <svg viewBox="0 0 360 170" class="circuit" id="dSvg"></svg>
+        <div class="controls">
+          <button class="toggle" id="dD">D = 0</button>
+          <button class="toggle" id="dEN">EN = 0</button>
+        </div>
+        <div class="outs">
+          <span class="led" id="dQ"><i></i>Q = 0</span>
+          <span class="led" id="dQb"><i></i><span><span class="ov">Q</span> = 1</span></span>
+        </div>
+        <p class="status" id="dStatus"></p>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tt" id="dTable">
+          <tr><th>EN</th><th>D</th><th>Q<sub>+</sub></th><th>Durum</th></tr>
+          <tr data-k="0x"><td>0</td><td>X</td><td>Q</td><td class="note">Kilitli, değişmez</td></tr>
+          <tr data-k="10"><td>1</td><td>0</td><td>0</td><td class="note">Şeffaf: Q = D</td></tr>
+          <tr data-k="11"><td>1</td><td>1</td><td>1</td><td class="note">Şeffaf: Q = D</td></tr>
+        </table>
+        <p style="margin-top:12px">EN = 1 iken: <span class="formula">Q<sub>+</sub> = D</span></p>
+        <p class="status mono" id="dInner"></p>
+      </div>
+    </div>
+  </div>
+  <div class="callout"><b>Seviye tetiklemeli (level-triggered):</b> EN = 1 olduğu <i>süre boyunca</i> mandal şeffaftır; D'deki her değişiklik doğrudan Q'ya geçer. EN = 0 olunca son değer kilitlenir. Bu "şeffaflık" bazı tasarımlarda sorun yaratır; çözümü bir sonraki bölümdeki kenar tetiklemedir.</div>
+</section>
+
+<!-- 06 -->
+<section id="clk">
+  <div class="eyebrow">Bölüm 06</div>
+  <h2>Saat Sinyali (CLK) ve Kenar Tetikleme</h2>
+  <p class="lead">Senkron sistemlerde tüm hafıza elemanları ortak bir <b>saat sinyaline (CLK)</b> bağlanır. CLK, 0 ile 1 arasında düzenli olarak gidip gelen bir kare dalgadır.</p>
+  <svg viewBox="0 0 640 120" style="width:100%;max-width:640px;display:block;margin:6px 0 14px" role="img" aria-label="Saat sinyali kenarları">
+    <path d="M20 90 H100 V30 H180 V90 H260 V30 H340 V90 H420 V30 H500 V90 H580" fill="none" stroke="var(--ink)" stroke-width="2.2"/>
+    <g stroke-width="2.4" fill="none">
+      <path d="M100 100 V20" stroke="var(--hi)" stroke-dasharray="4 3"/><path d="M260 100 V20" stroke="var(--hi)" stroke-dasharray="4 3"/><path d="M420 100 V20" stroke="var(--hi)" stroke-dasharray="4 3"/>
+      <path d="M180 100 V20" stroke="var(--neg)" stroke-dasharray="4 3"/><path d="M340 100 V20" stroke="var(--neg)" stroke-dasharray="4 3"/><path d="M500 100 V20" stroke="var(--neg)" stroke-dasharray="4 3"/>
+    </g>
+    <path d="M94 62 L100 52 L106 62" fill="var(--hi)"/><path d="M174 52 L180 62 L186 52" fill="var(--neg)"/>
+    <g font-family="Inter,sans-serif" font-size="13">
+      <text x="100" y="14" fill="var(--hi)" text-anchor="middle">↑ yükselen (pozitif) kenar</text>
+      <text x="340" y="115" fill="var(--neg)" text-anchor="middle">↓ düşen (negatif) kenar</text>
+      <text x="140" y="52" fill="var(--muted)" text-anchor="middle">yüksek</text>
+      <text x="220" y="80" fill="var(--muted)" text-anchor="middle">düşük</text>
+    </g>
+  </svg>
+  <div class="cmp">
+    <div>
+      <h4 style="color:var(--hi)">Pozitif kenar tetikleme ↑</h4>
+      <p>Çıkış yalnızca CLK <b>0 → 1</b> geçişi anında değişir. Sembolde CLK girişinde küçük bir <b>üçgen (▷)</b> bulunur.</p>
+    </div>
+    <div>
+      <h4 style="color:var(--neg)">Negatif kenar tetikleme ↓</h4>
+      <p>Çıkış yalnızca CLK <b>1 → 0</b> geçişi anında değişir. Sembolde üçgenin önünde bir <b>daire (○▷)</b> bulunur.</p>
+    </div>
+  </div>
+  <svg viewBox="0 0 640 162" style="width:100%;max-width:640px;display:block;margin:8px 0" id="ffSymbols" role="img" aria-label="Flip-flop sembolleri"></svg>
+  <p><b>Flip-flop</b>, kenar tetiklemeli hafıza elemanıdır. D mandaldan farkı şudur: Mandal, EN yüksek olduğu <i>süre boyunca</i> şeffaftır; flip-flop ise D'yi yalnızca saat <i>kenarındaki tek bir anda</i> örnekler ve bir sonraki kenara kadar tutar. Pozitif kenar tetiklemeli D flip-flop'un karakteristik denklemi: <span class="formula">Q<sub>+</sub> = D</span> (kenar anında).</p>
+
+  <h3>Zamanlama diyagramı: mandal ve flip-flop karşılaştırması</h3>
+  <p><b>D</b> satırındaki herhangi bir zaman dilimine tıklayarak D'yi değiştir. Üç farklı elemanın aynı girişlere nasıl tepki verdiğini karşılaştır.</p>
+  <div class="controls">
+    <button class="btn" id="tdRand">Rastgele D</button>
+    <button class="btn" id="tdClear">D'yi temizle</button>
+    <label><input type="checkbox" id="tdPos" checked> Yükselen kenarları göster</label>
+    <label><input type="checkbox" id="tdNeg" checked> Düşen kenarları göster</label>
+  </div>
+  <div class="wave-wrap"><svg class="wave" id="timing"></svg></div>
+  <div class="callout neg" style="margin-top:14px">Flip-flop, kenardan <b>hemen önceki</b> D değerini örnekler. Gerçek devrelerde D'nin kenardan önce bir süre (kurulum süresi, <i>setup time</i>) ve sonra bir süre (tutma süresi, <i>hold time</i>) sabit kalması gerekir.</div>
+</section>
+
+<!-- 07 -->
+<section id="jk">
+  <div class="eyebrow">Bölüm 07</div>
+  <h2>JK Flip-Flop</h2>
+  <p class="lead">JK flip-flop, SR'nin geliştirilmiş hâlidir: <b>J</b> Set'e, <b>K</b> Reset'e karşılık gelir. Farkı, SR'deki yasak durumun (J = K = 1) burada <b>toggle</b>, yani çıkışı tersine çevirme anlamına gelmesidir. Tüm değişiklikler yalnızca seçilen saat kenarında olur.</p>
+  <div class="sim">
+    <div class="sim-grid">
+      <div>
+        <div class="controls">
+          <button class="toggle" id="jkJ">J = 0</button>
+          <button class="toggle" id="jkK">K = 0</button>
+          <button class="toggle" id="jkC">CLK = 0</button>
+        </div>
+        <div class="controls">
+          <label for="jkMode">Tetikleme:</label>
+          <select id="jkMode">
+            <option value="pos">Pozitif kenar (↑)</option>
+            <option value="neg">Negatif kenar (↓)</option>
+          </select>
+          <button class="btn primary" id="jkPulse">Saat darbesi ver ⎍</button>
+          <button class="btn" id="jkReset">Sıfırla</button>
+        </div>
+        <div class="outs">
+          <span class="led" id="jkQ"><i></i>Q = 0</span>
+          <span class="led" id="jkQb"><i></i><span><span class="ov">Q</span> = 1</span></span>
+        </div>
+        <p class="status" id="jkStatus">CLK'yı değiştir veya darbe ver.</p>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tt" id="jkTable">
+          <tr><th>J</th><th>K</th><th>Q<sub>+</sub></th><th>Durum</th></tr>
+          <tr data-k="00"><td>0</td><td>0</td><td>Q</td><td class="note">Değişmez</td></tr>
+          <tr data-k="01"><td>0</td><td>1</td><td>0</td><td class="note">Reset</td></tr>
+          <tr data-k="10"><td>1</td><td>0</td><td>1</td><td class="note">Set</td></tr>
+          <tr data-k="11"><td>1</td><td>1</td><td><span class="ov">Q</span></td><td class="note">Toggle (tersle)</td></tr>
+        </table>
+        <p style="margin-top:12px">Karakteristik denklem:<br><span class="formula">Q<sub>+</sub> = J·<span class="ov">Q</span> + <span class="ov">K</span>·Q</span></p>
+      </div>
+    </div>
+    <h3 style="margin-top:18px">Geçmiş (zamanlama)</h3>
+    <div class="wave-wrap"><svg class="wave" id="jkWave"></svg></div>
+  </div>
+  <h3>Uyarma (excitation) tablosu</h3>
+  <p>Tasarımda "Q'dan Q<sub>+</sub>'ya geçmek için J ve K ne olmalı?" sorusunun cevabıdır. Sayıcı tasarımında kullanılır.</p>
+  <div class="tbl-wrap">
+    <table class="tt">
+      <tr><th>Q</th><th>Q<sub>+</sub></th><th>J</th><th>K</th></tr>
+      <tr><td>0</td><td>0</td><td>0</td><td>X</td></tr>
+      <tr><td>0</td><td>1</td><td>1</td><td>X</td></tr>
+      <tr><td>1</td><td>0</td><td>X</td><td>1</td></tr>
+      <tr><td>1</td><td>1</td><td>X</td><td>0</td></tr>
+    </table>
+  </div>
+  <div class="callout">J ve K'yı birbirine bağlayıp tek giriş <b>T</b> yaparsan <b>T flip-flop</b> elde edersin: T = 1 iken her saat kenarında çıkış tersine döner. Bu, sayıcıların temelidir.</div>
+</section>
+
+<!-- 08 -->
+<section id="ozet">
+  <div class="eyebrow">Bölüm 08</div>
+  <h2>Özet ve Karşılaştırma</h2>
+  <div class="tbl-wrap">
+    <table class="tt" style="width:100%">
+      <tr><th>Eleman</th><th>Tetikleme</th><th>Girişler</th><th>Karakteristik denklem</th><th>Not</th></tr>
+      <tr><td>SR mandal</td><td class="note">Seviye (asenkron)</td><td>S, R</td><td>Q<sub>+</sub> = S + <span class="ov">R</span>Q</td><td class="note">S = R = 1 yasak</td></tr>
+      <tr><td>D mandal</td><td class="note">Seviye (EN = 1)</td><td>D, EN</td><td>Q<sub>+</sub> = D</td><td class="note">EN = 1 iken şeffaf</td></tr>
+      <tr><td>D flip-flop</td><td class="note">Kenar (↑ veya ↓)</td><td>D, CLK</td><td>Q<sub>+</sub> = D</td><td class="note">Kaydedicilerin temeli</td></tr>
+      <tr><td>JK flip-flop</td><td class="note">Kenar (↑ veya ↓)</td><td>J, K, CLK</td><td>Q<sub>+</sub> = J<span class="ov">Q</span> + <span class="ov">K</span>Q</td><td class="note">J = K = 1 → toggle</td></tr>
+      <tr><td>T flip-flop</td><td class="note">Kenar (↑ veya ↓)</td><td>T, CLK</td><td>Q<sub>+</sub> = T ⊕ Q</td><td class="note">Sayıcıların temeli</td></tr>
+    </table>
+  </div>
+  <h3>Akılda tutulacaklar</h3>
+  <ul>
+    <li>Doğruluk tablosu, n giriş için 2ⁿ satır içerir; çıkışı 1 olan satırlar minterimlerdir.</li>
+    <li>NAND ve NOR evrensel kapılardır.</li>
+    <li>Ardıl devreler geri besleme sayesinde hafıza taşır.</li>
+    <li><b>Mandal = seviye</b> tetiklemeli, <b>flip-flop = kenar</b> tetiklemeli.</li>
+    <li>Pozitif kenar: 0→1 (▷), negatif kenar: 1→0 (○▷).</li>
+  </ul>
+</section>
+
+<!-- 09 -->
+<section id="soru">
+  <div class="eyebrow">Bölüm 09</div>
+  <h2>Zaman Diyagramı Soruları</h2>
+  <p class="lead">Tüm kapılar ve ardıl devreler için rastgele zaman diyagramı sorusu üret. Önce çıkışı kâğıda kendin çiz, sonra tek tıkla çözümü ve adım adım açıklamasını gör.</p>
+  <div class="sim">
+    <div class="controls">
+      <label for="qType">Soru türü:</label>
+      <select id="qType"></select>
+      <button class="btn primary" id="qNew">Yeni soru üret</button>
+      <button class="btn" id="qSolve">Çözümü göster</button>
+    </div>
+    <div class="q-head">
+      <div id="qSym" class="q-sym"></div>
+      <div>
+        <p id="qText" style="font-weight:600;margin-bottom:6px"></p>
+        <p id="qHint" class="status"></p>
+      </div>
+    </div>
+    <div class="wave-wrap"><svg class="wave" id="qWave"></svg></div>
+    <div id="qSol" class="q-sol" hidden></div>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="test">
+  <div class="eyebrow">Bölüm 10</div>
+  <h2>Kendini Test Et</h2>
+  <p class="lead">Her soruda bir seçeneğe tıkla; doğru cevap ve açıklaması görünecek.</p>
+  <div id="quiz"></div>
+  <div class="controls">
+    <span class="score" id="score">Puan: 0 / 0</span>
+    <button class="btn" id="quizReset">Testi sıfırla</button>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+const $ = s => document.querySelector(s);
+const W = v => v ? 'var(--hi)' : 'var(--lo)';
+const OV = s => `<span class="ov">${s}</span>`;
+
+/* ---------- tema ---------- */
+(function(){
+  let saved = null;
+  try { saved = localStorage.getItem('st-theme'); } catch(e){}
+  if (saved) document.documentElement.dataset.theme = saved;
+  $('#themeBtn').onclick = () => {
+    const dark = document.documentElement.dataset.theme
+      ? document.documentElement.dataset.theme === 'dark'
+      : matchMedia('(prefers-color-scheme: dark)').matches;
+    const next = dark ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('st-theme', next); } catch(e){}
+  };
+})();
+
+/* ---------- içindekiler vurgusu ---------- */
+(function(){
+  const links = [...document.querySelectorAll('nav.toc a')];
+  const obs = new IntersectionObserver(es => {
+    es.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.classList.toggle('active', l.getAttribute('href') === '#' + e.target.id));
+      }
+    });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  document.querySelectorAll('main section').forEach(s => obs.observe(s));
+})();
+
+function setToggle(el, name, v){
+  el.classList.toggle('on', !!v);
+  el.textContent = `${name} = ${v}`;
+}
+function setLed(el, label, v, bad){
+  el.classList.toggle('on', !!v && !bad);
+  el.classList.toggle('bad', !!bad);
+  const txt = el.childNodes[el.childNodes.length - 1];
+  if (txt.nodeType === 3) txt.textContent = `${label} = ${v}`;
+  else txt.innerHTML = `${OV(label)} = ${v}`;
+}
+
+/* ---------- 01 doğruluk tablosu ---------- */
+const FUNCS = [
+  { n: 'Y = A·B + C', f: (a,b,c) => (a&b)|c },
+  { n: "Y = (A + B)·C'", f: (a,b,c) => (a|b)&(1-c) },
+  { n: 'Y = A ⊕ B ⊕ C  (tek eşlik)', f: (a,b,c) => a^b^c },
+  { n: 'Y = AB + BC + AC  (çoğunluk)', f: (a,b,c) => (a&b)|(b&c)|(a&c) },
+  { n: "Y = A'·B'·C'  (hepsi 0 mı?)", f: (a,b,c) => (1-a)&(1-b)&(1-c) },
+];
+(function(){
+  const sel = $('#ttSel');
+  FUNCS.forEach((f,i) => sel.add(new Option(f.n, i)));
+  function render(){
+    const F = FUNCS[sel.value];
+    let h = '<tr><th>Satır</th><th>A</th><th>B</th><th>C</th><th>Y</th></tr>';
+    const ms = [];
+    for (let i = 0; i < 8; i++){
+      const a = i>>2&1, b = i>>1&1, c = i&1, y = F.f(a,b,c);
+      if (y) ms.push(i);
+      h += `<tr class="${y?'on':''}"><td>m${i}</td><td>${a}</td><td>${b}</td><td>${c}</td><td>${y}</td></tr>`;
+    }
+    $('#ttTable').innerHTML = h;
+    $('#ttSum').innerHTML = `3 giriş → 2³ = <b>8 satır</b>. Çıkışın 1 olduğu satırlar: <b class="mono">Y = Σm(${ms.join(', ')})</b>`;
+  }
+  sel.onchange = render;
+  render();
+})();
+
+/* ---------- 02 kapılar ---------- */
+const GATES = [
+  { k:'AND',  f:(a,b)=>a&b,       ex:'Y = A·B',      d:'İki giriş de 1 ise 1' },
+  { k:'OR',   f:(a,b)=>a|b,       ex:'Y = A + B',    d:'En az biri 1 ise 1' },
+  { k:'NOT',  f:(a)=>1-a,         ex:"Y = A'",       d:'Girişin tersi' },
+  { k:'NAND', f:(a,b)=>1-(a&b),   ex:"Y = (A·B)'",   d:'AND\'in tersi' },
+  { k:'NOR',  f:(a,b)=>1-(a|b),   ex:"Y = (A + B)'", d:'OR\'un tersi' },
+  { k:'XOR',  f:(a,b)=>a^b,       ex:'Y = A ⊕ B',    d:'Girişler farklı ise 1' },
+  { k:'XNOR', f:(a,b)=>1-(a^b),   ex:"Y = (A ⊕ B)'", d:'Girişler aynı ise 1' },
+];
+function gateBody(k){
+  // döndürür: [şekil svg, giriş bitiş x, çıkış x]
+  if (k==='AND'||k==='NAND') return ['<path d="M30 10 H58 A30 30 0 0 1 58 70 H30 Z"/>', 30, 88];
+  if (k==='NOT') return ['<path d="M30 10 L80 40 L30 70 Z"/>', 30, 80];
+  const or = '<path d="M30 10 Q65 10 95 40 Q65 70 30 70 Q45 40 30 10 Z"/>';
+  if (k==='XOR'||k==='XNOR') return [or + '<path d="M22 10 Q37 40 22 70" fill="none"/>', 28, 95];
+  return [or, 36, 95];
+}
+function gateSVG(k, a, b, y){
+  const [body, inEnd, outX] = gateBody(k);
+  const bubble = ['NAND','NOR','XNOR','NOT'].includes(k);
+  const end = bubble ? outX + 10 : outX;
+  const ins = k==='NOT'
+    ? `<path d="M0 40 H${inEnd}" stroke="${W(a)}"/>`
+    : `<path d="M0 25 H${inEnd}" stroke="${W(a)}"/><path d="M0 55 H${inEnd}" stroke="${W(b)}"/>`;
+  return `<svg viewBox="0 0 150 80" aria-label="${k} kapısı">
+    <g stroke-width="3" fill="none">${ins}<path d="M${end} 40 H150" stroke="${W(y)}"/></g>
+    <g fill="var(--panel)" stroke="var(--ink)" stroke-width="2">${body}${bubble?`<circle cx="${outX+5}" cy="40" r="5"/>`:''}</g>
+  </svg>`;
+}
+(function(){
+  let A = 0, B = 0;
+  function render(){
+    setToggle($('#gA'), 'A', A); setToggle($('#gB'), 'B', B);
+    $('#gateGrid').innerHTML = GATES.map(g => {
+      const y = g.f(A,B);
+      let t = g.k==='NOT' ? '<tr><th>A</th><th>Y</th></tr>' : '<tr><th>A</th><th>B</th><th>Y</th></tr>';
+      if (g.k==='NOT') [0,1].forEach(a => t += `<tr class="${a===A?'on':''}"><td>${a}</td><td>${g.f(a)}</td></tr>`);
+      else for (let i=0;i<4;i++){ const a=i>>1, b=i&1; t += `<tr class="${a===A&&b===B?'on':''}"><td>${a}</td><td>${b}</td><td>${g.f(a,b)}</td></tr>`; }
+      return `<div class="gate">
+        <div class="hd"><b>${g.k}</b><span class="led ${y?'on':''}"><i></i>Y = ${y}</span></div>
+        ${gateSVG(g.k, A, B, y)}
+        <div class="ex">${g.ex}  ·  ${g.d}</div>
+        <table class="tt">${t}</table>
+      </div>`;
+    }).join('');
+  }
+  $('#gA').onclick = () => { A ^= 1; render(); };
+  $('#gB').onclick = () => { B ^= 1; render(); };
+  render();
+})();
+
+/* yardımcı: konumlandırılmış NOR / AND kapısı */
+function norAt(x, y){
+  return `<g transform="translate(${x},${y})" fill="var(--panel)" stroke="var(--ink)" stroke-width="2">
+    <path d="M0 0 Q35 0 65 30 Q35 60 0 60 Q15 30 0 0 Z"/><circle cx="70" cy="30" r="5"/></g>`;
+}
+function andAt(x, y){
+  return `<g transform="translate(${x},${y})" fill="var(--panel)" stroke="var(--ink)" stroke-width="2">
+    <path d="M0 0 H25 A25 25 0 0 1 25 50 H0 Z"/></g>`;
+}
+const LBL = (x,y,t,anchor='start') => `<text x="${x}" y="${y}" font-family="JetBrains Mono,monospace" font-size="14" fill="var(--ink)" text-anchor="${anchor}">${t}</text>`;
+
+/* ---------- 04 SR mandal ---------- */
+function srCircuit(S, R, Q, Qb, x0 = 0){
+  // R üst NOR'a, S alt NOR'a gider
+  const w = (d, v) => `<path d="${d}" stroke="${W(v)}" stroke-width="3" fill="none" stroke-linejoin="round"/>`;
+  return [
+    w(`M${x0+20} 35 H136`, R), w(`M${x0+20} 165 H136`, S),
+    w('M205 50 H330', Q), w('M205 150 H330', Qb),
+    w('M250 50 V100 H90 V135 H136', Q),
+    w('M275 150 V85 H100 V65 H136', Qb),
+    `<circle cx="250" cy="50" r="3.5" fill="${W(Q)}"/><circle cx="275" cy="150" r="3.5" fill="${W(Qb)}"/>`,
+    norAt(130, 20), norAt(130, 120),
+  ].join('');
+}
+(function(){
+  let S = 0, R = 0, q = 0, invalid = false;
+  const rows = [...document.querySelectorAll('#srTable tr[data-k]')];
+  function update(){
+    if (S && R) invalid = true;
+    else if (S) { q = 1; invalid = false; }
+    else if (R) { q = 0; invalid = false; }
+    const Q = invalid && S && R ? 0 : q;
+    const Qb = invalid && S && R ? 0 : 1 - q;
+    $('#srSvg').innerHTML = srCircuit(S, R, Q, Qb) +
+      LBL(4, 40, 'R') + LBL(4, 170, 'S') + LBL(336, 55, 'Q') + LBL(336, 155, 'Q̅');
+    setToggle($('#srS'), 'S', S); setToggle($('#srR'), 'R', R);
+    const bad = S && R;
+    setLed($('#srQ'), 'Q', Q, bad); setLed($('#srQb'), 'Q', Qb, bad);
+    rows.forEach(r => { r.classList.toggle('on', r.dataset.k === `${S}${R}` && !bad); r.classList.toggle('bad', r.dataset.k === '11' && bad); });
+    let msg;
+    if (bad) msg = '<b>Yasak durum!</b> Q ve Q̅ ikisi de 0. S ve R aynı anda 0\'a dönerse sonuç belirsiz olur.';
+    else if (S) msg = '<b>Set:</b> Q = 1 yapıldı.';
+    else if (R) msg = '<b>Reset:</b> Q = 0 yapıldı.';
+    else msg = invalid ? '<b>Belirsiz:</b> Yasak durumdan çıkıldı; gerçek devrede Q rastgele 0 ya da 1 olabilir (burada önceki değer gösteriliyor).'
+                       : `<b>Hafıza:</b> Q önceki değeri olan ${q}${q ? "'i" : "'ı"} koruyor.`;
+    $('#srStatus').innerHTML = msg;
+  }
+  $('#srS').onclick = () => { S ^= 1; update(); };
+  $('#srR').onclick = () => { R ^= 1; update(); };
+  update();
+})();
+
+/* ---------- 05 D mandal ---------- */
+(function(){
+  let D = 0, EN = 0, q = 0;
+  const rows = [...document.querySelectorAll('#dTable tr[data-k]')];
+  function update(){
+    if (EN) q = D;
+    const S = D & EN, R = (1 - D) & EN;
+    const w = (d, v) => `<path d="${d}" stroke="${W(v)}" stroke-width="3" fill="none" stroke-linejoin="round"/>`;
+    $('#dSvg').innerHTML = [
+      // D → üst AND, D' → alt AND; EN her ikisine
+      w('M20 40 H90', D), w('M45 40 V130 H58', D),
+      `<g transform="translate(58,121)" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"><path d="M0 0 L16 9 L0 18 Z"/><circle cx="19" cy="9" r="3"/></g>`,
+      w('M80 130 H90', 1 - D),
+      w('M20 85 H70 V60 H90', EN), w('M70 85 V110 H90', EN),
+      `<circle cx="45" cy="40" r="3.5" fill="${W(D)}"/><circle cx="70" cy="85" r="3.5" fill="${W(EN)}"/>`,
+      andAt(90, 25), andAt(90, 95),
+      w('M140 50 H200', S), w('M140 120 H200', R),
+      `<rect x="200" y="30" width="90" height="110" rx="8" fill="var(--soft)" stroke="var(--ink)" stroke-width="2"/>`,
+      LBL(208, 55, 'S'), LBL(208, 125, 'R'), LBL(245, 92, 'SR', 'middle'),
+      w('M290 55 H340', q), w('M290 120 H340', 1 - q),
+      LBL(4, 45, 'D'), LBL(0, 90, 'EN'), LBL(282, 50, 'Q', 'end'), LBL(282, 125, 'Q̅', 'end'),
+      LBL(150, 44, `S=${S}`), LBL(150, 114, `R=${R}`),
+    ].join('');
+    setToggle($('#dD'), 'D', D); setToggle($('#dEN'), 'EN', EN);
+    setLed($('#dQ'), 'Q', q); setLed($('#dQb'), 'Q', 1 - q);
+    rows.forEach(r => r.classList.toggle('on', EN ? r.dataset.k === `1${D}` : r.dataset.k === '0x'));
+    $('#dStatus').innerHTML = EN ? '<b>Şeffaf:</b> EN = 1 olduğu için Q, D\'yi takip ediyor. D\'yi değiştirmeyi dene.'
+                                 : `<b>Kilitli:</b> EN = 0. D ne olursa olsun Q = ${q} olarak kalıyor.`;
+    $('#dInner').innerHTML = `İç sinyaller: S = D·EN = ${S}, R = D̅·EN = ${R}`;
+  }
+  $('#dD').onclick = () => { D ^= 1; update(); };
+  $('#dEN').onclick = () => { EN ^= 1; update(); };
+  update();
+})();
+
+/* ---------- 06 flip-flop sembolleri ---------- */
+function ffBlock(x, title, ins, clkNeg, sub){
+  // ins: üstten giriş adları (son eleman CLK)
+  let s = `<g transform="translate(${x},15)">
+    <rect x="40" y="0" width="90" height="100" rx="6" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"/>`;
+  const ys = ins.length === 2 ? [25, 75] : [20, 50, 80];
+  ins.forEach((n, i) => {
+    const y = ys[i], isClk = n === 'CLK';
+    const startX = isClk && clkNeg ? 30 : 40;
+    s += `<path d="M5 ${y} H${startX}" stroke="var(--ink)" stroke-width="2"/>`;
+    if (isClk){
+      if (clkNeg) s += `<circle cx="35" cy="${y}" r="5" fill="var(--panel)" stroke="${'var(--neg)'}" stroke-width="2"/>`;
+      s += `<path d="M40 ${y-8} L52 ${y} L40 ${y+8}" fill="none" stroke="${clkNeg?'var(--neg)':'var(--hi)'}" stroke-width="2"/>`;
+      s += `<text x="0" y="${y-6}" font-size="11" font-family="JetBrains Mono" fill="var(--muted)">CLK</text>`;
+    } else {
+      s += `<text x="47" y="${y+5}" font-size="13" font-family="JetBrains Mono" fill="var(--ink)">${n}</text>`;
+    }
+  });
+  s += `<path d="M130 25 H160 M130 75 H160" stroke="var(--ink)" stroke-width="2"/>
+    <text x="122" y="30" font-size="13" text-anchor="end" font-family="JetBrains Mono" fill="var(--ink)">Q</text>
+    <text x="122" y="80" font-size="13" text-anchor="end" font-family="JetBrains Mono" fill="var(--ink)">Q̅</text>
+    <text x="85" y="122" font-size="12.5" text-anchor="middle" font-family="Inter" fill="var(--ink)" font-weight="600">${title}</text>
+    <text x="85" y="137" font-size="11.5" text-anchor="middle" font-family="Inter" fill="var(--muted)">${sub}</text></g>`;
+  return s;
+}
+$('#ffSymbols').innerHTML =
+  ffBlock(0, 'D flip-flop', ['D','CLK'], false, 'pozitif kenar ▷') +
+  ffBlock(215, 'D flip-flop', ['D','CLK'], true, 'negatif kenar ○▷') +
+  ffBlock(440, 'JK flip-flop', ['J','CLK','K'], false, 'pozitif kenar ▷');
+
+/* ---------- dalga çizici ---------- */
+function wavePath(vals, x0, step, yTop, h){
+  const Y = v => v ? yTop : yTop + h;
+  let d = `M${x0} ${Y(vals[0])}`;
+  for (let t = 0; t < vals.length; t++){
+    d += ` H${x0 + (t+1)*step}`;
+    if (t+1 < vals.length && vals[t+1] !== vals[t]) d += ` V${Y(vals[t+1])}`;
+  }
+  return d;
+}
+
+/* ---------- 06 zamanlama diyagramı ---------- */
+(function(){
+  const N = 40, STEP = 22, X0 = 150, ROW = 46, H = 24;
+  const clk = Array.from({length:N}, (_,t) => Math.floor(t/4) % 2);
+  let D = [0,0,1,1,1,0,0,0, 0,1,1,0,0,0,1,1, 1,1,1,0,0,1,0,0, 0,0,0,1,1,1,1,0, 1,0,0,0,1,1,0,0];
+  const rows = [
+    { name:'CLK', color:'var(--ink)' },
+    { name:'D (tıkla)', color:'var(--accent)' },
+    { name:'D mandal', sub:'EN = CLK, seviye', color:'var(--muted)' },
+    { name:'D FF ↑', sub:'pozitif kenar', color:'var(--hi)' },
+    { name:'D FF ↓', sub:'negatif kenar', color:'var(--neg)' },
+  ];
+  function compute(){
+    const lat = [], pos = [], neg = [];
+    let l = 0, p = 0, n = 0;
+    for (let t = 0; t < N; t++){
+      if (clk[t]) l = D[t];
+      if (t > 0 && !clk[t-1] && clk[t]) p = D[t-1];
+      if (t > 0 && clk[t-1] && !clk[t]) n = D[t-1];
+      lat.push(l); pos.push(p); neg.push(n);
+    }
+    return [clk, D, lat, pos, neg];
+  }
+  function render(){
+    const data = compute();
+    const Wd = X0 + N*STEP + 10, Ht = rows.length*ROW + 20;
+    const svg = $('#timing');
+    svg.setAttribute('viewBox', `0 0 ${Wd} ${Ht}`);
+    svg.style.minWidth = '760px';
+    let s = '';
+    for (let t = 0; t <= N; t++) s += `<path d="M${X0+t*STEP} 8 V${Ht-8}" stroke="var(--line)" stroke-width="1"/>`;
+    for (let t = 1; t < N; t++){
+      const rise = !clk[t-1] && clk[t], fall = clk[t-1] && !clk[t];
+      if (rise && $('#tdPos').checked) s += `<path d="M${X0+t*STEP} 6 V${Ht-6}" stroke="var(--hi)" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+      if (fall && $('#tdNeg').checked) s += `<path d="M${X0+t*STEP} 6 V${Ht-6}" stroke="var(--neg)" stroke-width="1.6" stroke-dasharray="4 3"/>`;
+    }
+    rows.forEach((r, i) => {
+      const yTop = 14 + i*ROW;
+      s += `<text x="8" y="${yTop+ (r.sub?10:16)}" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" fill="${r.color}">${r.name}</text>`;
+      if (r.sub) s += `<text x="8" y="${yTop+26}" font-family="Inter,sans-serif" font-size="11" fill="var(--muted)">${r.sub}</text>`;
+      s += `<path d="${wavePath(data[i], X0, STEP, yTop, H)}" fill="none" stroke="${r.color}" stroke-width="2.4" stroke-linejoin="round"/>`;
+      if (i === 1){
+        for (let t = 0; t < N; t++)
+          s += `<rect data-t="${t}" x="${X0+t*STEP}" y="${yTop-6}" width="${STEP}" height="${H+12}" fill="var(--accent)" fill-opacity="${D[t]?0.10:0}" style="cursor:pointer"><title>t=${t}: D=${D[t]}</title></rect>`;
+      }
+    });
+    svg.innerHTML = s;
+  }
+  $('#timing').addEventListener('click', e => {
+    const t = e.target.dataset && e.target.dataset.t;
+    if (t !== undefined){ D[+t] ^= 1; render(); }
+  });
+  $('#tdRand').onclick = () => { let v = 0; D = D.map(() => (Math.random() < .3 ? (v ^= 1) : v)); render(); };
+  $('#tdClear').onclick = () => { D = D.map(() => 0); render(); };
+  $('#tdPos').onchange = render; $('#tdNeg').onchange = render;
+  render();
+})();
+
+/* ---------- 07 JK flip-flop ---------- */
+(function(){
+  let J = 0, K = 0, C = 0, q = 0, hist = [];
+  const rows = [...document.querySelectorAll('#jkTable tr[data-k]')];
+  const record = () => { hist.push({ C, J, K, q }); if (hist.length > 32) hist.shift(); };
+  function clockTo(nc){
+    const prev = C; C = nc;
+    const mode = $('#jkMode').value;
+    const edge = (mode === 'pos' && !prev && C) || (mode === 'neg' && prev && !C);
+    let msg;
+    if (edge){
+      const old = q;
+      if (J && K) q = 1 - q; else if (J) q = 1; else if (K) q = 0;
+      const act = J && K ? 'Toggle' : J ? 'Set' : K ? 'Reset' : 'Değişmez';
+      msg = `<b>${mode==='pos'?'Yükselen ↑':'Düşen ↓'} kenar algılandı.</b> J=${J}, K=${K} → ${act}: Q ${old} → ${q}`;
+    } else {
+      msg = `CLK ${prev} → ${C}: Bu kenar seçili tetikleme türü değil, Q değişmedi.`;
+    }
+    record(); render(msg);
+  }
+  function render(msg){
+    setToggle($('#jkJ'), 'J', J); setToggle($('#jkK'), 'K', K); setToggle($('#jkC'), 'CLK', C);
+    setLed($('#jkQ'), 'Q', q); setLed($('#jkQb'), 'Q', 1 - q);
+    rows.forEach(r => r.classList.toggle('on', r.dataset.k === `${J}${K}`));
+    if (msg) $('#jkStatus').innerHTML = msg;
+    drawHist();
+  }
+  function drawHist(){
+    const STEP = 24, X0 = 60, ROW = 40, H = 20, N = Math.max(hist.length, 1);
+    const names = [['CLK','C','var(--ink)'], ['J','J','var(--accent)'], ['K','K','var(--accent)'], ['Q','q','var(--hi)']];
+    const Wd = X0 + Math.max(N, 20)*STEP + 10, Ht = names.length*ROW + 14;
+    const svg = $('#jkWave');
+    svg.setAttribute('viewBox', `0 0 ${Wd} ${Ht}`);
+    svg.style.minWidth = '560px';
+    let s = '';
+    names.forEach(([n, key, col], i) => {
+      const yTop = 12 + i*ROW;
+      s += `<text x="8" y="${yTop+16}" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" fill="${col}">${n}</text>`;
+      if (hist.length) s += `<path d="${wavePath(hist.map(h => h[key]), X0, STEP, yTop, H)}" fill="none" stroke="${col}" stroke-width="2.4"/>`;
+    });
+    if (!hist.length) s += `<text x="${X0}" y="${Ht/2}" font-family="Inter" font-size="13" fill="var(--muted)">Girişleri değiştirdikçe dalga formu burada oluşur.</text>`;
+    svg.innerHTML = s;
+  }
+  $('#jkJ').onclick = () => { J ^= 1; record(); render(); };
+  $('#jkK').onclick = () => { K ^= 1; record(); render(); };
+  $('#jkC').onclick = () => clockTo(1 - C);
+  $('#jkPulse').onclick = () => { clockTo(1 - C); setTimeout(() => clockTo(1 - C), 250); };
+  $('#jkMode').onchange = () => render(`Tetikleme türü: <b>${$('#jkMode').value==='pos'?'pozitif kenar (0→1)':'negatif kenar (1→0)'}</b>`);
+  $('#jkReset').onclick = () => { J = K = C = q = 0; hist = []; render('Sıfırlandı.'); };
+  render();
+})();
+
+/* ---------- 09 zaman diyagramı soru üretici ---------- */
+(function(){
+  const rnd = p => Math.random() < p;
+  const randWave = (N, p, can) => {
+    let v = rnd(.5) ? 1 : 0;
+    return Array.from({length:N}, (_,t) => { if (t > 0 && can(t) && rnd(p)) v ^= 1; return v; });
+  };
+  // her giriş en az bir kez değişsin
+  const lively = (N, p, can = () => true) => {
+    let w; do { w = randWave(N, p, can); } while (w.every(v => v === w[0]));
+    return w;
+  };
+  const clkWave = N => Array.from({length:N}, (_,t) => Math.floor(t/2) % 2);
+  const blk = (title, ins, neg, sub) => `<svg viewBox="0 0 175 160">${ffBlock(0, title, ins, neg, sub)}</svg>`;
+  const changed = (ws, t) => t === 0 || ws.some(w => w[t] !== w[t-1]);
+
+  function gateQ(g){
+    const one = g.k === 'NOT', N = 16;
+    const A = lively(N, .35), B = one ? null : lively(N, .35);
+    const Y = A.map((a,t) => one ? g.f(a) : g.f(a, B[t]));
+    const rows = [{ name:'A', vals:A }];
+    if (!one) rows.push({ name:'B', vals:B });
+    let tbl = '<tr><th>t</th>' + A.map((_,t) => `<th>${t}</th>`).join('') + '</tr>';
+    rows.forEach(r => tbl += `<tr><td>${r.name}</td>${r.vals.map(v => `<td>${v}</td>`).join('')}</tr>`);
+    tbl += `<tr><td class="y">Y</td>${Y.map(v => `<td class="y">${v}</td>`).join('')}</tr>`;
+    return {
+      N, rows, out:{ name:'Y', vals:Y }, sym: gateSVG(g.k, 0, 0, 0),
+      text: `Girişler bir ${g.k} kapısına uygulanıyor. Y çıkışının zaman diyagramını çiz.`,
+      hint: `${g.ex} · ${g.d}. Kapılarda hafıza yoktur: çıkış her an yalnızca o anki girişlere bağlıdır.`,
+      sol: `<p><b>Yöntem:</b> Her zaman diliminde girişleri oku ve ${g.k} kuralını uygula (<span class="formula">${g.ex}</span>).</p>
+            <div class="tbl-wrap"><table class="tt">${tbl}</table></div>`,
+    };
+  }
+
+  function srQ(){
+    const N = 20; let S, R;
+    do {
+      S = lively(N, .3); R = lively(N, .3);
+      for (let t = 0; t < N; t++) if (S[t] && R[t]) R[t] = 0;   // yasak durumu soruya koyma
+    } while (!S.some(v => v) || !R.some(v => v));
+    let q = 0; const Q = [], steps = [];
+    for (let t = 0; t < N; t++){
+      if (S[t]) q = 1; else if (R[t]) q = 0;
+      if (changed([S, R], t)) steps.push(`t=${t}: S=${S[t]}, R=${R[t]} → <b>${S[t] ? 'Set' : R[t] ? 'Reset' : 'Hafıza'}</b>, Q = ${q}`);
+      Q.push(q);
+    }
+    return {
+      N, rows:[{ name:'S', vals:S }, { name:'R', vals:R }], out:{ name:'Q', vals:Q },
+      sym: blk('SR mandal', ['S','R'], false, 'seviye, asenkron'),
+      text: 'Girişler NOR tabanlı bir SR mandala uygulanıyor. Başlangıçta Q = 0. Q çıkışını çiz.',
+      hint: 'S=1 → Q=1, R=1 → Q=0, S=R=0 → Q değişmez. (Yasak S=R=1 durumu bu soruda yok.)',
+      steps,
+    };
+  }
+
+  function dLatchQ(){
+    const N = 20, EN = lively(N, .25), D = lively(N, .35);
+    let q = 0; const Q = [], steps = [];
+    for (let t = 0; t < N; t++){
+      if (EN[t]) q = D[t];
+      if (changed([EN, D], t)){
+        if (EN[t]) steps.push(`t=${t}: EN=1 → <b>şeffaf</b>, Q = D = ${q}`);
+        else if (t > 0 && EN[t-1]) steps.push(`t=${t}: EN 1→0 → <b>kilitlendi</b>, Q = ${q} olarak kalır`);
+        else steps.push(`t=${t}: EN=0 → <b>kilitli</b>, D=${D[t]} olsa da Q = ${q}`);
+      }
+      Q.push(q);
+    }
+    return {
+      N, rows:[{ name:'EN', vals:EN }, { name:'D', vals:D }], out:{ name:'Q', vals:Q },
+      sym: blk('D mandal', ['D','EN'], false, 'seviye tetiklemeli'),
+      text: 'Girişler bir D mandala uygulanıyor. Başlangıçta Q = 0. Q çıkışını çiz.',
+      hint: 'EN = 1 olduğu süre boyunca Q = D (şeffaf); EN = 0 iken Q son değerini tutar.',
+      steps,
+    };
+  }
+
+  const FF = {
+    D:  { ins:['D'],     eq:'Q₊ = D',        next:(q,[d]) => d,                        act:() => 'Q = D' },
+    JK: { ins:['J','K'], eq:'Q₊ = JQ̅ + K̅Q', next:(q,[j,k]) => j&&k ? 1-q : j ? 1 : k ? 0 : q,
+          act:([j,k]) => j&&k ? 'Toggle' : j ? 'Set' : k ? 'Reset' : 'Değişmez' },
+    T:  { ins:['T'],     eq:'Q₊ = T ⊕ Q',    next:(q,[t]) => t ? 1-q : q,              act:([t]) => t ? 'Toggle' : 'Değişmez' },
+  };
+  function ffQ(kind, neg){
+    const N = 32, F = FF[kind], clk = clkWave(N);
+    // veri girişleri yalnızca tek t'lerde değişir, böylece saat kenarıyla çakışmaz
+    const ws = F.ins.map(() => lively(N, .3, t => t % 2 === 1));
+    let q = 0; const Q = [0], steps = [], edges = [];
+    for (let t = 1; t < N; t++){
+      const active = neg ? (clk[t-1] && !clk[t]) : (!clk[t-1] && clk[t]);
+      if (active){
+        const v = ws.map(w => w[t-1]), old = q;
+        q = F.next(q, v);
+        edges.push(t);
+        steps.push(`t=${t} ${neg ? '↓' : '↑'}: ${F.ins.map((n,i) => `${n}=${v[i]}`).join(', ')} → <b>${F.act(v)}</b>, Q: ${old} → ${q}`);
+      }
+      Q.push(q);
+    }
+    const sym = kind === 'JK' ? ['J','CLK','K'] : [F.ins[0], 'CLK'];
+    return {
+      N, clk, edges, neg, rows: F.ins.map((n,i) => ({ name:n, vals:ws[i] })), out:{ name:'Q', vals:Q },
+      sym: blk(`${kind} flip-flop`, sym, neg, neg ? 'negatif kenar ○▷' : 'pozitif kenar ▷'),
+      text: `${neg ? 'Negatif' : 'Pozitif'} kenar tetiklemeli ${kind} flip-flop. Başlangıçta Q = 0. Q çıkışını çiz.`,
+      hint: `Yalnızca ${neg ? 'düşen (1→0)' : 'yükselen (0→1)'} kenarlara bak (kesikli çizgiler); kenarlar arasında Q değişmez. ${F.eq}`,
+      steps,
+    };
+  }
+
+  const TYPES = [
+    ...GATES.map(g => ({ id:g.k, group:'gate', make:() => gateQ(g) })),
+    { id:'SR mandal', group:'seq', make:srQ },
+    { id:'D mandal',  group:'seq', make:dLatchQ },
+    ...['D','JK','T'].flatMap(k => [false, true].map(neg =>
+      ({ id:`${k} flip-flop ${neg ? '↓' : '↑'}`, group:'seq', make:() => ffQ(k, neg) }))),
+  ];
+
+  const sel = $('#qType');
+  sel.innerHTML = `<option value="all">Rastgele (hepsi)</option><option value="gate">Rastgele kapı</option><option value="seq">Rastgele ardıl devre</option>
+    <optgroup label="Kapılar">${TYPES.filter(x => x.group === 'gate').map(x => `<option>${x.id}</option>`).join('')}</optgroup>
+    <optgroup label="Ardıl devreler">${TYPES.filter(x => x.group === 'seq').map(x => `<option>${x.id}</option>`).join('')}</optgroup>`;
+
+  let cur = null, solved = false;
+  function draw(){
+    const { N, rows, out, edges, clk, neg } = cur;
+    const all = (clk ? [{ name:'CLK', vals:clk, color:'var(--ink)' }] : []).concat(rows.map(r => ({ ...r, color:'var(--accent)' })));
+    const STEP = N > 20 ? 20 : 28, X0 = 64, ROW = 44, H = 22, TOP = 26;
+    const Wd = X0 + N*STEP + 12, Ht = TOP + (all.length + 1)*ROW + 4;
+    const svg = $('#qWave');
+    svg.setAttribute('viewBox', `0 0 ${Wd} ${Ht}`);
+    svg.style.minWidth = (N > 20 ? 720 : 520) + 'px';
+    let s = '';
+    for (let t = 0; t <= N; t++){
+      s += `<path d="M${X0+t*STEP} ${TOP-6} V${Ht-4}" stroke="var(--line)"/>`;
+      if (t < N && (N <= 20 || t % 2 === 0))
+        s += `<text x="${X0+t*STEP+3}" y="${TOP-10}" font-family="JetBrains Mono,monospace" font-size="10.5" fill="var(--muted)">${t}</text>`;
+    }
+    (edges || []).forEach(t => s += `<path d="M${X0+t*STEP} ${TOP-6} V${Ht-4}" stroke="${neg ? 'var(--neg)' : 'var(--hi)'}" stroke-width="1.6" stroke-dasharray="4 3"/>`);
+    all.forEach((r, i) => {
+      const y = TOP + 6 + i*ROW;
+      s += `<text x="8" y="${y+16}" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" fill="${r.color}">${r.name}</text>`;
+      s += `<path d="${wavePath(r.vals, X0, STEP, y, H)}" fill="none" stroke="${r.color}" stroke-width="2.4" stroke-linejoin="round"/>`;
+    });
+    const y = TOP + 6 + all.length*ROW;
+    s += `<text x="8" y="${y+16}" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" fill="var(--hi)">${out.name}</text>`;
+    if (solved) s += `<path d="${wavePath(out.vals, X0, STEP, y, H)}" fill="none" stroke="var(--hi)" stroke-width="3" stroke-linejoin="round"/>`;
+    else s += `<rect x="${X0}" y="${y-4}" width="${N*STEP}" height="${H+8}" rx="4" fill="none" stroke="var(--lo)" stroke-dasharray="5 4"/>
+               <text x="${X0 + N*STEP/2}" y="${y+16}" text-anchor="middle" font-family="Inter,sans-serif" font-size="13" fill="var(--muted)">? (çıkışı sen çiz)</text>`;
+    svg.innerHTML = s;
+  }
+  function showSol(){
+    const box = $('#qSol');
+    box.hidden = !solved;
+    $('#qSolve').textContent = solved ? 'Çözümü gizle' : 'Çözümü göster';
+    if (!solved) return;
+    box.innerHTML = cur.sol || `<p><b>Çözüm adımları:</b>${cur.clk ? ' (flip-flop, kenardan hemen önceki giriş değerlerini örnekler)' : ''}</p>
+      <ol>${cur.steps.map(x => `<li class="mono" style="font-size:13.5px">${x}</li>`).join('')}</ol>
+      <p class="status" style="margin-top:8px">Sonuç: <span class="mono">${cur.out.name} = ${cur.out.vals.join('')}</span></p>`;
+  }
+  function newQ(){
+    const v = sel.value;
+    const pool = v === 'all' ? TYPES : v === 'gate' || v === 'seq' ? TYPES.filter(x => x.group === v) : TYPES.filter(x => x.id === v);
+    const T = pool[Math.floor(Math.random() * pool.length)];
+    cur = T.make(); solved = false;
+    $('#qSym').innerHTML = cur.sym;
+    $('#qText').textContent = cur.text;
+    $('#qHint').textContent = '💡 ' + cur.hint;
+    draw(); showSol();
+  }
+  $('#qNew').onclick = newQ;
+  sel.onchange = newQ;
+  $('#qSolve').onclick = () => { solved = !solved; draw(); showSol(); };
+  newQ();
+})();
+
+/* ---------- 10 test ---------- */
+const QUIZ = [
+  { q:'4 girişli bir fonksiyonun doğruluk tablosunda kaç satır vardır?', o:['4','8','16','32'], a:2, e:'2⁴ = 16 satır.' },
+  { q:'Hangi kapının çıkışı yalnızca iki giriş de 0 iken 1 olur?', o:['NAND','NOR','XOR','AND'], a:1, e:"NOR = (A+B)'; yalnızca A = B = 0 iken 1'dir." },
+  { q:'Girişler birbirinden farklıyken 1 veren kapı hangisidir?', o:['XNOR','OR','XOR','NAND'], a:2, e:'XOR (özel veya), girişler farklıysa 1 verir.' },
+  { q:'Ardıl devreyi kombinasyonel devreden ayıran temel özellik nedir?', o:['Daha çok kapı içermesi','Hafıza (geri besleme) içermesi','Yalnızca NAND kullanması','Daha hızlı olması'], a:1, e:'Ardıl devrenin çıkışı mevcut duruma da bağlıdır; bu, geri besleme ile sağlanan hafızadır.' },
+  { q:'NOR tabanlı SR mandalda hangi giriş kombinasyonu yasaktır?', o:['S=0, R=0','S=1, R=0','S=0, R=1','S=1, R=1'], a:3, e:'S = R = 1 iken Q ve Q̅ ikisi de 0 olur; ardından sonuç belirsizdir.' },
+  { q:'D mandalda EN = 1 iken ne olur?', o:['Q sabit kalır','Q, D\'yi takip eder (şeffaf)','Q tersine döner','Q = 0 olur'], a:1, e:'EN = 1 iken D mandal şeffaftır: Q = D.' },
+  { q:'Pozitif kenar tetiklemeli bir flip-flop çıkışını ne zaman günceller?', o:['CLK 1 olduğu süre boyunca','CLK 1→0 geçişinde','CLK 0→1 geçişinde','CLK 0 olduğu süre boyunca'], a:2, e:'Pozitif (yükselen) kenar = 0 → 1 geçişi.' },
+  { q:'Flip-flop sembolünde CLK girişinde ○▷ (daire + üçgen) neyi gösterir?', o:['Seviye tetikleme','Negatif kenar tetikleme','Pozitif kenar tetikleme','Asenkron reset'], a:1, e:'Üçgen kenar tetiklemeyi, daire ise terslemeyi, yani düşen kenarı gösterir.' },
+  { q:'JK flip-flopta J = K = 1 iken saat kenarında ne olur?', o:['Q = 0','Q = 1','Q değişmez','Q tersine döner (toggle)'], a:3, e:'JK\'nın SR\'den farkı: J = K = 1 durumunda çıkış terslenir.' },
+  { q:'Q = 0 iken bir JK flip-flopun bir sonraki kenarda Q = 1 olması için J ve K ne olmalı?', o:['J=1, K=X','J=0, K=1','J=X, K=0','J=0, K=X'], a:0, e:'Uyarma tablosu: 0 → 1 geçişi için J = 1, K fark etmez (X).' },
+];
+(function(){
+  let correct = 0, answered = 0;
+  function build(){
+    correct = answered = 0;
+    $('#quiz').innerHTML = QUIZ.map((x, i) => `
+      <div class="quiz-q" data-i="${i}">
+        <p>${i+1}. ${x.q}</p>
+        <div class="opts">${x.o.map((o, j) => `<button data-j="${j}">${String.fromCharCode(65+j)}) ${o}</button>`).join('')}</div>
+        <div class="exp">${x.e}</div>
+      </div>`).join('');
+    score();
+  }
+  function score(){ $('#score').textContent = `Puan: ${correct} / ${answered}  (toplam ${QUIZ.length})`; }
+  $('#quiz').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const box = b.closest('.quiz-q'); if (box.classList.contains('done')) return;
+    const x = QUIZ[box.dataset.i], j = +b.dataset.j;
+    box.classList.add('done'); answered++;
+    if (j === x.a) correct++; else b.classList.add('wrong');
+    box.querySelectorAll('button')[x.a].classList.add('right');
+    score();
+  });
+  $('#quizReset').onclick = build;
+  build();
+})();
+</script>
+</body>
+</html>

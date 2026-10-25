@@ -6,6 +6,7 @@ var cs=document.currentScript,base=cs?cs.src.replace(/site-nav\.js[^/]*$/,''):''
 var FILE=location.protocol==='file:';
 var DIG=FILE?'sayisal-elektronik/index.html':'sayisal-elektronik/';
 var MCU=FILE?'mikrodenetleyiciler/index.html':'mikrodenetleyiciler/';
+var STD=FILE?'sayisal-tasarim/index.html':'sayisal-tasarim/';
 var NAV=[
   {k:'home',href:'index.html',t:'Ana sayfa'},
   {k:'sim',href:'Deney_Simulatoru.html',t:'Deney Simülatörü'},
@@ -16,6 +17,7 @@ var NAV=[
     {k:'lab',href:'Lab_Jenerator_Osiloskop.html',t:'Jeneratör + Osiloskop',d:'İki cihaz birlikte, kabloyla bağlı',ic:'M3 6h7v6H3zM14 12h7v6h-7zM10 9c4 0 4 6 4 6'}
   ]},
   {k:'dig',href:DIG,t:'Sayısal Elektronik'},
+  {k:'st',href:STD,t:'Sayısal Tasarım'},
   {k:'mcu',href:MCU,t:'Mikrodenetleyiciler'}
 ];
 var SEQ=[
@@ -24,13 +26,15 @@ var SEQ=[
   {k:'osc',href:'Osiloskop_Egitimi.html',t:'Osiloskop eğitimi'},
   {k:'lab',href:'Lab_Jenerator_Osiloskop.html',t:'Jeneratör + osiloskop laboratuvarı'},
   {k:'sim',href:'Deney_Simulatoru.html',t:'Deney simülatörü'},
-  {k:'dig',href:DIG,t:'Sayısal tasarım laboratuvarı'},
+  {k:'dig',href:DIG,t:'Y-0016 deney seti laboratuvarı'},
+  {k:'st',href:STD,t:'Sayısal Tasarım dersi'},
   {k:'mcu',href:MCU,t:'Mikrodenetleyiciler'}
 ];
 var path=decodeURIComponent(location.pathname);
 var cur='home';
 if(/sayisal-elektronik(\/|\/index\.html)?$/.test(path))cur='dig';
 else if(/\/mikrodenetleyiciler(\/|$)/.test(path))cur='mcu';
+else if(/\/sayisal-tasarim(\/|$)/.test(path))cur='st';
 else{var f=path.split('/').pop();SEQ.forEach(function(p){if(p.href===f)cur=p.k;});}
 var DARK=false,APP=cur==='dig';
 
@@ -68,7 +72,7 @@ var css=''+
 '.sn.dark{background:rgba(13,17,23,.9);border-bottom-color:#2d3744}'+
 '.sn.dark .sn-brand{color:#e6edf3}.sn.dark .sn-l{color:#a9b6c5}.sn.dark .sn-l:hover{background:rgba(255,255,255,.07);color:#fff}.sn.dark .sn-l.on{color:#f2b705}.sn.dark .sn-l.on::after{background:#f2b705}'+
 '.sn.dark .sn-burger{border-color:#2d3744}.sn.dark .sn-burger svg{stroke:#e6edf3}'+
-'@media (max-width:900px){'+
+'@media (max-width:1080px){'+
 ' .sn-links{position:absolute;left:0;right:0;top:var(--sn-h);flex-direction:column;align-items:stretch;gap:2px;padding:10px 14px 16px;background:#fff;border-bottom:1px solid rgba(20,40,60,.1);box-shadow:0 18px 30px rgba(13,40,64,.12);display:none;margin:0}'+
 ' .sn.open .sn-links{display:flex}'+
 ' .sn-burger{display:inline-flex}'+
@@ -121,7 +125,7 @@ function build(){
   h+='</nav></div></header>';
   document.body.insertAdjacentHTML('afterbegin',h);
   var nav=document.querySelector('.sn'),dd=nav.querySelector('.sn-dd'),btn=dd.querySelector('button'),bur=nav.querySelector('.sn-burger');
-  var hoverOK=window.matchMedia('(hover:hover) and (min-width:901px)');
+  var hoverOK=window.matchMedia('(hover:hover) and (min-width:1081px)');
   function setDD(o){dd.classList.toggle('open',o);btn.setAttribute('aria-expanded',o?'true':'false');}
   btn.addEventListener('click',function(e){e.stopPropagation();setDD(!dd.classList.contains('open'));});
   dd.addEventListener('mouseenter',function(){if(hoverOK.matches)setDD(true);});
