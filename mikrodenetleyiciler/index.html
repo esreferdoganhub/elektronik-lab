@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="tr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mikrodenetleyiciler · Elektronik Laboratuvarı</title>
+<meta name="description" content="Mikrodenetleyiciler bölümü: Arduino UNO ile pinler, değişkenler, buton, potansiyometre, PWM ve map() üzerine uygulamalı ders notları.">
+<script src="../site-nav.js"></script>
+<style>
+  :root{--bg:#f5f7fa;--panel:#fff;--ink:#14212e;--sub:#52606d;--line:#dbe3eb;--accent:#00766a;--accent-soft:#e0f1ee;--copper:#c46f1c;--hero1:#0b2a40;--hero2:#0f4b4f}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.6 "Segoe UI","Helvetica Neue",Arial,sans-serif}
+  .wrap{max-width:1100px;margin:0 auto;padding:0 20px}
+  header.hero{background:linear-gradient(135deg,var(--hero1),var(--hero2));color:#fff;padding:52px 0 46px}
+  .kicker{font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#7fe0d2}
+  header.hero h1{font-size:clamp(1.9rem,4vw,2.7rem);line-height:1.15;margin:8px 0 12px}
+  header.hero p{max-width:640px;margin:0;color:#d7ecea;font-size:1.05rem}
+  main{padding:36px 0 20px}
+  h2{font-size:1.3rem;margin:0 0 14px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+  a.card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden;text-decoration:none;color:inherit;transition:transform .15s,box-shadow .15s,border-color .15s}
+  a.card:hover{transform:translateY(-3px);box-shadow:0 14px 30px rgba(13,40,64,.12);border-color:var(--accent)}
+  .card .pic{background:linear-gradient(160deg,#e6f3f1,#d3e9e6);padding:18px;display:flex;justify-content:center}
+  .card .pic svg{width:100%;max-width:300px;height:auto}
+  .card .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .card .lvl{font-size:.75rem;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.06em}
+  .card h3{margin:0;font-size:1.15rem;line-height:1.3}
+  .card p{margin:0;color:var(--sub);font-size:.95rem}
+  .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px}
+  .tags span{font-size:.78rem;background:var(--accent-soft);color:#0b5d55;border-radius:999px;padding:2px 10px}
+  .go{margin-top:auto;padding-top:6px;font-weight:700;color:var(--accent)}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="kicker">Mikrodenetleyiciler</div>
+  <h1>Kodla donanımı birleştir: Arduino ile mikrodenetleyici programlama</h1>
+  <p>Pinleri tanımaktan buton, potansiyometre ve PWM ile LED parlaklığını kontrol etmeye kadar, devre şemaları ve açıklamalı kodlarla adım adım ders notları.</p>
+</div></header>
+<main><div class="wrap">
+  <h2>Ders notları</h2>
+  <div class="grid">
+    <a class="card" href="arduino-ders-notu.html">
+      <div class="pic">
+        <svg viewBox="0 0 300 170" role="img" aria-label="Arduino UNO kartı ve LED">
+          <rect x="20" y="20" width="200" height="130" rx="10" fill="#0d6b70"/>
+          <rect x="30" y="30" width="44" height="30" rx="3" fill="#c9ced3"/><rect x="30" y="112" width="34" height="26" rx="3" fill="#2b3236"/>
+          <rect x="104" y="72" width="82" height="22" rx="3" fill="#1b2326"/>
+          <g fill="#1b2326"><rect x="96" y="26" width="116" height="10" rx="2"/><rect x="104" y="134" width="104" height="10" rx="2"/></g>
+          <g fill="#e08a2c"><circle cx="104" cy="31" r="2"/><circle cx="114" cy="31" r="2"/><circle cx="124" cy="31" r="2"/><circle cx="134" cy="31" r="2"/><circle cx="144" cy="31" r="2"/><circle cx="154" cy="31" r="2"/><circle cx="164" cy="31" r="2"/><circle cx="174" cy="31" r="2"/><circle cx="184" cy="31" r="2"/><circle cx="194" cy="31" r="2"/><circle cx="204" cy="31" r="2"/></g>
+          <g fill="#2c9a5a"><circle cx="152" cy="139" r="2"/><circle cx="162" cy="139" r="2"/><circle cx="172" cy="139" r="2"/><circle cx="182" cy="139" r="2"/><circle cx="192" cy="139" r="2"/><circle cx="202" cy="139" r="2"/></g>
+          <text x="145" y="87" text-anchor="middle" font-size="10" font-weight="700" fill="#eaf7f6" font-family="Arial">ATmega328P</text>
+          <text x="120" y="122" text-anchor="middle" font-size="13" font-weight="800" fill="#eaf7f6" font-family="Arial">UNO</text>
+          <path d="M204 31 C 236 20 250 50 254 70" fill="none" stroke="#3e6fd0" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M202 139 C 240 150 266 120 262 96" fill="none" stroke="#2b3236" stroke-width="2.5" stroke-linecap="round"/>
+          <circle cx="258" cy="80" r="16" fill="#ff5a3c" opacity=".25"/><circle cx="258" cy="80" r="9" fill="#ff5a3c"/>
+          <path d="M254 89 V100 M262 89 V96" stroke="#7a8288" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="body">
+        <span class="lvl">Başlangıç · Arduino UNO</span>
+        <h3>Arduino UNO ile ilk adımlar</h3>
+        <p>Pinler, değişkenler, buton ile LED yakma, potansiyometre ile analog okuma ve PWM ile dimmer devresi.</p>
+        <div class="tags"><span>Pinler</span><span>setup() / loop()</span><span>Değişkenler</span><span>pinMode</span><span>digitalWrite / digitalRead</span><span>if / else</span><span>Buton</span><span>analogRead</span><span>Potansiyometre</span><span>PWM</span><span>map()</span></div>
+        <span class="go">Ders notunu aç →</span>
+      </div>
+    </a>
+  </div>
+</div></main>
+</body>
+</html>

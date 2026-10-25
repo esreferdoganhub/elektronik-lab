@@ -1,0 +1,1177 @@
+<!doctype html>
+<html lang="tr" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arduino UNO Ders Notu · Mikrodenetleyiciler</title>
+<script src="../site-nav.js"></script>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Düzen: solda yapışkan içindekiler, sağda ~70 karakterlik okuma sütunu; şemalar ve kod blokları sütunu tam kullanır */
+:root {
+  --bg: #f5f8f7;
+  --surface: #ffffff;
+  --ink: #142321;
+  --muted: #566a67;
+  --line: #d5e0de;
+  --accent: #00766a;
+  --accent-soft: #e0f1ee;
+  --copper: #c46f1c;
+  --copper-soft: #fbeedf;
+  --code-bg: #10201e;
+  --code-fg: #dfeae8;
+  --board: #0d6b70;
+  --board-ink: #eaf7f6;
+  --pin-dig: #3e6fd0;
+  --pin-pwm: #e08a2c;
+  --pin-ana: #2c9a5a;
+  --pin-pwr: #d64848;
+  --pin-gnd: #2b3236;
+  --pin-com: #8a5cc9;
+  --wire: #2b3a38;
+  --warn: #b5442f;
+  --warn-soft: #fbe9e4;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Source Sans 3", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0d1514; --surface: #142120; --ink: #e2ecea; --muted: #94a8a4; --line: #263634;
+    --accent: #43c2b0; --accent-soft: #15322e; --copper: #eba35b; --copper-soft: #33261a;
+    --code-bg: #0a1211; --code-fg: #dfeae8; --board: #0f4f53; --board-ink: #e6f4f3;
+    --pin-dig: #6d95ea; --pin-pwm: #f0a24d; --pin-ana: #4cc07c; --pin-pwr: #ec6b6b; --pin-gnd: #c3cccc; --pin-com: #b08ae6;
+    --wire: #c9d6d4; --warn: #f08a72; --warn-soft: #3a1f19;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0d1514; --surface: #142120; --ink: #e2ecea; --muted: #94a8a4; --line: #263634;
+  --accent: #43c2b0; --accent-soft: #15322e; --copper: #eba35b; --copper-soft: #33261a;
+  --code-bg: #0a1211; --code-fg: #dfeae8; --board: #0f4f53; --board-ink: #e6f4f3;
+  --pin-dig: #6d95ea; --pin-pwm: #f0a24d; --pin-ana: #4cc07c; --pin-pwr: #ec6b6b; --pin-gnd: #c3cccc; --pin-com: #b08ae6;
+  --wire: #c9d6d4; --warn: #f08a72; --warn-soft: #3a1f19;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 1.08rem;
+  line-height: 1.65;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0 64px;
+}
+a { color: var(--accent); }
+a:focus-visible, button:focus-visible, input:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+.wrap { max-width: 1120px; margin: 0 auto; }
+
+/* Başlık */
+.masthead { padding-block: 48px 32px; border-bottom: 1px solid var(--line); margin-bottom: 40px; }
+.eyebrow { font-family: var(--font-mono); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 0 0 12px; }
+h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(2.2rem, 5vw, 3.6rem); line-height: 1.05; margin: 0 0 16px; text-wrap: balance; letter-spacing: -0.01em; }
+h1 .tilde { color: var(--copper); }
+.lede { font-size: 1.2rem; color: var(--muted); max-width: 62ch; margin: 0; }
+.meta-row { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 20px; font-family: var(--font-mono); font-size: .8rem; color: var(--muted); }
+
+.layout { display: grid; grid-template-columns: 1fr; gap: 40px; }
+@media (min-width: 1040px) { .layout { grid-template-columns: 230px minmax(0, 1fr); gap: 56px; } }
+
+/* İçindekiler */
+.toc { font-size: .95rem; }
+.toc-inner { position: sticky; top: calc(var(--sn-h, 0px) + 20px); }
+.toc details { border: 1px solid var(--line); border-radius: 10px; background: var(--surface); padding: 10px 14px; }
+.toc summary { font-family: var(--font-display); font-weight: 700; cursor: pointer; }
+.toc ol { list-style: none; margin: 10px 0 4px; padding: 0; display: grid; gap: 2px; counter-reset: t; }
+.toc li { counter-increment: t; }
+.toc a { display: grid; grid-template-columns: 2.2em 1fr; color: var(--ink); text-decoration: none; padding: 4px 6px; border-radius: 6px; line-height: 1.35; }
+.toc a::before { content: counter(t, decimal-leading-zero); font-family: var(--font-mono); font-size: .78rem; color: var(--muted); padding-top: 2px; }
+.toc a:hover { background: var(--accent-soft); }
+.toc a.lab::after { content: ""; }
+.toc .tag { font-family: var(--font-mono); font-size: .68rem; color: var(--copper); letter-spacing: .04em; }
+@media (min-width: 1040px) {
+  .toc details { border: 0; background: none; padding: 0; }
+  .toc summary { pointer-events: none; list-style: none; margin-bottom: 4px; }
+  .toc summary::-webkit-details-marker { display: none; }
+}
+
+/* İçerik */
+main { min-width: 0; }
+article { max-width: 760px; }
+section { padding-block: 8px 40px; border-bottom: 1px solid var(--line); margin-bottom: 40px; scroll-margin-top: calc(var(--sn-h, 0px) + 20px); }
+section:last-of-type { border-bottom: 0; }
+.sec-num { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; display: flex; gap: 10px; align-items: center; }
+.sec-num .lab-chip { color: var(--copper); background: var(--copper-soft); padding: 1px 8px; border-radius: 99px; font-size: .72rem; }
+h2 { font-family: var(--font-display); font-weight: 700; font-size: clamp(1.6rem, 3.2vw, 2.15rem); line-height: 1.15; margin: 6px 0 16px; text-wrap: balance; }
+h3 { font-family: var(--font-display); font-weight: 700; font-size: 1.25rem; margin: 32px 0 8px; text-wrap: balance; }
+p { margin: 0 0 14px; }
+ul, ol { padding-left: 1.3em; margin: 0 0 14px; }
+li { margin-bottom: 4px; }
+code, pre, .codeline { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+code { font-family: var(--font-mono); font-size: .88em; background: var(--accent-soft); padding: 1px 5px; border-radius: 4px; }
+strong { font-weight: 700; }
+
+/* Kod blokları */
+.code { position: relative; margin: 16px 0 22px; border-radius: 10px; background: var(--code-bg); color: var(--code-fg); }
+.code-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 12px 0 16px; font-family: var(--font-mono); font-size: .74rem; color: #8fa9a5; }
+.code pre { margin: 0; padding: 10px 16px 16px; overflow-x: auto; font-family: var(--font-mono); font-size: .86rem; line-height: 1.6; }
+.code pre code { background: none; padding: 0; font-size: inherit; color: inherit; }
+.copy-btn { font-family: var(--font-mono); font-size: .72rem; color: #cfe1de; background: transparent; border: 1px solid #36504c; border-radius: 6px; padding: 3px 9px; cursor: pointer; }
+.copy-btn:hover { background: #1d3532; }
+.hljs-comment { color: #7f9a95; font-style: italic; }
+.hljs-keyword, .hljs-type { color: #6fd3c4; }
+.hljs-built_in, .hljs-title.function_ { color: #f2b56b; }
+.hljs-number, .hljs-literal { color: #e88f8f; }
+.hljs-string { color: #b6dc8a; }
+.hljs-meta { color: #b99be8; }
+
+/* Kutular */
+.note, .warn, .tip { border-radius: 10px; padding: 14px 16px; margin: 18px 0; font-size: 1rem; }
+.note { background: var(--accent-soft); }
+.tip { background: var(--copper-soft); }
+.warn { background: var(--warn-soft); }
+.note b.lbl, .tip b.lbl, .warn b.lbl { display: block; font-family: var(--font-mono); font-size: .72rem; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 4px; }
+.note b.lbl { color: var(--accent); }
+.tip b.lbl { color: var(--copper); }
+.warn b.lbl { color: var(--warn); }
+.note p:last-child, .tip p:last-child, .warn p:last-child { margin-bottom: 0; }
+
+/* Tablolar */
+.tbl { overflow-x: auto; margin: 16px 0 22px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+table { border-collapse: collapse; width: 100%; font-size: .96rem; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-family: var(--font-mono); font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; background: var(--bg); }
+tr:last-child td { border-bottom: 0; }
+td code { white-space: nowrap; }
+td.num { font-variant-numeric: tabular-nums; font-family: var(--font-mono); font-size: .86rem; white-space: nowrap; }
+
+/* Şekiller */
+figure { margin: 20px 0 26px; }
+.fig-box { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 14px; overflow-x: auto; }
+.fig-box svg { display: block; width: 100%; height: auto; min-width: 520px; }
+figcaption { font-size: .9rem; color: var(--muted); margin-top: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; font-size: .88rem; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+
+svg text { font-family: var(--font-mono); }
+.sch .w { stroke: var(--wire); stroke-width: 2; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.sch .blk { fill: var(--accent-soft); stroke: var(--accent); stroke-width: 1.5; }
+.sch .blk-t { fill: var(--accent); font-size: 13px; font-weight: 600; }
+.sch .pl { fill: var(--ink); font-size: 12px; }
+.sch .lb { fill: var(--ink); font-size: 12px; }
+.sch .lb-m { fill: var(--muted); font-size: 11px; }
+.sch .dot { fill: var(--wire); }
+.sch .led { fill: var(--pin-pwr); stroke: var(--wire); stroke-width: 1.5; }
+.sch .ray { stroke: var(--pin-pwr); stroke-width: 1.5; fill: none; }
+.sch .pot-arrow { stroke: var(--copper); stroke-width: 2; fill: none; }
+.sch .hl { stroke: var(--copper); }
+
+/* İki sütunlu karşılaştırma */
+.split { display: grid; grid-template-columns: 1fr; gap: 14px; margin: 16px 0 22px; }
+@media (min-width: 640px) { .split { grid-template-columns: 1fr 1fr; } }
+.split > div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; min-width: 0; }
+.split h4 { font-family: var(--font-display); margin: 0 0 6px; font-size: 1.05rem; display: flex; align-items: center; gap: 8px; }
+.split ul { margin: 0; }
+.pill { font-family: var(--font-mono); font-size: .72rem; padding: 1px 8px; border-radius: 99px; font-weight: 600; }
+.pill.in { background: var(--accent-soft); color: var(--accent); }
+.pill.out { background: var(--copper-soft); color: var(--copper); }
+
+/* Akış */
+.flow { display: grid; grid-template-columns: 1fr; gap: 10px; margin: 16px 0 22px; }
+@media (min-width: 600px) { .flow { grid-template-columns: 1fr auto 1.4fr; align-items: stretch; } }
+.flow .step { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+.flow .step b { font-family: var(--font-mono); color: var(--accent); }
+.flow .arrow { align-self: center; justify-self: center; color: var(--muted); font-family: var(--font-mono); }
+.flow .loop b { color: var(--copper); }
+
+/* Simülatör */
+.sim { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin: 20px 0 26px; }
+.sim h4 { font-family: var(--font-display); margin: 0 0 4px; font-size: 1.1rem; }
+.sim .sub { color: var(--muted); font-size: .92rem; margin: 0 0 14px; }
+.sim-grid { display: grid; grid-template-columns: 1fr; gap: 18px; align-items: center; }
+@media (min-width: 620px) { .sim-grid { grid-template-columns: 1fr 150px; } }
+.sim label { font-family: var(--font-mono); font-size: .8rem; color: var(--muted); display: block; margin-bottom: 6px; }
+.sim input[type=range] { width: 100%; accent-color: var(--copper); }
+.readout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 14px; }
+@media (min-width: 520px) { .readout { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.readout div { background: var(--bg); border-radius: 8px; padding: 8px 10px; }
+.readout small { display: block; font-family: var(--font-mono); font-size: .68rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); }
+.readout output { font-family: var(--font-mono); font-size: 1.15rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.led-vis { display: grid; place-items: center; gap: 6px; }
+.led-vis svg { width: 110px; height: 110px; }
+.led-vis span { font-family: var(--font-mono); font-size: .75rem; color: var(--muted); }
+.sim .wave { margin-top: 14px; background: var(--bg); border-radius: 8px; padding: 8px; }
+.sim .wave svg { width: 100%; height: 70px; display: block; }
+.sim .codeline { margin-top: 12px; font-family: var(--font-mono); font-size: .85rem; background: var(--code-bg); color: var(--code-fg); padding: 10px 12px; border-radius: 8px; overflow-x: auto; white-space: nowrap; }
+.sim .codeline .c { color: #7f9a95; }
+
+.wave-path { fill: none; stroke: var(--copper); stroke-width: 2.2; stroke-linejoin: round; }
+.wave-base { stroke: var(--line); stroke-width: 1; }
+.wave-t { fill: var(--muted); font-size: 11px; }
+.wave-tb { fill: var(--ink); font-size: 12px; font-weight: 600; }
+
+.summary-grid { display: grid; grid-template-columns: 1fr; gap: 10px; }
+@media (min-width: 640px) { .summary-grid { grid-template-columns: 1fr 1fr; } }
+.summary-grid div { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-width: 0; }
+.summary-grid code { background: none; padding: 0; color: var(--accent); font-weight: 600; font-size: .95rem; }
+.summary-grid p { margin: 4px 0 0; font-size: .95rem; color: var(--muted); }
+
+footer { color: var(--muted); font-size: .9rem; padding-top: 8px; }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--pin-pwr)"/>
+    </marker>
+    <marker id="arrc" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="var(--copper)"/>
+    </marker>
+  </defs>
+</svg>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">Mikrodenetleyiciler · Ders Notu</p>
+    <h1>Arduino UNO ile ilk adımlar: pinler, değişkenler, buton, potansiyometre ve <span class="tilde">~</span>PWM</h1>
+    <p class="lede">Bu notta Arduino UNO kartını tanıyıp temel fonksiyonları öğreniyoruz. Sonra öğrendiklerimizle iki devre kuruyoruz: butonla LED yakma ve potansiyometreyle LED parlaklığı ayarlama (dimmer).</p>
+    <div class="meta-row"><span>Kart: Arduino UNO R3 (ATmega328P)</span><span>Gerekenler: UNO, breadboard, LED, 220Ω ve 10kΩ direnç, buton, 10kΩ potansiyometre, jumper kablo</span></div>
+  </header>
+
+  <div class="layout">
+    <nav class="toc" aria-label="İçindekiler">
+      <div class="toc-inner">
+        <details id="tocDetails" open>
+          <summary>İçindekiler</summary>
+          <ol>
+            <li><a href="#pinler">Arduino UNO pinleri</a></li>
+            <li><a href="#iskelet">setup() ve loop()</a></li>
+            <li><a href="#degiskenler">Değişkenler</a></li>
+            <li><a href="#pinmode">pinMode: giriş mi, çıkış mı?</a></li>
+            <li><a href="#digitalwrite">digitalWrite()</a></li>
+            <li><a href="#digitalread">digitalRead()</a></li>
+            <li><a href="#ifelse">if / else yapısı</a></li>
+            <li><a href="#buton-led">Buton ile LED yakma <span class="tag">UYGULAMA</span></a></li>
+            <li><a href="#analogread">analogRead()</a></li>
+            <li><a href="#pot">Potansiyometre okuma <span class="tag">UYGULAMA</span></a></li>
+            <li><a href="#analogwrite">analogWrite() ve PWM</a></li>
+            <li><a href="#dimmer">map() ve dimmer devresi <span class="tag">UYGULAMA</span></a></li>
+            <li><a href="#hatalar">Sık hatalar ve özet</a></li>
+          </ol>
+        </details>
+      </div>
+    </nav>
+
+    <main>
+      <article>
+
+<!-- 1 -->
+<section id="pinler">
+  <div class="sec-num">Bölüm 01</div>
+  <h2>Arduino UNO'nun pinleri</h2>
+  <p>Arduino UNO, üzerinde <strong>ATmega328P</strong> mikrodenetleyicisi bulunan bir geliştirme kartıdır. 5 V ile çalışır, 16 MHz hızındadır. Dış dünyayla iletişimi kartın kenarlarındaki <strong>pinler</strong> (soketler) üzerinden kurar. Bir LED yakmak, bir butonu okumak ya da bir sensörden değer almak için önce hangi pinin ne işe yaradığını bilmemiz gerekir.</p>
+
+  <figure>
+    <div class="fig-box">
+      <svg id="unoBoard" viewBox="0 0 760 420" role="img" aria-label="Arduino UNO pin yerleşimi: üstte dijital pinler 0-13, altta güç pinleri ve analog pinler A0-A5"></svg>
+    </div>
+    <div class="legend" aria-hidden="true">
+      <span><i style="background:var(--pin-dig)"></i>Dijital G/Ç</span>
+      <span><i style="background:var(--pin-pwm)"></i>PWM (~) destekli dijital</span>
+      <span><i style="background:var(--pin-ana)"></i>Analog giriş</span>
+      <span><i style="background:var(--pin-pwr)"></i>Güç</span>
+      <span><i style="background:var(--pin-gnd)"></i>GND (toprak)</span>
+      <span><i style="background:var(--pin-com)"></i>Haberleşme</span>
+    </div>
+    <figcaption>Şekil 1 — Arduino UNO pin yerleşimi (sadeleştirilmiş). Pinlerin üzerine gelince kısa açıklama görünür.</figcaption>
+  </figure>
+
+  <h3>Dijital pinler (0–13)</h3>
+  <p>Kartın üst kenarındaki 14 pin <strong>dijital giriş/çıkış</strong> pinidir. Dijital pin yalnızca iki durum bilir: <code>HIGH</code> (5 V, mantıksal 1) ve <code>LOW</code> (0 V, mantıksal 0). Bu pinleri LED yakmak gibi çıkış işlerinde ya da buton okumak gibi giriş işlerinde kullanırız.</p>
+  <ul>
+    <li><strong>0 (RX) ve 1 (TX):</strong> Bilgisayarla seri haberleşme (USB) için kullanılır. Program yüklerken sorun çıkarmamak için bu pinlere mümkünse devre bağlamayın.</li>
+    <li><strong>13:</strong> Kart üzerindeki <code>L</code> etiketli LED'e bağlıdır. Kodda <code>LED_BUILTIN</code> adıyla da kullanılabilir. Devre kurmadan ilk denemeyi bu LED ile yapabilirsiniz.</li>
+  </ul>
+
+  <h3>PWM pinleri (~3, ~5, ~6, ~9, ~10, ~11)</h3>
+  <p>Numarasının yanında <strong>~</strong> (tilde) işareti olan altı dijital pin <strong>PWM</strong> (Pulse Width Modulation, darbe genişlik modülasyonu) çıkışı verebilir. Bu pinler 5 V'u çok hızlı açıp kapatarak sanki arada bir gerilim varmış gibi davranır. LED parlaklığı ya da motor hızı ayarlamak için kullanılır. <code>analogWrite()</code> fonksiyonu yalnızca bu pinlerde çalışır; ayrıntısı <a href="#analogwrite">Bölüm 11</a>'de.</p>
+
+  <h3>Analog giriş pinleri (A0–A5)</h3>
+  <p>Kartın alt sağ köşesindeki A0–A5 pinleri <strong>analog giriş</strong> pinleridir. 0 ile 5 V arasındaki herhangi bir gerilimi ölçüp 0–1023 arasında bir sayıya çevirirler. Potansiyometre, LDR (ışık sensörü), sıcaklık sensörü gibi kademeli değer veren elemanlar bu pinlere bağlanır. Gerekirse A0–A5 normal dijital pin gibi de kullanılabilir.</p>
+
+  <div class="note"><b class="lbl">Karıştırılan nokta</b><p>UNO'da <strong>analog çıkış pini yoktur</strong>. "Analog" pinler sadece okuma (giriş) yapar. Ayarlı çıkış gerektiğinde ~ işaretli PWM pinleri kullanılır.</p></div>
+
+  <h3>Güç pinleri</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Pin</th><th>Görevi</th></tr></thead>
+    <tbody>
+      <tr><td><code>5V</code></td><td>Devrelere 5 V besleme verir. Breadboard'un artı (+) hattı genelde buraya bağlanır.</td></tr>
+      <tr><td><code>3.3V</code></td><td>3,3 V ile çalışan sensörler için besleme (en fazla yaklaşık 50 mA).</td></tr>
+      <tr><td><code>GND</code></td><td>Toprak, yani 0 V referansı. Devredeki tüm elemanların eksi uçları ortak GND'de buluşmalıdır.</td></tr>
+      <tr><td><code>Vin</code></td><td>Kart harici adaptörle beslendiğinde adaptör gerilimi buradan alınır (önerilen 7–12 V).</td></tr>
+      <tr><td><code>RESET</code></td><td>LOW yapılırsa kart yeniden başlar; kart üzerindeki reset butonuyla aynı işi görür.</td></tr>
+      <tr><td><code>AREF</code></td><td>Analog okuma için harici referans gerilimi. Başlangıç seviyesinde boş bırakılır.</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="warn"><b class="lbl">Akım sınırı</b><p>Bir dijital pinden çekilebilecek güvenli akım yaklaşık <strong>20 mA</strong>'dir (mutlak üst sınır 40 mA). Bu yüzden LED'ler her zaman seri bir dirençle (220–330 Ω) bağlanır. Motor, röle bobini gibi yükler doğrudan pine bağlanmaz; araya transistör veya sürücü kartı konur.</p></div>
+</section>
+
+<!-- 2 -->
+<section id="iskelet">
+  <div class="sec-num">Bölüm 02</div>
+  <h2>Programın iskeleti: <code>void setup()</code> ve <code>void loop()</code></h2>
+  <p>Arduino'da yazdığımız programa <strong>sketch</strong> denir. Her sketch'te mutlaka iki fonksiyon bulunur. <code>void</code> kelimesi, bu fonksiyonların geriye bir değer döndürmediğini belirtir.</p>
+
+  <div class="flow">
+    <div class="step"><b>setup()</b><br>Kart açıldığında veya resetlendiğinde <strong>yalnızca bir kez</strong> çalışır. Pin ayarları, seri haberleşmenin başlatılması gibi hazırlıklar burada yapılır.</div>
+    <div class="arrow" aria-hidden="true">→</div>
+    <div class="step loop"><b>loop()</b><br>setup() bittikten sonra <strong>sonsuz döngü</strong> hâlinde tekrar tekrar çalışır. Buton okuma, LED yakma gibi sürekli yapılacak işler buraya yazılır. Saniyede binlerce kez dönebilir.</div>
+  </div>
+
+  <div class="code"><div class="code-head"><span>iskelet.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">void setup() {
+  // Buraya yazılan kodlar bir kez çalışır
+}
+
+void loop() {
+  // Buraya yazılan kodlar sürekli tekrar eder
+}</code></pre></div>
+
+  <h3>Yazım kuralları</h3>
+  <ul>
+    <li>Her komut <strong>noktalı virgül</strong> <code>;</code> ile biter.</li>
+    <li>Fonksiyonun içeriği süslü parantezler <code>{ }</code> arasına yazılır.</li>
+    <li>Büyük/küçük harf duyarlıdır: <code>pinMode</code> doğru, <code>pinmode</code> hatalıdır.</li>
+    <li><code>//</code> ile başlayan satırlar yorumdur, derleyici onları yok sayar. Birden çok satırlık yorum için <code>/* ... */</code> kullanılır.</li>
+  </ul>
+</section>
+
+<!-- 3 -->
+<section id="degiskenler">
+  <div class="sec-num">Bölüm 03</div>
+  <h2>Değişkenler</h2>
+
+  <h3>Neden değişkenlere ihtiyaç duyarız?</h3>
+  <p>Değişken, bir değeri bellekte saklamak için kullandığımız <strong>isimli bir kutudur</strong>. Programın bir yerde ölçtüğü ya da hesapladığı değeri başka bir yerde kullanabilmesi için o değeri bir yere koyması gerekir. Değişkenler bize üç kolaylık sağlar:</p>
+  <ol>
+    <li><strong>Değer saklama:</strong> Butonun durumu, potansiyometrenin okunan değeri gibi bilgileri tutarız.</li>
+    <li><strong>Okunabilirlik:</strong> <code>digitalWrite(13, HIGH)</code> yerine <code>digitalWrite(ledPin, HIGH)</code> yazmak, kodun ne yaptığını açıkça gösterir.</li>
+    <li><strong>Kolay değişiklik:</strong> LED'i 13. pinden 8. pine taşıdığınızda kodun her yerini değil, sadece değişkenin değerini değiştirirsiniz.</li>
+  </ol>
+
+  <h3>Değişken nasıl yazılır?</h3>
+  <p>Genel yazım şekli şöyledir: önce <strong>tür</strong>, sonra <strong>isim</strong>, isteğe bağlı olarak <strong>ilk değer</strong>.</p>
+  <div class="code"><div class="code-head"><span>tür  isim  =  değer;</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">int ledPin = 13;          // tam sayı
+float sicaklik = 24.5;    // ondalıklı sayı
+bool butonBasili = false; // doğru / yanlış
+char harf = 'A';          // tek karakter
+int sayac;                // değer verilmeden tanımlandı
+
+sayac = 0;                // sonradan değer atandı
+sayac = sayac + 1;        // değeri 1 artırıldı (sayac++ ile aynı)</code></pre></div>
+
+  <p><strong>İsimlendirme kuralları:</strong></p>
+  <ul>
+    <li>Harf veya alt çizgi ile başlar; rakamla başlayamaz (<code>2led</code> hatalı).</li>
+    <li>Boşluk ve Türkçe karakter (ç, ğ, ı, ö, ş, ü) kullanılmaz: <code>sıcaklık</code> yerine <code>sicaklik</code>.</li>
+    <li><code>int</code>, <code>void</code>, <code>if</code> gibi ayrılmış kelimeler isim olamaz.</li>
+    <li>Anlamlı isim seçin. Birden çok kelime için <code>potDegeri</code> gibi "camelCase" yazım yaygındır. Yani ilk kelime küçük ikinci kelimenin ilk harfi büyük yazım şekli</li>
+  </ul>
+
+  <h3>Değişken türleri</h3>
+  <p>Tür, değişkenin ne tür bir veri tutacağını ve bellekte ne kadar yer kaplayacağını belirler. UNO'da 2 KB gibi çok küçük bir RAM olduğu için doğru türü seçmek önemlidir.</p>
+  <div class="tbl"><table>
+    <thead><tr><th>Tür</th><th>Boyut</th><th>Aralık</th><th>Tipik kullanım</th></tr></thead>
+    <tbody>
+      <tr><td><code>bool</code></td><td class="num">1 bayt</td><td class="num">true / false</td><td>Buton basılı mı, LED açık mı</td></tr>
+      <tr><td><code>byte</code></td><td class="num">1 bayt</td><td class="num">0 … 255</td><td>PWM değeri, küçük sayılar</td></tr>
+      <tr><td><code>char</code></td><td class="num">1 bayt</td><td class="num">−128 … 127</td><td>Tek karakter: <code>'A'</code></td></tr>
+      <tr><td><code>int</code></td><td class="num">2 bayt</td><td class="num">−32.768 … 32.767</td><td>Pin numarası, analogRead sonucu, sayaç</td></tr>
+      <tr><td><code>unsigned int</code></td><td class="num">2 bayt</td><td class="num">0 … 65.535</td><td>Negatif olmayan büyük sayılar</td></tr>
+      <tr><td><code>long</code></td><td class="num">4 bayt</td><td class="num">±2,1 milyar</td><td>Büyük tam sayılar</td></tr>
+      <tr><td><code>unsigned long</code></td><td class="num">4 bayt</td><td class="num">0 … 4.294.967.295</td><td>Zaman: <code>millis()</code> sonucu</td></tr>
+      <tr><td><code>float</code></td><td class="num">4 bayt</td><td class="num">≈ 6–7 basamak hassasiyet</td><td>Gerilim, sıcaklık gibi ondalıklı değerler</td></tr>
+      <tr><td><code>String</code></td><td class="num">değişken</td><td class="num">metin</td><td>Seri ekrana yazılacak mesajlar</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="tip"><b class="lbl">const ile sabit tanımlama</b><p>Program boyunca değişmeyecek değerlerin başına <code>const</code> yazılır: <code>const int ledPin = 13;</code>. Böylece değer yanlışlıkla değiştirilemez, derleyici de belleği daha verimli kullanır. Pin numaraları için en doğru tercih budur.</p></div>
+
+  <h3>Kapsam: değişkeni nereye yazmalı?</h3>
+  <ul>
+    <li><strong>Global değişken:</strong> Tüm fonksiyonların dışında, dosyanın en üstünde tanımlanır. <code>setup()</code> ve <code>loop()</code> dahil her yerden erişilir. Pin numaraları ve loop'un her turunda değerini koruması gereken veriler (sayaç, LED durumu) burada tanımlanır.</li>
+    <li><strong>Yerel değişken:</strong> Bir fonksiyonun içinde tanımlanır, yalnızca orada geçerlidir. <code>loop()</code> içinde tanımlanan yerel değişken her turda yeniden oluşur.</li>
+  </ul>
+
+  <div class="code"><div class="code-head"><span>kapsam.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">const int ledPin = 13;   // global: her yerden erişilir
+int sayac = 0;           // global: değerini korur
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  int okunan = analogRead(A0);  // yerel: sadece loop içinde geçerli
+  sayac = sayac + 1;
+  Serial.println(sayac);
+  delay(500);
+}</code></pre></div>
+
+  <h3>Değişkenlerin kullanım yerleri</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Kullanım</th><th>Örnek</th></tr></thead>
+    <tbody>
+      <tr><td>Pin numaralarını adlandırmak</td><td><code>const int butonPin = 2;</code></td></tr>
+      <tr><td>Okunan sensör değerini saklamak</td><td><code>int potDegeri = analogRead(A0);</code></td></tr>
+      <tr><td>Bir durumu hatırlamak</td><td><code>bool ledAcik = false;</code></td></tr>
+      <tr><td>Saymak</td><td><code>int basmaSayisi = 0;</code></td></tr>
+      <tr><td>Hesap sonucu tutmak</td><td><code>float gerilim = potDegeri * (5.0 / 1023.0);</code></td></tr>
+      <tr><td>Ayar değerleri</td><td><code>int beklemeSuresi = 500;</code></td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<!-- 4 -->
+<section id="pinmode">
+  <div class="sec-num">Bölüm 04</div>
+  <h2><code>pinMode()</code>: giriş mi, çıkış mı?</h2>
+  <p>Dijital pinler hem giriş hem çıkış olabildiği için, bir pini kullanmadan önce Arduino'ya o pinin görevini söylememiz gerekir. Bu ayar genelde <code>setup()</code> içinde, bir kez yapılır.</p>
+  <div class="code"><div class="code-head"><span>pinMode(pin, mod);</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">pinMode(13, OUTPUT);        // 13. pin çıkış
+pinMode(2, INPUT);          // 2. pin giriş
+pinMode(3, INPUT_PULLUP);   // 3. pin giriş, dahili pull-up direnci açık</code></pre></div>
+
+  <p>Karar vermenin kolay yolu şu soruyu sormaktır: <strong>Bilgi Arduino'ya mı geliyor, yoksa Arduino bir şeyi mi çalıştırıyor?</strong></p>
+
+  <div class="split">
+    <div>
+      <h4><span class="pill in">INPUT</span> Arduino'ya bilgi gelir</h4>
+      <ul>
+        <li>Buton, anahtar (switch)</li>
+        <li>Hareket sensörü (PIR)</li>
+        <li>Engel / kızılötesi sensör</li>
+        <li>Limit (sınır) anahtarı</li>
+        <li>Eğim sensörü, reed röle</li>
+        <li>Ultrasonik sensörün Echo pini</li>
+      </ul>
+    </div>
+    <div>
+      <h4><span class="pill out">OUTPUT</span> Arduino bir şeyi sürer</h4>
+      <ul>
+        <li>LED, RGB LED</li>
+        <li>Buzzer</li>
+        <li>Röle modülü</li>
+        <li>Transistör / motor sürücü girişi</li>
+        <li>7 segment gösterge</li>
+        <li>Ultrasonik sensörün Trig pini</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>Üç mod</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Mod</th><th>Anlamı</th></tr></thead>
+    <tbody>
+      <tr><td><code>OUTPUT</code></td><td>Pin 5 V veya 0 V verir. <code>digitalWrite()</code> ve <code>analogWrite()</code> ile kullanılır.</td></tr>
+      <tr><td><code>INPUT</code></td><td>Pin gerilimi okur. Pin boşta kalırsa okunan değer rastgele değişir, bu yüzden harici bir pull-down veya pull-up direnci gerekir.</td></tr>
+      <tr><td><code>INPUT_PULLUP</code></td><td>Giriş + kartın içindeki yaklaşık 20–50 kΩ'luk direnç pini 5 V'a çeker. Harici direnç gerekmez. Buton basılı değilken <code>HIGH</code>, basılıyken <code>LOW</code> okunur (ters mantık).</td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="note"><b class="lbl">Bilmekte fayda var</b><p>A0–A5 pinlerini <code>analogRead()</code> ile okurken <code>pinMode</code> yazmaya gerek yoktur. <code>analogWrite()</code> da pini kendisi çıkış yapar; yine de <code>pinMode(pin, OUTPUT)</code> yazmak kodu okuyan kişi için açıklayıcıdır.</p></div>
+</section>
+
+<!-- 5 -->
+<section id="digitalwrite">
+  <div class="sec-num">Bölüm 05</div>
+  <h2><code>digitalWrite()</code>: pini aç / kapat</h2>
+  <p>OUTPUT olarak ayarlanmış bir pine <code>HIGH</code> (5 V) ya da <code>LOW</code> (0 V) verir.</p>
+  <div class="code"><div class="code-head"><span>digitalWrite(pin, deger);</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">digitalWrite(13, HIGH);  // 13. pine 5 V ver, LED yanar
+digitalWrite(13, LOW);   // 13. pine 0 V ver, LED söner</code></pre></div>
+
+  <h3>İlk program: Blink (yanıp sönen LED)</h3>
+  <p>Kart üzerindeki <code>L</code> LED'ini birer saniye arayla yakıp söndürür. Hiçbir devre kurmadan deneyebilirsiniz.</p>
+  <div class="code"><div class="code-head"><span>blink.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">const int ledPin = 13;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  digitalWrite(ledPin, HIGH);  // LED'i yak
+  delay(1000);                 // 1000 ms = 1 saniye bekle
+  digitalWrite(ledPin, LOW);   // LED'i söndür
+  delay(1000);
+}</code></pre></div>
+  <p><code>delay(ms)</code> programı verilen milisaniye kadar bekletir. <code>delay(1000)</code> bir saniyedir.</p>
+</section>
+
+<!-- 6 -->
+<section id="digitalread">
+  <div class="sec-num">Bölüm 06</div>
+  <h2><code>digitalRead()</code>: pinin durumunu oku</h2>
+  <p>INPUT veya INPUT_PULLUP olarak ayarlanmış bir pinin o anki durumunu okur ve <code>HIGH</code> ya da <code>LOW</code> döndürür. Okunan değeri genelde bir değişkende saklarız.</p>
+  <div class="code"><div class="code-head"><span>deger = digitalRead(pin);</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">const int butonPin = 2;
+int butonDurumu = 0;
+
+void setup() {
+  pinMode(butonPin, INPUT);
+  Serial.begin(9600);       // Seri haberleşmeyi 9600 baud hızında başlat
+}
+
+void loop() {
+  butonDurumu = digitalRead(butonPin);
+  Serial.println(butonDurumu);  // Basılıysa 1, değilse 0 yazar
+  delay(100);
+}</code></pre></div>
+  <p>Sonucu görmek için Arduino IDE'de <strong>Araçlar › Seri Port Ekranı</strong>'nı açın ve hızı 9600 baud seçin. <code>Serial.println()</code> değeri yazar ve alt satıra geçer.</p>
+  <div class="note"><b class="lbl">Neden direnç gerekiyor?</b><p>Boşta kalan (hiçbir yere bağlı olmayan) bir giriş pini çevredeki elektriksel gürültüden etkilenir; elinizi yaklaştırsanız bile 0 ile 1 arasında rastgele değişir. Buna <strong>floating</strong> (havada kalma) denir. Pull-down ya da pull-up direnci, buton basılı değilken pini belirli bir seviyede tutar. Bağlantısı <a href="#buton-led">Bölüm 08</a>'de.</p></div>
+</section>
+
+<!-- 7 -->
+<section id="ifelse">
+  <div class="sec-num">Bölüm 07</div>
+  <h2><code>if / else</code> yapısı: karar verme</h2>
+  <p>Program bir koşula göre farklı işler yapacaksa <code>if</code> (eğer) kullanılır. Koşul doğruysa süslü parantez içindeki kodlar çalışır; yanlışsa <code>else</code> (değilse) bloğu çalışır.</p>
+  <div class="code"><div class="code-head"><span>yapı</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">if (kosul) {
+  // koşul doğruysa çalışır
+} else {
+  // koşul yanlışsa çalışır
+}</code></pre></div>
+
+  <p>İkiden fazla durum varsa <code>else if</code> ile koşullar zincirlenir. Arduino yukarıdan aşağı bakar ve ilk doğru koşulu çalıştırır:</p>
+  <div class="code"><div class="code-head"><span>else-if.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">int deger = analogRead(A0);
+
+if (deger &lt; 300) {
+  Serial.println("Dusuk");
+} else if (deger &lt; 700) {
+  Serial.println("Orta");
+} else {
+  Serial.println("Yuksek");
+}</code></pre></div>
+
+  <h3>Karşılaştırma ve mantık operatörleri</h3>
+  <div class="tbl"><table>
+    <thead><tr><th>Operatör</th><th>Anlamı</th><th>Örnek</th></tr></thead>
+    <tbody>
+      <tr><td><code>==</code></td><td>eşit mi</td><td><code>buton == HIGH</code></td></tr>
+      <tr><td><code>!=</code></td><td>eşit değil mi</td><td><code>buton != LOW</code></td></tr>
+      <tr><td><code>&gt;</code> <code>&lt;</code></td><td>büyük / küçük</td><td><code>deger &gt; 512</code></td></tr>
+      <tr><td><code>&gt;=</code> <code>&lt;=</code></td><td>büyük eşit / küçük eşit</td><td><code>deger &lt;= 100</code></td></tr>
+      <tr><td><code>&amp;&amp;</code></td><td>VE: iki koşul da doğru</td><td><code>b1 == HIGH &amp;&amp; b2 == HIGH</code></td></tr>
+      <tr><td><code>||</code></td><td>VEYA: en az biri doğru</td><td><code>b1 == HIGH || b2 == HIGH</code></td></tr>
+      <tr><td><code>!</code></td><td>DEĞİL: tersine çevirir</td><td><code>!ledAcik</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <div class="warn"><b class="lbl">En sık hata: = ile == karışması</b><p><code>=</code> <strong>atama</strong> yapar (değer koyar), <code>==</code> <strong>karşılaştırma</strong> yapar. <code>if (buton = HIGH)</code> yazarsanız derleyici hata vermez ama koşul her zaman doğru çıkar. Doğrusu <code>if (buton == HIGH)</code>.</p></div>
+</section>
+
+<!-- 8 -->
+<section id="buton-led">
+  <div class="sec-num">Bölüm 08 <span class="lab-chip">Uygulama</span></div>
+  <h2>Buton ile LED yakma devresi</h2>
+  <p>Şimdiye kadar öğrendiklerimizi birleştiriyoruz: <code>pinMode</code>, <code>digitalRead</code>, <code>if/else</code> ve <code>digitalWrite</code>. Butona basılıyken LED yanacak, bırakınca sönecek.</p>
+
+  <h3>LED nasıl bağlanır?</h3>
+  <ul>
+    <li>LED'in <strong>uzun bacağı anot (+)</strong>, <strong>kısa bacağı katot (−)</strong>'tur. Katot tarafında LED'in gövdesi de düzdür.</li>
+    <li>Anot, <strong>220 Ω</strong> (veya 330 Ω) direnç üzerinden Arduino pinine bağlanır. Direnç LED'den geçen akımı sınırlar; dirençsiz bağlanan LED ve pin zarar görebilir.</li>
+    <li>Katot <strong>GND</strong>'ye bağlanır.</li>
+  </ul>
+
+  <h3>Buton nasıl bağlanır?</h3>
+  <ul>
+    <li>Breadboard'a takılan 4 bacaklı butonlarda bacaklar ikişer ikişer içeriden birbirine bağlıdır. Butonu breadboard'un ortasındaki kanalın üzerine yerleştirin; çapraz bacakları kullanırsanız her zaman doğru iki ucu seçmiş olursunuz.</li>
+    <li>İki bağlantı yöntemi vardır: harici <strong>pull-down direnci</strong> ile veya dahili <strong>INPUT_PULLUP</strong> ile.</li>
+  </ul>
+
+  <h3>Yöntem 1: 10 kΩ pull-down direnci ile</h3>
+  <p>Butonun bir ucu 5V'a, diğer ucu hem D2 pinine hem de 10 kΩ direnç üzerinden GND'ye bağlanır. Basılı değilken direnç pini GND'ye çeker (<code>LOW</code>), basınca pin 5V'a bağlanır (<code>HIGH</code>).</p>
+
+  <figure>
+    <div class="fig-box">
+      <svg class="sch" viewBox="0 0 560 290" role="img" aria-label="Pull-down bağlantılı buton ve LED devre şeması">
+        <rect class="blk" x="20" y="30" width="130" height="240" rx="8"/>
+        <text class="blk-t" x="85" y="22" text-anchor="middle">Arduino UNO</text>
+        <text class="pl" x="140" y="74" text-anchor="end">5V</text>
+        <text class="pl" x="140" y="134" text-anchor="end">D2</text>
+        <text class="pl" x="140" y="194" text-anchor="end">D13</text>
+        <text class="pl" x="140" y="254" text-anchor="end">GND</text>
+        <!-- 5V - buton - D2 düğümü -->
+        <path class="w" d="M150,70 H305"/>
+        <circle cx="305" cy="70" r="3.5" fill="var(--surface)" stroke="var(--wire)" stroke-width="2"/>
+        <circle cx="355" cy="70" r="3.5" fill="var(--surface)" stroke="var(--wire)" stroke-width="2"/>
+        <path class="w" d="M300,58 H360 M330,58 V44 M318,44 H342"/>
+        <path class="w" d="M355,70 H420 V130"/>
+        <text class="lb" x="330" y="34" text-anchor="middle">Buton</text>
+        <path class="w" d="M150,130 H420"/>
+        <circle class="dot" cx="420" cy="130" r="4"/>
+        <!-- pull-down direnci -->
+        <path class="w" d="M420,130 V150"/>
+        <polyline class="w" points="420,150 411,156 429,166 411,176 429,186 411,196 429,204 420,210"/>
+        <path class="w" d="M420,210 V250"/>
+        <text class="lb" x="440" y="176">10 kΩ</text>
+        <text class="lb-m" x="440" y="192">pull-down</text>
+        <!-- LED hattı -->
+        <path class="w" d="M150,190 H220"/>
+        <polyline class="w" points="220,190 226,182 238,198 250,182 262,198 274,182 286,198 290,190"/>
+        <text class="lb" x="255" y="170" text-anchor="middle">220 Ω</text>
+        <path class="w" d="M290,190 H330"/>
+        <polygon class="led" points="330,177 330,203 354,190"/>
+        <path class="w" d="M354,177 V203"/>
+        <path class="ray" d="M344,172 L354,160" marker-end="url(#arr)"/>
+        <path class="ray" d="M352,176 L362,164" marker-end="url(#arr)"/>
+        <text class="lb-m" x="322" y="218" text-anchor="middle">+ anot</text>
+        <text class="lb-m" x="368" y="218" text-anchor="middle">− katot</text>
+        <path class="w" d="M354,190 H385 V250"/>
+        <!-- GND hattı -->
+        <path class="w" d="M150,250 H420"/>
+        <circle class="dot" cx="385" cy="250" r="4"/>
+      </svg>
+    </div>
+    <figcaption>Şekil 2 — Pull-down dirençli buton (D2) ve 220 Ω dirençli LED (D13).</figcaption>
+  </figure>
+
+  <div class="code"><div class="code-head"><span>buton_led_pulldown.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">const int butonPin = 2;   // buton D2'de
+const int ledPin = 13;    // LED D13'te
+int butonDurumu = 0;      // okunan değer burada saklanır
+
+void setup() {
+  pinMode(butonPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  butonDurumu = digitalRead(butonPin);
+
+  if (butonDurumu == HIGH) {     // butona basıldıysa
+    digitalWrite(ledPin, HIGH);  // LED'i yak
+  } else {
+    digitalWrite(ledPin, LOW);   // LED'i söndür
+  }
+}</code></pre></div>
+
+  <h3>Yöntem 2: INPUT_PULLUP ile (dirençsiz)</h3>
+  <p>Kartın içindeki pull-up direncini kullanırsak buton için harici direnç gerekmez. Butonun bir ucu D2'ye, diğer ucu doğrudan GND'ye bağlanır. Mantık terstir: basılı değilken <code>HIGH</code>, basılıyken <code>LOW</code> okunur.</p>
+
+  <figure>
+    <div class="fig-box">
+      <svg class="sch" viewBox="0 0 560 230" role="img" aria-label="INPUT_PULLUP bağlantılı buton ve LED devre şeması">
+        <rect class="blk" x="20" y="30" width="130" height="180" rx="8"/>
+        <text class="blk-t" x="85" y="22" text-anchor="middle">Arduino UNO</text>
+        <text class="pl" x="140" y="74" text-anchor="end">D2</text>
+        <text class="pl" x="140" y="144" text-anchor="end">D13</text>
+        <text class="pl" x="140" y="194" text-anchor="end">GND</text>
+        <text class="lb-m" x="30" y="100">dahili</text>
+        <text class="lb-m" x="30" y="114">pull-up açık</text>
+        <!-- D2 - buton - GND -->
+        <path class="w" d="M150,70 H345"/>
+        <circle cx="345" cy="70" r="3.5" fill="var(--surface)" stroke="var(--wire)" stroke-width="2"/>
+        <circle cx="395" cy="70" r="3.5" fill="var(--surface)" stroke="var(--wire)" stroke-width="2"/>
+        <path class="w" d="M340,58 H400 M370,58 V44 M358,44 H382"/>
+        <text class="lb" x="370" y="34" text-anchor="middle">Buton</text>
+        <path class="w" d="M395,70 H430 V190"/>
+        <!-- LED hattı -->
+        <path class="w" d="M150,140 H200"/>
+        <polyline class="w" points="200,140 206,132 218,148 230,132 242,148 254,132 266,148 270,140"/>
+        <text class="lb" x="235" y="120" text-anchor="middle">220 Ω</text>
+        <path class="w" d="M270,140 H300"/>
+        <polygon class="led" points="300,127 300,153 324,140"/>
+        <path class="w" d="M324,127 V153"/>
+        <path class="ray" d="M314,122 L324,110" marker-end="url(#arr)"/>
+        <path class="ray" d="M322,126 L332,114" marker-end="url(#arr)"/>
+        <path class="w" d="M324,140 H350 V190"/>
+        <path class="w" d="M150,190 H430"/>
+        <circle class="dot" cx="350" cy="190" r="4"/>
+      </svg>
+    </div>
+    <figcaption>Şekil 3 — INPUT_PULLUP ile buton: tek kablo pine, diğeri GND'ye.</figcaption>
+  </figure>
+
+  <div class="code"><div class="code-head"><span>buton_led_pullup.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">const int butonPin = 2;
+const int ledPin = 13;
+
+void setup() {
+  pinMode(butonPin, INPUT_PULLUP);  // dahili direnç açık
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  int butonDurumu = digitalRead(butonPin);
+
+  if (butonDurumu == LOW) {      // DİKKAT: basılıyken LOW okunur
+    digitalWrite(ledPin, HIGH);
+  } else {
+    digitalWrite(ledPin, LOW);
+  }
+}</code></pre></div>
+
+  <h3>Geliştirme: her basışta LED durumunu değiştir</h3>
+  <p>Butona bir kez basınca LED yanık kalsın, tekrar basınca sönsün istiyorsak LED'in durumunu bir <code>bool</code> değişkende hatırlamamız ve basılma <em>anını</em> yakalamamız gerekir. Butonun kontakları basıldığı anda birkaç milisaniye titreştiği (sıçrama, "bounce") için kısa bir bekleme ekliyoruz.</p>
+  <div class="code"><div class="code-head"><span>buton_toggle.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">const int butonPin = 2;
+const int ledPin = 13;
+bool ledAcik = false;      // LED'in durumu
+int oncekiButon = HIGH;    // bir önceki turdaki buton değeri
+
+void setup() {
+  pinMode(butonPin, INPUT_PULLUP);
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  int simdikiButon = digitalRead(butonPin);
+
+  // HIGH'dan LOW'a geçiş = butona basıldığı an
+  if (oncekiButon == HIGH &amp;&amp; simdikiButon == LOW) {
+    ledAcik = !ledAcik;              // durumu tersine çevir
+    digitalWrite(ledPin, ledAcik);
+    delay(50);                       // sıçrama (debounce) önlemi
+  }
+
+  oncekiButon = simdikiButon;
+}</code></pre></div>
+</section>
+
+<!-- 9 -->
+<section id="analogread">
+  <div class="sec-num">Bölüm 09</div>
+  <h2><code>analogRead()</code>: gerilimi sayıya çevir</h2>
+  <p>Dijital okuma sadece "var / yok" söyler. Bir sensörün <em>ne kadar</em> değer verdiğini öğrenmek için analog okuma yaparız. <code>analogRead()</code>, A0–A5 pinlerinden birindeki 0–5 V arası gerilimi <strong>0 ile 1023</strong> arasında bir tam sayıya çevirir.</p>
+  <div class="code"><div class="code-head"><span>deger = analogRead(pin);</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">int deger = analogRead(A0);   // 0 ... 1023 arası bir sayı</code></pre></div>
+
+  <p>Neden 1023? UNO'daki analog-dijital çevirici (ADC) <strong>10 bitliktir</strong>. 10 bit ile 2<sup>10</sup> = 1024 farklı değer gösterilebilir: 0'dan 1023'e. Her adım yaklaşık 5 V / 1024 ≈ <strong>4,9 mV</strong>'a karşılık gelir.</p>
+
+  <div class="tbl"><table>
+    <thead><tr><th>Pindeki gerilim</th><th>analogRead sonucu</th></tr></thead>
+    <tbody>
+      <tr><td class="num">0 V</td><td class="num">0</td></tr>
+      <tr><td class="num">1,25 V</td><td class="num">≈ 256</td></tr>
+      <tr><td class="num">2,5 V</td><td class="num">≈ 512</td></tr>
+      <tr><td class="num">3,75 V</td><td class="num">≈ 767</td></tr>
+      <tr><td class="num">5 V</td><td class="num">1023</td></tr>
+    </tbody>
+  </table></div>
+
+  <p>Okunan sayıyı tekrar volta çevirmek için:</p>
+  <div class="code"><div class="code-head"><span>gerilim hesabı</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">int deger = analogRead(A0);
+float gerilim = deger * (5.0 / 1023.0);   // 5.0 yazmak önemli: ondalıklı bölme yapar</code></pre></div>
+  <div class="note"><b class="lbl">Neden 5.0?</b><p><code>5 / 1023</code> iki tam sayının bölümüdür ve sonucu 0 olur. <code>5.0 / 1023.0</code> yazınca bölme ondalıklı yapılır.</p></div>
+</section>
+
+<!-- 10 -->
+<section id="pot">
+  <div class="sec-num">Bölüm 10 <span class="lab-chip">Uygulama</span></div>
+  <h2>Potansiyometre ile analog okuma</h2>
+  <p>Potansiyometre, mili çevrildikçe direnci değişen ayarlı bir dirençtir. Üç bacağı vardır. İki dış bacağa 5V ve GND verildiğinde, orta bacak (sürgü, "wiper") mili çevirdikçe 0 ile 5 V arasında bir gerilim verir. Bu gerilimi analog pinden okuruz.</p>
+
+  <h3>Bağlantı</h3>
+  <ul>
+    <li>Dış bacaklardan biri → <strong>5V</strong></li>
+    <li>Diğer dış bacak → <strong>GND</strong></li>
+    <li>Orta bacak → <strong>A0</strong></li>
+  </ul>
+  <p>Dış bacakları yer değiştirirseniz sadece dönüş yönü tersine döner; devre yine çalışır.</p>
+
+  <figure>
+    <div class="fig-box">
+      <svg class="sch" viewBox="0 0 560 250" role="img" aria-label="Potansiyometre devre şeması: uçlar 5V ve GND'ye, orta uç A0'a">
+        <rect class="blk" x="20" y="30" width="130" height="200" rx="8"/>
+        <text class="blk-t" x="85" y="22" text-anchor="middle">Arduino UNO</text>
+        <text class="pl" x="140" y="64" text-anchor="end">5V</text>
+        <text class="pl" x="140" y="134" text-anchor="end">A0</text>
+        <text class="pl" x="140" y="214" text-anchor="end">GND</text>
+        <path class="w" d="M150,60 H360 V90"/>
+        <polyline class="w" points="360,90 351,97 369,108 351,119 369,130 351,141 369,152 351,163 360,170"/>
+        <path class="w" d="M360,170 V210 H150"/>
+        <path class="pot-arrow" d="M150,130 H346" marker-end="url(#arrc)"/>
+        <text class="lb" x="384" y="124">10 kΩ</text>
+        <text class="lb-m" x="384" y="140">potansiyometre</text>
+        <text class="lb-m" x="250" y="122" text-anchor="middle">orta uç (0–5 V)</text>
+      </svg>
+    </div>
+    <figcaption>Şekil 4 — Potansiyometre bir gerilim bölücüdür; orta uç A0'a bağlanır.</figcaption>
+  </figure>
+
+  <div class="code"><div class="code-head"><span>pot_okuma.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">const int potPin = A0;
+int potDegeri = 0;
+
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  potDegeri = analogRead(potPin);
+  float gerilim = potDegeri * (5.0 / 1023.0);
+
+  Serial.print("Deger: ");
+  Serial.print(potDegeri);
+  Serial.print("   Gerilim: ");
+  Serial.print(gerilim);
+  Serial.println(" V");
+
+  delay(200);
+}</code></pre></div>
+  <div class="tip"><b class="lbl">Grafik olarak izleyin</b><p>Arduino IDE'de <strong>Araçlar › Seri Çizici</strong> (Serial Plotter) açılırsa <code>Serial.println(potDegeri);</code> ile gönderilen değerler canlı grafik olarak görünür. Mili çevirdikçe çizginin yükselip alçaldığını izleyin.</p></div>
+</section>
+
+<!-- 11 -->
+<section id="analogwrite">
+  <div class="sec-num">Bölüm 11</div>
+  <h2><code>analogWrite()</code> ve PWM</h2>
+  <p><code>digitalWrite()</code> ile bir LED ya tam yanar ya söner. Yarı parlaklık için <code>analogWrite()</code> kullanılır. Bu fonksiyon gerçekte 2,5 V gibi ara bir gerilim üretmez; bunun yerine pini saniyede yaklaşık <strong>490 kez</strong> (5 ve 6. pinlerde ≈ 980 kez) açıp kapatır. Göz bu hızı ayırt edemez ve LED'i ortalama parlaklıkta görür. Bu yönteme <strong>PWM</strong> denir.</p>
+
+  <div class="code"><div class="code-head"><span>analogWrite(pin, deger);</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">analogWrite(9, 0);     // her zaman kapalı  →  %0
+analogWrite(9, 64);    // zamanın ~%25'i açık
+analogWrite(9, 127);   // zamanın ~%50'si açık
+analogWrite(9, 255);   // her zaman açık    →  %100</code></pre></div>
+
+  <ul>
+    <li>Değer aralığı <strong>0–255</strong>'tir (8 bit). analogRead'in 0–1023 aralığından farklı olduğuna dikkat edin.</li>
+    <li>Sadece <strong>~ işaretli pinlerde</strong> çalışır: 3, 5, 6, 9, 10, 11.</li>
+    <li>Pinin açık kaldığı sürenin bir periyoda oranına <strong>görev oranı</strong> (duty cycle) denir.</li>
+  </ul>
+
+  <figure>
+    <div class="fig-box">
+      <svg id="pwmRows" viewBox="0 0 560 230" role="img" aria-label="Yüzde 25, 50 ve 75 görev oranına sahip PWM sinyalleri"></svg>
+    </div>
+    <figcaption>Şekil 5 — Aynı frekansta, farklı görev oranlarında PWM sinyali. Yüksek kısım ne kadar genişse LED o kadar parlak görünür.</figcaption>
+  </figure>
+
+  <h3>Örnek: yavaşça yanıp sönen LED (fade)</h3>
+  <p>LED'i bir PWM pinine (örneğin D9) 220 Ω direnç üzerinden bağlayın. Parlaklık değişkeni her turda biraz artar; sınıra gelince yön değiştirir.</p>
+  <div class="code"><div class="code-head"><span>fade.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">const int ledPin = 9;    // ~9 PWM pini
+int parlaklik = 0;
+int adim = 5;
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+}
+
+void loop() {
+  analogWrite(ledPin, parlaklik);
+  parlaklik = parlaklik + adim;
+
+  if (parlaklik &lt;= 0 || parlaklik &gt;= 255) {
+    adim = -adim;          // sınıra gelince yönü ters çevir
+  }
+  delay(30);
+}</code></pre></div>
+</section>
+
+<!-- 12 -->
+<section id="dimmer">
+  <div class="sec-num">Bölüm 12 <span class="lab-chip">Uygulama</span></div>
+  <h2><code>map()</code> fonksiyonu ve dimmer devresi</h2>
+  <p>Şimdi potansiyometreyi çevirerek LED'in parlaklığını ayarlayacağız. Bir sorun var: <code>analogRead()</code> <strong>0–1023</strong> arası değer verir, <code>analogWrite()</code> ise <strong>0–255</strong> arası değer ister. Bir aralıktaki sayıyı diğer aralığa orantılı olarak çevirmek için <code>map()</code> fonksiyonu kullanılır.</p>
+
+  <div class="code"><div class="code-head"><span>map(deger, eskiMin, eskiMax, yeniMin, yeniMax)</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">int parlaklik = map(potDegeri, 0, 1023, 0, 255);
+// 0    → 0
+// 512  → 127
+// 1023 → 255</code></pre></div>
+
+  <p><code>map()</code> şu hesabı yapar: <code>(deger − eskiMin) × (yeniMax − yeniMin) / (eskiMax − eskiMin) + yeniMin</code>. Birkaç ayrıntı:</p>
+  <ul>
+    <li><strong>Tam sayı</strong> ile çalışır; ondalık kısmı atar (127,6 → 127).</li>
+    <li>Ters çevirmek mümkündür: <code>map(potDegeri, 0, 1023, 255, 0)</code> ile pot çevrildikçe LED kısılır.</li>
+    <li>Başka aralıklar için de kullanılır: yüzdeye çevirmek için <code>map(potDegeri, 0, 1023, 0, 100)</code>, servo açısı için <code>map(potDegeri, 0, 1023, 0, 180)</code>.</li>
+    <li>Sonucu sınırlamaz. Giriş aralığın dışına çıkabiliyorsa <code>constrain(sonuc, 0, 255)</code> ile sınırlayın.</li>
+  </ul>
+
+  <div class="sim" id="simulator">
+    <h4>Dene: potansiyometreyi çevir</h4>
+    <p class="sub">Kaydırıcı potansiyometrenin milini temsil eder. Değerlerin analogRead'den map'e, oradan PWM sinyaline nasıl geçtiğini izleyin.</p>
+    <div class="sim-grid">
+      <div>
+        <label for="potSlider">Potansiyometre konumu</label>
+        <input type="range" id="potSlider" min="0" max="1023" value="512">
+        <div class="readout">
+          <div><small>analogRead</small><output id="oRead">512</output></div>
+          <div><small>Gerilim</small><output id="oVolt">2,50 V</output></div>
+          <div><small>map → PWM</small><output id="oMap">127</output></div>
+          <div><small>Görev oranı</small><output id="oDuty">%50</output></div>
+        </div>
+      </div>
+      <div class="led-vis">
+        <svg viewBox="0 0 110 110" aria-hidden="true">
+          <defs>
+            <radialGradient id="glowG"><stop offset="0" stop-color="#ff5a4a" stop-opacity=".9"/><stop offset="1" stop-color="#ff5a4a" stop-opacity="0"/></radialGradient>
+          </defs>
+          <circle id="ledGlow" cx="55" cy="50" r="50" fill="url(#glowG)" opacity=".5"/>
+          <path d="M37,52 A18,18 0 0 1 73,52 V78 H37 Z" fill="#7a1f17" stroke="var(--wire)" stroke-width="1.5"/>
+          <path id="ledBody" d="M37,52 A18,18 0 0 1 73,52 V78 H37 Z" fill="#ff4a3a" opacity=".5"/>
+          <rect x="33" y="78" width="44" height="6" rx="2" fill="var(--muted)"/>
+          <path d="M46,84 V106 M64,84 V100" stroke="var(--muted)" stroke-width="2"/>
+        </svg>
+        <span>D9 · LED</span>
+      </div>
+    </div>
+    <div class="wave"><svg viewBox="0 0 560 70" preserveAspectRatio="none" aria-hidden="true"><line class="wave-base" x1="0" y1="60" x2="560" y2="60"/><path id="simWave" class="wave-path" d=""/></svg></div>
+    <div class="codeline" id="simCode">int parlaklik = map(512, 0, 1023, 0, 255); <span class="c">// = 127</span></div>
+  </div>
+
+  <h3>Dimmer devresinin bağlantısı</h3>
+  <ul>
+    <li>Potansiyometre: dış uçlar 5V ve GND, orta uç <strong>A0</strong> (Bölüm 10'daki gibi).</li>
+    <li>LED: anot 220 Ω direnç üzerinden <strong>D9</strong>'a (PWM pini olmalı), katot GND'ye.</li>
+  </ul>
+
+  <figure>
+    <div class="fig-box">
+      <svg class="sch" viewBox="0 0 560 270" role="img" aria-label="Dimmer devre şeması: potansiyometre A0'a, LED 220 ohm direnç üzerinden D9'a bağlı">
+        <rect class="blk" x="20" y="30" width="130" height="220" rx="8"/>
+        <text class="blk-t" x="85" y="22" text-anchor="middle">Arduino UNO</text>
+        <text class="pl" x="140" y="64" text-anchor="end">5V</text>
+        <text class="pl" x="140" y="134" text-anchor="end">A0</text>
+        <text class="pl" x="140" y="194" text-anchor="end">~D9</text>
+        <text class="pl" x="140" y="234" text-anchor="end">GND</text>
+        <!-- pot -->
+        <path class="w" d="M150,60 H400 V90"/>
+        <polyline class="w" points="400,90 391,97 409,108 391,119 409,130 391,141 409,152 391,163 400,170"/>
+        <path class="w" d="M400,170 V230"/>
+        <path class="pot-arrow" d="M150,130 H386" marker-end="url(#arrc)"/>
+        <text class="lb" x="424" y="124">10 kΩ</text>
+        <text class="lb-m" x="424" y="140">potansiyometre</text>
+        <!-- LED -->
+        <path class="w" d="M150,190 H200"/>
+        <polyline class="w" points="200,190 206,182 218,198 230,182 242,198 254,182 266,198 270,190"/>
+        <text class="lb" x="235" y="172" text-anchor="middle">220 Ω</text>
+        <path class="w" d="M270,190 H300"/>
+        <polygon class="led" points="300,177 300,203 324,190"/>
+        <path class="w" d="M324,177 V203"/>
+        <path class="ray" d="M314,172 L324,160" marker-end="url(#arr)"/>
+        <path class="ray" d="M322,176 L332,164" marker-end="url(#arr)"/>
+        <path class="w" d="M324,190 H350 V230"/>
+        <path class="w" d="M150,230 H400"/>
+        <circle class="dot" cx="350" cy="230" r="4"/>
+      </svg>
+    </div>
+    <figcaption>Şekil 6 — Dimmer: A0'dan okunan değer map() ile 0–255'e çevrilip D9'a yazılır.</figcaption>
+  </figure>
+
+  <div class="code"><div class="code-head"><span>dimmer.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">const int potPin = A0;   // potansiyometre orta ucu
+const int ledPin = 9;    // ~ işaretli PWM pini
+
+int potDegeri = 0;       // 0 ... 1023
+int parlaklik = 0;       // 0 ... 255
+
+void setup() {
+  pinMode(ledPin, OUTPUT);
+  Serial.begin(9600);
+}
+
+void loop() {
+  potDegeri = analogRead(potPin);                  // 1) oku
+  parlaklik = map(potDegeri, 0, 1023, 0, 255);     // 2) çevir
+  analogWrite(ledPin, parlaklik);                  // 3) yaz
+
+  Serial.print("Pot: ");
+  Serial.print(potDegeri);
+  Serial.print("   Parlaklik: ");
+  Serial.println(parlaklik);
+
+  delay(10);
+}</code></pre></div>
+
+  <div class="note"><b class="lbl">map() olmadan da olur mu?</b><p>0–1023 aralığı 0–255 aralığının yaklaşık 4 katı olduğu için <code>parlaklik = potDegeri / 4;</code> da aynı sonucu verir. <code>map()</code> ise her aralık için çalıştığından daha genel bir çözümdür.</p></div>
+
+  <h3>Ek: eşik değerle if/else</h3>
+  <p>Analog değeri <code>if</code> ile de kullanabiliriz. Örneğin pot yarının üstüne çevrilince LED yansın:</p>
+  <div class="code"><div class="code-head"><span>esik.ino</span><button class="copy-btn" type="button">Kopyala</button></div><pre><code class="language-arduino">void loop() {
+  int potDegeri = analogRead(A0);
+
+  if (potDegeri &gt; 512) {
+    digitalWrite(9, HIGH);
+  } else {
+    digitalWrite(9, LOW);
+  }
+}</code></pre></div>
+</section>
+
+<!-- 13 -->
+<section id="hatalar">
+  <div class="sec-num">Bölüm 13</div>
+  <h2>Sık yapılan hatalar ve özet</h2>
+  <div class="tbl"><table>
+    <thead><tr><th>Belirti</th><th>Olası neden</th></tr></thead>
+    <tbody>
+      <tr><td>LED hiç yanmıyor</td><td>LED ters takılmış (uzun bacak pine/dirence gitmeli), GND bağlı değil ya da <code>pinMode(…, OUTPUT)</code> unutulmuş.</td></tr>
+      <tr><td>LED çok sönük yanıyor</td><td><code>pinMode</code> yazılmamış (pin INPUT'ta kalmış) ya da direnç çok büyük.</td></tr>
+      <tr><td>Buton okuması rastgele değişiyor</td><td>Pull-down direnci yok, pin havada kalıyor. <code>INPUT_PULLUP</code> kullanın.</td></tr>
+      <tr><td>Butona basınca tersini yapıyor</td><td><code>INPUT_PULLUP</code>'ta mantık terstir: basılıyken <code>LOW</code>.</td></tr>
+      <tr><td>Dimmer çalışmıyor, LED sadece açılıp kapanıyor</td><td>LED ~ işaretli olmayan bir pine bağlı.</td></tr>
+      <tr><td>Koşul hep doğru çıkıyor</td><td><code>if</code> içinde <code>==</code> yerine <code>=</code> yazılmış.</td></tr>
+      <tr><td>Gerilim hep 0 çıkıyor</td><td><code>5 / 1023</code> tam sayı bölmesi; <code>5.0 / 1023.0</code> yazın.</td></tr>
+      <tr><td>Kod yüklenemiyor</td><td>Doğru kart (Arduino Uno) ve port seçili değil ya da 0/1 pinlerine bir şey bağlı.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Fonksiyon özeti</h3>
+  <div class="summary-grid">
+    <div><code>pinMode(pin, mod)</code><p>Pini INPUT, OUTPUT ya da INPUT_PULLUP yapar. setup() içinde.</p></div>
+    <div><code>digitalWrite(pin, HIGH/LOW)</code><p>Pine 5 V veya 0 V verir.</p></div>
+    <div><code>digitalRead(pin)</code><p>HIGH ya da LOW döndürür.</p></div>
+    <div><code>analogRead(A0…A5)</code><p>0–5 V'u 0–1023 sayısına çevirir.</p></div>
+    <div><code>analogWrite(~pin, 0–255)</code><p>PWM ile ortalama gerilim / parlaklık ayarı.</p></div>
+    <div><code>map(x, a, b, c, d)</code><p>x'i a–b aralığından c–d aralığına orantılı çevirir.</p></div>
+    <div><code>delay(ms)</code><p>Programı verilen milisaniye kadar bekletir.</p></div>
+    <div><code>Serial.println(x)</code><p>Seri Port Ekranı'na yazar; Serial.begin(9600) gerekir.</p></div>
+  </div>
+</section>
+
+      </article>
+      <footer>Mikrodenetleyiciler dersi · Arduino UNO temel konular</footer>
+    </main>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/arduino.min.js"></script>
+<script>
+(function () {
+  var NS = "http://www.w3.org/2000/svg";
+  function el(tag, attrs, parent, text) {
+    var e = document.createElementNS(NS, tag);
+    for (var k in attrs) e.setAttribute(k, attrs[k]);
+    if (text != null) e.textContent = text;
+    if (parent) parent.appendChild(e);
+    return e;
+  }
+
+  /* --- Arduino UNO kartı --- */
+  var board = document.getElementById("unoBoard");
+  var info = {
+    dig: "Dijital giriş/çıkış: HIGH (5 V) veya LOW (0 V)",
+    pwm: "Dijital + PWM: analogWrite(pin, 0–255) ile kullanılabilir",
+    ana: "Analog giriş: analogRead() ile 0–1023 okunur",
+    pwr: "Güç pini",
+    gnd: "GND: 0 V, ortak toprak",
+    com: "Haberleşme pini"
+  };
+  var col = { dig: "var(--pin-dig)", pwm: "var(--pin-pwm)", ana: "var(--pin-ana)", pwr: "var(--pin-pwr)", gnd: "var(--pin-gnd)", com: "var(--pin-com)" };
+  function cat(l) {
+    if (l === "GND") return "gnd";
+    if (l.charAt(0) === "~") return "pwm";
+    if (l.charAt(0) === "A" && l.length === 2) return "ana";
+    if (/SCL|SDA|TX|RX/.test(l)) return "com";
+    if (/^\d+$/.test(l)) return "dig";
+    return "pwr";
+  }
+  el("rect", { x: 40, y: 30, width: 680, height: 360, rx: 16, fill: "var(--board)" }, board);
+  el("rect", { x: 14, y: 70, width: 96, height: 72, rx: 4, fill: "#b9c3c6", stroke: "#7d8a8e" }, board);
+  el("text", { x: 62, y: 112, "text-anchor": "middle", "font-size": 12, fill: "#2b3236" }, board, "USB");
+  el("rect", { x: 14, y: 270, width: 84, height: 70, rx: 6, fill: "#1d2326" }, board);
+  el("text", { x: 56, y: 309, "text-anchor": "middle", "font-size": 11, fill: "#c9d3d5" }, board, "7–12V");
+  el("rect", { x: 380, y: 196, width: 240, height: 54, rx: 4, fill: "#1d2326" }, board);
+  el("text", { x: 500, y: 228, "text-anchor": "middle", "font-size": 13, fill: "#c9d3d5" }, board, "ATmega328P");
+  el("text", { x: 170, y: 232, "font-size": 40, "font-weight": 700, fill: "var(--board-ink)", "font-family": "Bricolage Grotesque, sans-serif" }, board, "UNO");
+  el("circle", { cx: 150, cy: 60, r: 10, fill: "#d9dfe0", stroke: "#7d8a8e" }, board);
+  el("text", { x: 150, y: 88, "text-anchor": "middle", "font-size": 9, fill: "var(--board-ink)" }, board, "RESET");
+
+  var top1 = ["SCL", "SDA", "AREF", "GND", "13", "12", "~11", "~10", "~9", "8"];
+  var top2 = ["7", "~6", "~5", "4", "~3", "2", "TX 1", "RX 0"];
+  var bot1 = ["IOREF", "RESET", "3.3V", "5V", "GND", "GND", "Vin"];
+  var bot2 = ["A0", "A1", "A2", "A3", "A4", "A5"];
+
+  function pinRow(list, x0, y, isTop) {
+    list.forEach(function (l, i) {
+      var x = x0 + i * 24, c = cat(l);
+      var g = el("g", {}, board);
+      el("title", {}, g, l + " — " + info[c]);
+      el("rect", { x: x - 8, y: y - 8, width: 16, height: 16, rx: 2, fill: col[c], stroke: "var(--board-ink)", "stroke-width": 1 }, g);
+      el("rect", { x: x - 3, y: y - 3, width: 6, height: 6, fill: "#11181a" }, g);
+      var ty = isTop ? y + 16 : y - 16;
+      el("text", {
+        x: x, y: ty, "font-size": 11, fill: "var(--board-ink)",
+        "text-anchor": isTop ? "end" : "start", "dominant-baseline": "central",
+        transform: "rotate(-90 " + x + " " + ty + ")"
+      }, g, l);
+    });
+  }
+  pinRow(top1, 220, 52, true);
+  pinRow(top2, 460, 52, true);
+  pinRow(bot1, 300, 368, false);
+  pinRow(bot2, 500, 368, false);
+
+  el("text", { x: 424, y: 140, "text-anchor": "middle", "font-size": 11, fill: "var(--board-ink)", "letter-spacing": "1" }, board, "DIGITAL (PWM ~)");
+  el("text", { x: 372, y: 300, "text-anchor": "middle", "font-size": 11, fill: "var(--board-ink)", "letter-spacing": "1" }, board, "POWER");
+  el("text", { x: 560, y: 300, "text-anchor": "middle", "font-size": 11, fill: "var(--board-ink)", "letter-spacing": "1" }, board, "ANALOG IN");
+  el("rect", { x: 300, y: 128, width: 12, height: 7, rx: 1, fill: "#f6c445" }, board);
+  el("text", { x: 306, y: 150, "text-anchor": "middle", "font-size": 10, fill: "var(--board-ink)" }, board, "L");
+
+  /* --- PWM dalga şekilleri --- */
+  function pwmPath(duty, x0, w, periods, yHi, yLo) {
+    var p = w / periods, d = "M" + x0 + "," + yLo;
+    for (var i = 0; i < periods; i++) {
+      var s = x0 + i * p, on = p * duty;
+      if (duty <= 0) { d += " L" + (s + p) + "," + yLo; continue; }
+      if (duty >= 1) { d += " L" + s + "," + yHi + " L" + (s + p) + "," + yHi; continue; }
+      d += " L" + s + "," + yHi + " L" + (s + on) + "," + yHi + " L" + (s + on) + "," + yLo + " L" + (s + p) + "," + yLo;
+    }
+    return d;
+  }
+  var rows = document.getElementById("pwmRows");
+  [[64, .25], [127, .5], [191, .75]].forEach(function (r, i) {
+    var top = 20 + i * 72, yHi = top, yLo = top + 40;
+    el("text", { class: "wave-tb", x: 0, y: top + 16 }, rows, "analogWrite " + r[0]);
+    el("text", { class: "wave-t", x: 0, y: top + 34 }, rows, "görev oranı %" + Math.round(r[1] * 100));
+    el("line", { class: "wave-base", x1: 150, y1: yLo, x2: 556, y2: yLo }, rows);
+    el("path", { class: "wave-path", d: pwmPath(r[1], 150, 400, 4, yHi, yLo) }, rows);
+  });
+
+  /* --- Simülatör --- */
+  var s = document.getElementById("potSlider");
+  function upd() {
+    var v = parseInt(s.value, 10);
+    var m = Math.floor(v * 255 / 1023);
+    var duty = m / 255;
+    document.getElementById("oRead").textContent = v;
+    document.getElementById("oVolt").textContent = (v * 5 / 1023).toFixed(2).replace(".", ",") + " V";
+    document.getElementById("oMap").textContent = m;
+    document.getElementById("oDuty").textContent = "%" + Math.round(duty * 100);
+    document.getElementById("ledBody").setAttribute("opacity", (0.05 + duty * 0.95).toFixed(3));
+    document.getElementById("ledGlow").setAttribute("opacity", (duty * 0.9).toFixed(3));
+    document.getElementById("simWave").setAttribute("d", pwmPath(duty, 4, 552, 6, 10, 60));
+    document.getElementById("simCode").innerHTML = "int parlaklik = map(" + v + ", 0, 1023, 0, 255); <span class=\"c\">// = " + m + "</span>";
+  }
+  s.addEventListener("input", upd);
+  upd();
+
+  /* --- Kopyala düğmeleri --- */
+  document.querySelectorAll(".code").forEach(function (box) {
+    var btn = box.querySelector(".copy-btn");
+    var code = box.querySelector("pre code");
+    if (!btn || !code) return;
+    btn.addEventListener("click", function () {
+      var text = code.textContent;
+      function done(msg) { btn.textContent = msg; setTimeout(function () { btn.textContent = "Kopyala"; }, 1500); }
+      try {
+        navigator.clipboard.writeText(text).then(function () { done("Kopyalandı"); }, function () { selectIt(); });
+      } catch (e) { selectIt(); }
+      function selectIt() {
+        var r = document.createRange(); r.selectNodeContents(code);
+        var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        done("Seçildi, Ctrl+C");
+      }
+    });
+  });
+
+  /* --- Dar ekranda içindekiler kapalı başlasın --- */
+  if (window.matchMedia("(max-width: 1039px)").matches) {
+    document.getElementById("tocDetails").removeAttribute("open");
+  }
+
+  try { if (window.hljs) hljs.highlightAll(); } catch (e) {}
+})();
+</script>

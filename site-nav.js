@@ -5,6 +5,7 @@
 var cs=document.currentScript,base=cs?cs.src.replace(/site-nav\.js[^/]*$/,''):'';
 var FILE=location.protocol==='file:';
 var DIG=FILE?'sayisal-elektronik/index.html':'sayisal-elektronik/';
+var MCU=FILE?'mikrodenetleyiciler/index.html':'mikrodenetleyiciler/';
 var NAV=[
   {k:'home',href:'index.html',t:'Ana sayfa'},
   {k:'sim',href:'Deney_Simulatoru.html',t:'Deney Simülatörü'},
@@ -14,7 +15,8 @@ var NAV=[
     {k:'osc',href:'Osiloskop_Egitimi.html',t:'Osiloskop',d:'RIGOL DS1202Z-E · tetikleme, ölçüm',ic:'M2 4h20v14H2zM4 13l3-5 3 7 3-6 3 4 3-3'},
     {k:'lab',href:'Lab_Jenerator_Osiloskop.html',t:'Jeneratör + Osiloskop',d:'İki cihaz birlikte, kabloyla bağlı',ic:'M3 6h7v6H3zM14 12h7v6h-7zM10 9c4 0 4 6 4 6'}
   ]},
-  {k:'dig',href:DIG,t:'Sayısal Elektronik'}
+  {k:'dig',href:DIG,t:'Sayısal Elektronik'},
+  {k:'mcu',href:MCU,t:'Mikrodenetleyiciler'}
 ];
 var SEQ=[
   {k:'mm',href:'Multimetre_Egitimi.html',t:'Multimetre eğitimi'},
@@ -22,11 +24,13 @@ var SEQ=[
   {k:'osc',href:'Osiloskop_Egitimi.html',t:'Osiloskop eğitimi'},
   {k:'lab',href:'Lab_Jenerator_Osiloskop.html',t:'Jeneratör + osiloskop laboratuvarı'},
   {k:'sim',href:'Deney_Simulatoru.html',t:'Deney simülatörü'},
-  {k:'dig',href:DIG,t:'Sayısal tasarım laboratuvarı'}
+  {k:'dig',href:DIG,t:'Sayısal tasarım laboratuvarı'},
+  {k:'mcu',href:MCU,t:'Mikrodenetleyiciler'}
 ];
 var path=decodeURIComponent(location.pathname);
 var cur='home';
 if(/sayisal-elektronik(\/|\/index\.html)?$/.test(path))cur='dig';
+else if(/\/mikrodenetleyiciler(\/|$)/.test(path))cur='mcu';
 else{var f=path.split('/').pop();SEQ.forEach(function(p){if(p.href===f)cur=p.k;});}
 var DARK=false,APP=cur==='dig';
 
