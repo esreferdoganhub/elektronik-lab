@@ -574,8 +574,8 @@ function miniTrace(){
   const pad=(mx-mn)*0.08;mx+=pad;mn-=pad;
   const W=300,Hh=86,y=v=>(Hh-(v-mn)/(mx-mn)*Hh).toFixed(1);
   let s=`<svg viewBox="0 0 ${W} ${Hh}" class="mini"><rect width="${W}" height="${Hh}" fill="#04080b"/>`;
-  for(let k=1;k<6;k++)s+=`<line x1="${k*W/6}" y1="0" x2="${k*W/6}" y2="${Hh}" stroke="#1d2a33"/>`;
-  s+=`<line x1="0" y1="${y(0)}" x2="${W}" y2="${y(0)}" stroke="#3d4f5c" stroke-dasharray="3 3"/>`;
+  for(let k=1;k<6;k++)s+=`<line x1="${k*W/6}" y1="0" x2="${k*W/6}" y2="${Hh}" stroke="#5f6f7a" stroke-dasharray="2 3"/>`;
+  s+=`<line x1="0" y1="${y(0)}" x2="${W}" y2="${y(0)}" stroke="#7CFC9A" stroke-width="1.3"/>`;
   on.forEach(i=>{const b=fr.buf[i],N=b.length;let d='';for(let k=0;k<N;k+=3)d+=(k?'L':'M')+(k/(N-1)*W).toFixed(1)+' '+y(b[k]);s+=`<path d="${d}" fill="none" stroke="${Scope.COL[i]}" stroke-width="1.6"/>`;});
   s+=`<text x="4" y="11" font-size="9" fill="#9fb3c8">${Scope.siFmt(mx,'V')}</text><text x="4" y="${Hh-4}" font-size="9" fill="#9fb3c8">${Scope.siFmt(mn,'V')}</text><text x="${W-4}" y="${Hh-4}" font-size="9" fill="#9fb3c8" text-anchor="end">${Scope.siFmt(Scope.TD[S.ti]*12,'s')} pencere</text></svg>`;
   return s;

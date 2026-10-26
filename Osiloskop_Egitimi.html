@@ -534,13 +534,13 @@ function chYs(i,v){return clamp(chY(i,v),GY0+0.8,GY0+GH-0.8);}
 function gridSvg(){
   const g=S.grid;let o='';
   if(g==='none')return `<rect x="${GX0}" y="${GY0}" width="${GW}" height="${GH}" fill="none" stroke="#444"/>`;
-  if(g==='full')for(let i=1;i<12;i++)o+=`<line x1="${GX0+i*DX}" y1="${GY0}" x2="${GX0+i*DX}" y2="${GY0+GH}" stroke="#4a4a4a" stroke-width=".6" stroke-dasharray="1 3"/>`;
-  if(g==='full')for(let j=1;j<8;j++)o+=`<line x1="${GX0}" y1="${GY0+j*DY}" x2="${GX0+GW}" y2="${GY0+j*DY}" stroke="#4a4a4a" stroke-width=".6" stroke-dasharray="1 3"/>`;
-  if(g==='grid'){for(let i=1;i<12;i++)o+=`<line x1="${GX0+i*DX}" y1="${GY0}" x2="${GX0+i*DX}" y2="${GY0+GH}" stroke="#3a3a3a" stroke-width=".5"/>`;for(let j=1;j<8;j++)o+=`<line x1="${GX0}" y1="${GY0+j*DY}" x2="${GX0+GW}" y2="${GY0+j*DY}" stroke="#3a3a3a" stroke-width=".5"/>`;}
-  o+=`<rect x="${GX0}" y="${GY0}" width="${GW}" height="${GH}" fill="none" stroke="#6a6a6a"/>`;
-  o+=`<line x1="${GCX}" y1="${GY0}" x2="${GCX}" y2="${GY0+GH}" stroke="#7a7a7a" stroke-width=".8"/><line x1="${GX0}" y1="${GCY}" x2="${GX0+GW}" y2="${GCY}" stroke="#7a7a7a" stroke-width=".8"/>`;
-  for(let i=0;i<60;i++){const x=GX0+i*GW/60;o+=`<line x1="${x}" y1="${GCY-2}" x2="${x}" y2="${GCY+2}" stroke="#8a8a8a" stroke-width=".6"/>`;}
-  for(let j=0;j<40;j++){const y=GY0+j*GH/40;o+=`<line x1="${GCX-2}" y1="${y}" x2="${GCX+2}" y2="${y}" stroke="#8a8a8a" stroke-width=".6"/>`;}
+  if(g==='full')for(let i=1;i<12;i++)o+=`<line x1="${GX0+i*DX}" y1="${GY0}" x2="${GX0+i*DX}" y2="${GY0+GH}" stroke="#9a9a9a" stroke-width="1" stroke-dasharray="2 3"/>`;
+  if(g==='full')for(let j=1;j<8;j++)o+=`<line x1="${GX0}" y1="${GY0+j*DY}" x2="${GX0+GW}" y2="${GY0+j*DY}" stroke="#9a9a9a" stroke-width="1" stroke-dasharray="2 3"/>`;
+  if(g==='grid'){for(let i=1;i<12;i++)o+=`<line x1="${GX0+i*DX}" y1="${GY0}" x2="${GX0+i*DX}" y2="${GY0+GH}" stroke="#7a7a7a" stroke-width=".9"/>`;for(let j=1;j<8;j++)o+=`<line x1="${GX0}" y1="${GY0+j*DY}" x2="${GX0+GW}" y2="${GY0+j*DY}" stroke="#7a7a7a" stroke-width=".9"/>`;}
+  o+=`<rect x="${GX0}" y="${GY0}" width="${GW}" height="${GH}" fill="none" stroke="#a8a8a8" stroke-width="1.2"/>`;
+  o+=`<line x1="${GCX}" y1="${GY0}" x2="${GCX}" y2="${GY0+GH}" stroke="#7CFC9A" stroke-width="1.3"/><line x1="${GX0}" y1="${GCY}" x2="${GX0+GW}" y2="${GCY}" stroke="#7CFC9A" stroke-width="1.3"/>`; /* eksenler: projeksiyonda seçilsin diye ayrı renk */
+  for(let i=0;i<60;i++){const x=GX0+i*GW/60;o+=`<line x1="${x}" y1="${GCY-3}" x2="${x}" y2="${GCY+3}" stroke="#7CFC9A" stroke-width=".9"/>`;}
+  for(let j=0;j<40;j++){const y=GY0+j*GH/40;o+=`<line x1="${GCX-3}" y1="${y}" x2="${GCX+3}" y2="${y}" stroke="#7CFC9A" stroke-width=".9"/>`;}
   return o;
 }
 function render(){

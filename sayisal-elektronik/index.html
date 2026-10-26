@@ -1448,8 +1448,8 @@ function renderInst(){
   $('#dmmRd').textContent=DCX.dmmText(dmmAcc);
   // osiloskop (CH1 sarı, CH2 camgöbeği); ≤ 25 ms/böl: CH1'in (yoksa CH2'nin) yükselen kenarında tetiklenir
   const cv=$('#scope'),W=cv.width,H=cv.height;scx.fillStyle='#04100a';scx.fillRect(0,0,W,H);
-  scx.strokeStyle='#103a22';scx.lineWidth=1;scx.beginPath();for(let i=0;i<=10;i++){const x=i*W/10;scx.moveTo(x,0);scx.lineTo(x,H)}for(let j=0;j<=8;j++){const y=j*H/8;scx.moveTo(0,y);scx.lineTo(W,y)}scx.stroke();
-  scx.strokeStyle='#1c6a3c';scx.beginPath();scx.moveTo(0,H/2);scx.lineTo(W,H/2);scx.moveTo(W/2,0);scx.lineTo(W/2,H);scx.stroke();
+  scx.strokeStyle='#4f9a6c';scx.lineWidth=1;scx.setLineDash([3,4]);scx.beginPath();for(let i=0;i<=10;i++){const x=i*W/10;scx.moveTo(x,0);scx.lineTo(x,H)}for(let j=0;j<=8;j++){const y=j*H/8;scx.moveTo(0,y);scx.lineTo(W,y)}scx.stroke();
+  scx.setLineDash([]);scx.strokeStyle='#7CFC9A';scx.lineWidth=2;scx.beginPath();scx.moveTo(0,H/2);scx.lineTo(W,H/2);scx.moveTo(W/2,0);scx.lineTo(W/2,H);scx.stroke();
   if((probe.sc<0&&probe.sc2<0)||scope.n===0)return;
   const NB=240000,td=+$('#scT').value,win=td*10,t1=ST.t,trig=win<=0.25,span=trig?2.2*win:win;
   let cnt=0;for(let k=0;k<scope.n;k++){if(scope.t[(scope.i-1-k+NB)%NB]<t1-span)break;cnt++}
