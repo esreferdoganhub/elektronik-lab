@@ -61,6 +61,13 @@
   .scknob{cursor:grab;}
   .srcrow{margin:8px 0;font-size:.88rem;}
   .srcrow select{border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:.85rem;max-width:100%;}
+  .rdg{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-top:10px;}
+  .rdg label{display:flex;flex-direction:column;gap:3px;font-size:.8rem;color:var(--sub);min-width:0;}
+  .rdg input{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:inherit;font-size:.92rem;color:var(--ink);}
+  #rdRes{margin-top:6px;font-size:.88rem;}
+  .rdok{color:var(--ok);font-weight:700;} .rdno{color:var(--bad);font-weight:700;}
+  .rdans{margin-top:10px;background:var(--infobg);border-left:4px solid var(--accent);border-radius:8px;padding:8px 10px;font-size:.9rem;line-height:1.55;}
+  .card select{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font-size:.85rem;}
 </style>
 <script src="site-nav.js"></script>
 </head>
@@ -1315,15 +1322,17 @@ const LESSONS=[
   {t:'Son adım: Duty\'yi %60\'a çıkar ve osiloskopta +Duty\'nin %60 olduğunu doğrula. Ölçüm yaparak ayarı doğrulamak, güç elektroniği deneylerinin temel alışkanlığıdır.',hl:['g:params','s:left'],set:()=>{cfg(0,{on:true,wave:'square',freq:20000,amp:5,off:2.5,duty:30});sAuto();SS.meas=['freq','pduty','pwidth','vmax','vmin'];SS.left=0;SS.menu='meas';},demo:['g:wave','g:sk1','g:sk4','g:k6','g:k0','g:sk0']}
  ]}
 ];
-const TABS=[...LESSONS.map((l,i)=>({tab:l.tab,i})),{tab:'Serbest mod',i:'free'},{tab:'Sınav',i:'quiz'}];
+const TABS=[...LESSONS.map((l,i)=>({tab:l.tab,i})),{tab:'Kare okuma',i:'read'},{tab:'Serbest mod',i:'free'},{tab:'Sınav',i:'quiz'}];
 const chips=$('#chips');
 TABS.forEach((t,idx)=>{const b=document.createElement('button');b.textContent=t.tab;b.dataset.i=idx;b.onclick=()=>openTab(idx);chips.appendChild(b);});
 function openTab(idx){
   chips.querySelectorAll('button').forEach(b=>b.classList.toggle('on',+b.dataset.i===idx));
   const t=TABS[idx];showHalos([]);
   $('#presetCard').style.display=t.i==='free'?'':'none';
+  if(t.i!=='read')hideLcd(false);
   if(t.i==='free'){G.mode='free';resetAll();cfg(0,{on:true,amp:2});Scope.refresh();Scope.autoset();renderFree();renderPresets();mark();Scope.mark();}
   else if(t.i==='quiz'){G.mode='quiz';startQuiz();}
+  else if(t.i==='read'){G.mode='read';renderRead();newExample();}
   else{G.mode='lesson';G.lesson=t.i;enterStep(0);}
 }
 function enterStep(n){
@@ -1356,6 +1365,61 @@ function renderPresets(){
     resetAll();if(b.dataset.p!=='__reset')PRESETS[b.dataset.p]();else cfg(0,{on:true,amp:2});
     G.menu='param';G.param='freq';Scope.refresh();Scope.autoset();mark();say(b.dataset.p==='__reset'?'Sıfırlandı.':'Hazır ayar: '+b.dataset.p+' (osiloskop otomatik ayarlandı).','ok');
   });
+}
+
+/* ---------- Kare okuma alıştırması: rastgele, kolay okunur örnekler ----------
+   Bir periyot yatayda, tepeden tepeye genlik dikeyde virgüllü ama osiloskobun 0,2 karelik
+   ara çizgilerine denk gelen kare sayısı tutar; jeneratör ayarı bu kare sayılarından hesaplanır. */
+const RD={ex:null,wave:'mix',hide:true,shown:false};
+const RD_T=[50e-6,100e-6,200e-6,500e-6,1e-3,2e-3,5e-3],RD_V=[0.2,0.5,1,2];
+const trn=(v,d=2)=>(+v.toFixed(d)).toLocaleString('tr-TR',{maximumFractionDigits:d});
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function siTR(v,u){const a=Math.abs(v);const P=[[1e6,'M'],[1e3,'k'],[1,''],[1e-3,'m'],[1e-6,'µ']];for(const[sc,p]of P)if(a>=sc*0.9995)return (+(v/sc).toPrecision(3)).toLocaleString('tr-TR')+' '+p+u;return (+(v/1e-6).toPrecision(3)).toLocaleString('tr-TR')+' µ'+u}
+function newExample(){
+  let p,q,td,vd;
+  // yatay: 1,6…6,0 kare, 0,2 adımlı; dikey: 1,2…6,4 kare, 0,4 adımlı (tepeler ±q/2 de ara çizgiye düşsün); en az biri virgüllü
+  do{p=+(pick([...Array(23)].map((_,i)=>1.6+i*0.2))).toFixed(1);q=+(pick([...Array(14)].map((_,i)=>1.2+i*0.4))).toFixed(1);td=pick(RD_T);vd=pick(RD_V)}
+  while((Number.isInteger(p)&&Number.isInteger(q))||q*vd>10||(RD.ex&&RD.ex.p===p&&RD.ex.q===q&&RD.ex.td===td));
+  const wave=RD.wave==='mix'?pick(['sine','square','ramp']):RD.wave,T=p*td,f=1/T,vpp=+(q*vd).toFixed(4);
+  RD.ex={p,q,td,vd,wave,T,f,vpp};RD.shown=false;
+  resetAll();cfg(0,{on:true,wave,freq:f,amp:vpp,off:0,phase:0,duty:50});G.menu='param';G.param='freq';
+  Object.assign(SS,{ti:sti(td),hpos:0,mode:'auto',run:true,meas:[],allMeas:false,left:null});
+  Object.assign(SS.ch[0],{on:true,fine:false,vi:svi(vd),pos:0,coup:'DC',inv:false});SS.ch[1].on=false;
+  Object.assign(SS.trig,{src:0,slope:'rise',level:0});
+  hideLcd(RD.hide);Scope.refresh();mark();Scope.mark();renderRead();
+  say('Yeni örnek: ekrandaki kareleri say. Ölçek bilgisi ekranın üstünde (H) ve altında (CH1 V/böl).','ok');
+}
+function hideLcd(on){const root=$('#lcdRoot');if(!root)return;let o=$('#lcdHide');
+  if(!on){if(o)o.remove();return}
+  if(!o){const b={x:0,y:0,width:424,height:238}; /* jeneratör LCD'sinin sabit boyutu (lcdSvg) */o=document.createElementNS('http://www.w3.org/2000/svg','g');o.id='lcdHide';
+    o.innerHTML=`<rect x="${b.x-2}" y="${b.y-2}" width="${b.width+4}" height="${b.height+4}" rx="4" fill="#0b1426"/><text x="${b.x+b.width/2}" y="${b.y+b.height/2-6}" text-anchor="middle" font-size="40" font-weight="800" fill="#ffd23f">?</text><text x="${b.x+b.width/2}" y="${b.y+b.height/2+24}" text-anchor="middle" font-size="13" fill="#cfe0ff">Ayarlar gizli — osiloskoptan oku</text>`;root.append(o)}}
+const rdNum=v=>{v=String(v||'').trim().replace(/\s/g,'').replace(',','.');const m=v.match(/^([-+]?\d*\.?\d+)\s*([kKmMuµ]?)/);if(!m)return NaN;return +m[1]*({k:1e3,K:1e3,M:1e6,m:1e-3,u:1e-6,'µ':1e-6}[m[2]]||1)};
+function renderRead(){
+  const e=RD.ex,wl={sine:'Sinüs',square:'Kare',ramp:'Üçgen'};
+  $('#lessonCard').innerHTML=`<div class="stepno">Alıştırma · rastgele örnekler</div><h2>Kare okuma</h2>
+   <p>Osiloskop ekranında <b>bir periyodun yatayda</b> ve <b>tepeden tepeye genliğin dikeyde</b> kaç kare tuttuğunu oku. Büyük karelerin içindeki en küçük çizgi aralığı <b>0,2 kare</b>dir. Sonra ekrandaki ölçeklerle periyodu, frekansı ve Vpp'yi hesapla.</p>
+   <div class="row"><label style="font-size:.85rem">Dalga <select id="rdW"><option value="mix">Karışık</option><option value="sine">Sinüs</option><option value="square">Kare</option><option value="ramp">Üçgen</option></select></label>
+     <label style="font-size:.85rem"><input type="checkbox" id="rdH" ${RD.hide?'checked':''}> Jeneratör ekranını gizle</label></div>
+   <div class="row"><button class="b pri" id="rdNew">🎲 Rastgele örnek</button><button class="b" id="rdShow">${RD.shown?'Cevabı gizle':'Cevabı göster'}</button></div>
+   ${e?`<div class="rdg">
+     <label>Yatay: 1 periyot (kare)<input id="rdP" inputmode="decimal" placeholder="örn. 2,4"></label>
+     <label>Dikey: tepeden tepeye (kare)<input id="rdQ" inputmode="decimal" placeholder="örn. 3,2"></label>
+     <label>Frekans (Hz, kHz için k)<input id="rdF" inputmode="decimal" placeholder="örn. 2,08k"></label>
+     <label>Vpp (V)<input id="rdV" inputmode="decimal" placeholder="örn. 3,2"></label></div>
+     <div class="row"><button class="b" id="rdChk">Kontrol et</button></div><div id="rdRes"></div>`:''}
+   ${e&&RD.shown?`<div class="rdans"><b>Cevap</b> (${wl[e.wave]})<br>
+     Time/div = ${siTR(e.td,'s')} · CH1 = ${trn(e.vd)} V/böl<br>
+     Yatay: <b>${trn(e.p,1)} kare</b> → T = ${trn(e.p,1)} × ${siTR(e.td,'s')} = <b>${siTR(e.T,'s')}</b><br>
+     f = 1 / T = <b>${siTR(e.f,'Hz')}</b><br>
+     Dikey: <b>${trn(e.q,1)} kare</b> → Vpp = ${trn(e.q,1)} × ${trn(e.vd)} V = <b>${trn(e.vpp)} V</b> (Vp = ${trn(e.vpp/2)} V)</div>`:''}`;
+  $('#rdW').value=RD.wave;$('#rdW').onchange=()=>{RD.wave=$('#rdW').value;newExample()};
+  $('#rdH').onchange=()=>{RD.hide=$('#rdH').checked;hideLcd(RD.hide)};
+  $('#rdNew').onclick=newExample;$('#rdShow').onclick=()=>{RD.shown=!RD.shown;if(RD.shown){RD.hide=false;hideLcd(false)}renderRead()};
+  if(e)$('#rdChk').onclick=()=>{
+    const ok=(v,ref,tol)=>v===v&&Math.abs(v-ref)<=tol;
+    const r=[['Yatay kare',ok(rdNum($('#rdP').value),e.p,0.1)],['Dikey kare',ok(rdNum($('#rdQ').value),e.q,0.1)],['Frekans',ok(rdNum($('#rdF').value),e.f,e.f*0.03)],['Vpp',ok(rdNum($('#rdV').value),e.vpp,e.vpp*0.03)]];
+    $('#rdRes').innerHTML=r.map(([k,g])=>`<span class="${g?'rdok':'rdno'}">${g?'✔':'✖'} ${k}</span>`).join(' · ');
+    const n=r.filter(x=>x[1]).length;say(n===4?'Hepsi doğru! Yeni örnek için 🎲.':`${n}/4 doğru. Kareleri yeniden say; en küçük çizgi aralığı 0,2 kare.`,n===4?'ok':'warn')};
 }
 
 /* ---------- Sınav ---------- */

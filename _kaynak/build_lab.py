@@ -13,6 +13,13 @@ css += """
   .scknob{cursor:grab;}
   .srcrow{margin:8px 0;font-size:.88rem;}
   .srcrow select{border:1px solid var(--line);border-radius:6px;padding:4px 6px;font-size:.85rem;max-width:100%;}
+  .rdg{display:grid;grid-template-columns:1fr 1fr;gap:8px 10px;margin-top:10px;}
+  .rdg label{display:flex;flex-direction:column;gap:3px;font-size:.8rem;color:var(--sub);min-width:0;}
+  .rdg input{width:100%;min-width:0;box-sizing:border-box;border:1px solid var(--line);border-radius:6px;padding:5px 8px;font:inherit;font-size:.92rem;color:var(--ink);}
+  #rdRes{margin-top:6px;font-size:.88rem;}
+  .rdok{color:var(--ok);font-weight:700;} .rdno{color:var(--bad);font-weight:700;}
+  .rdans{margin-top:10px;background:var(--infobg);border-left:4px solid var(--accent);border-radius:8px;padding:8px 10px;font-size:.9rem;line-height:1.55;}
+  .card select{border:1px solid var(--line);border-radius:6px;padding:3px 6px;font-size:.85rem;}
 """
 css = css.replace("max-width:1320px", "max-width:1380px")
 css = css.replace("grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr)", "grid-template-columns:minmax(0,1.9fr) minmax(300px,1fr)")
