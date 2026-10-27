@@ -282,14 +282,91 @@ select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px
   </div>
   <div class="callout warn"><b>Neden S = R = 1 yasak?</b> NOR tabanlı mandalda iki çıkış da 0 olur, yani Q ve <span class="ov">Q</span> birbirinin tersi olmaz. Ardından S ve R aynı anda 0'a dönerse mandalın hangi duruma düşeceği belirsizdir (yarış durumu).</div>
   <p>Simülatörde dene: önce S'yi 1 yapıp geri 0'a çek, Q'nun 1'de <b>kaldığını</b> gör. Bu, devrenin bir biti hafızada tuttuğunu gösterir.</p>
-  <p><b>NAND tabanlı SR mandal</b>: Girişleri aktif-düşüktür (<span class="ov">S</span>, <span class="ov">R</span>). 0 uygulanan giriş etkili olur; yasak durum <span class="ov">S</span> = <span class="ov">R</span> = 0'dır.</p>
+
+  <h3>NAND tabanlı SR mandal (<span class="ov">S</span><span class="ov">R</span> mandal)</h3>
+  <p>Aynı hafıza devresi iki <b>NAND</b> kapısının çapraz bağlanmasıyla da kurulur. NAND kapısının çıkışı, girişlerinden biri 0 olunca kesinlikle 1 olur. Bu yüzden bu mandalın girişleri <b>aktif-düşüktür</b>: girişler normalde 1'de bekler, bir girişi kısa süre <b>0'a çekmek</b> o komutu verir. Girişler bu nedenle <span class="ov">S</span> ve <span class="ov">R</span> (S-değil, R-değil) diye yazılır.</p>
+  <div class="sim">
+    <div class="sim-grid">
+      <div>
+        <svg viewBox="0 0 360 200" class="circuit" id="srnSvg"></svg>
+        <div class="controls">
+          <button class="toggle on" id="srnS">S̅ = 1</button>
+          <button class="toggle on" id="srnR">R̅ = 1</button>
+        </div>
+        <div class="outs">
+          <span class="led" id="srnQ"><i></i>Q = 0</span>
+          <span class="led" id="srnQb"><i></i><span><span class="ov">Q</span> = 1</span></span>
+        </div>
+        <p class="status" id="srnStatus"></p>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tt" id="srnTable">
+          <tr><th><span class="ov">S</span></th><th><span class="ov">R</span></th><th>Q<sub>+</sub></th><th>Durum</th></tr>
+          <tr data-k="11"><td>1</td><td>1</td><td>Q</td><td class="note">Değişmez (hafıza, bekleme)</td></tr>
+          <tr data-k="01"><td>0</td><td>1</td><td>1</td><td class="note">Set</td></tr>
+          <tr data-k="10"><td>1</td><td>0</td><td>0</td><td class="note">Reset</td></tr>
+          <tr data-k="00"><td>0</td><td>0</td><td>?</td><td class="note">Geçersiz / yasak</td></tr>
+        </table>
+        <p style="margin-top:12px">Karakteristik denklem:<br><span class="formula">Q<sub>+</sub> = S + <span class="ov">R</span>·Q</span> &nbsp;(S = (<span class="ov">S</span>)′, R = (<span class="ov">R</span>)′)</p>
+      </div>
+    </div>
+  </div>
+  <p>Simülatörde dene: <span class="ov">S</span>'yi kısa süre 0 yapıp 1'e geri al. Q = 1 olur ve öyle kalır. Sonra <span class="ov">R</span>'yi kısa süre 0 yap: Q = 0 olur ve öyle kalır. Bekleme durumu iki girişin de <b>1</b> olduğu durumdur.</p>
+  <div class="callout warn"><b>Neden <span class="ov">S</span> = <span class="ov">R</span> = 0 yasak?</b> İki NAND kapısının birer girişi 0 olduğundan iki çıkış da 1 olur; Q ile <span class="ov">Q</span> birbirinin tersi olmaz. Girişler aynı anda 1'e dönerse mandalın hangi duruma düşeceği belirsizdir.</div>
+  <table class="tt" style="width:100%">
+    <tr><th></th><th>NOR tabanlı SR mandal</th><th>NAND tabanlı <span class="ov">S</span><span class="ov">R</span> mandal</th></tr>
+    <tr><td class="note">Girişlerin etkin seviyesi</td><td>1 (aktif-yüksek)</td><td>0 (aktif-düşük)</td></tr>
+    <tr><td class="note">Bekleme (hafıza)</td><td>S = R = 0</td><td><span class="ov">S</span> = <span class="ov">R</span> = 1</td></tr>
+    <tr><td class="note">Set (Q = 1)</td><td>S = 1, R = 0</td><td><span class="ov">S</span> = 0, <span class="ov">R</span> = 1</td></tr>
+    <tr><td class="note">Reset (Q = 0)</td><td>S = 0, R = 1</td><td><span class="ov">S</span> = 1, <span class="ov">R</span> = 0</td></tr>
+    <tr><td class="note">Yasak durum</td><td>S = R = 1 → Q = <span class="ov">Q</span> = 0</td><td><span class="ov">S</span> = <span class="ov">R</span> = 0 → Q = <span class="ov">Q</span> = 1</td></tr>
+  </table>
+
+  <h3>Uygulamalar</h3>
+  <h4>1. Kontak sıçraması giderici (debounce)</h4>
+  <p>Mekanik bir anahtar kapandığında kontaklar birkaç milisaniye boyunca titreşir ve sinyal 0 ile 1 arasında defalarca gidip gelir. Bu sinyal bir sayıcıya verilirse tek basış birden çok basış gibi sayılır. Çift yollu (SPDT) anahtar ve <span class="ov">S</span><span class="ov">R</span> mandal bu sorunu çözer. Anahtarın ortak ucu toprakta, iki kontak da birer <b>pull-up direnciyle</b> 1'de tutulur. Anahtar B kontağına ilk dokunduğu anda <span class="ov">R</span> = 0 olur ve mandal resetlenir. Sonraki titreşimlerde <span class="ov">R</span> 1'e dönse bile bu bekleme durumudur; mandal Q = 0'da kalır. Çıkış tek ve temiz bir geçiş yapar.</p>
+  <div class="sim"><svg viewBox="0 0 640 250" class="circuit" id="dbSvg" role="img" aria-label="SPDT anahtar, iki pull-up direnci ve NAND SR mandaldan oluşan kontak sıçraması giderici ile zaman diyagramı"></svg></div>
+
+  <h4>2. Alarm kilitleme</h4>
+  <p>Bir kapı ya da pencere sensörü açıldığında yalnızca kısa bir 0 darbesi verir. Bu darbe <span class="ov">S</span>'ye bağlanırsa mandal Set olur ve kapı yeniden kapansa bile <b>alarm (Q = 1) çalmaya devam eder</b>. Alarm ancak görevlinin RESET düğmesine basmasıyla (<span class="ov">R</span> = 0) susar. Mandal, kısa süren olayı "hatırlayan" bir bellektir.</p>
+
+  <h4>3. Başlat / Durdur (motor kontrolü)</h4>
+  <p>İki buton (pull-up dirençli, basınca 0) kullanılır: <b>BAŞLAT</b> butonu <span class="ov">S</span>'ye, <b>DURDUR</b> butonu <span class="ov">R</span>'ye bağlanır. Q çıkışı bir transistör ya da röle üzerinden motoru sürer. BAŞLAT'a bir kez basmak motoru çalıştırır, buton bırakılınca motor çalışmaya devam eder. DURDUR'a basınca durur. Bu, elektrik kumanda devrelerindeki kontaktör <b>mühürleme</b> (kendini tutma) devresinin dijital karşılığıdır. Güvenlik için iki butona aynı anda basıldığında durdurmanın öncelikli olması istenir. Bu durumda yasak durum yerine R'ye öncelik veren ek bir kapı kullanılır.</p>
+
+  <h4>4. Entegre olarak kullanım ve deney</h4>
+  <p>Mandal, 4 adet 2 girişli NAND içeren <b>74LS00</b> (ya da CMOS 4011) entegresinin iki kapısıyla kurulur. Hazır <span class="ov">S</span><span class="ov">R</span> mandal isteyenler için <b>74LS279</b> entegresinde dört adet mandal bulunur. Bu mandal, saatli SR, D mandal ve flip-flop'ların da temel yapı taşıdır. Devreyi <a href="../sayisal-elektronik/">Y-0016 deney seti simülatöründe</a> deneyebilirsin: Dijital → Modül 3 (Flip-floplar) → "7.2 NAND'lı SR FF" hazır bağlantısı.</p>
 </section>
 
 <!-- 05 -->
 <section id="d">
   <div class="eyebrow">Bölüm 05</div>
   <h2>D Mandal (D Latch)</h2>
-  <p class="lead">SR mandalın yasak durum sorununu çözmek için tek bir veri girişi <b>D</b> ve bir etkinleştirme girişi <b>EN</b> (bazı kaynaklarda C veya G) kullanılır. İçeride <span class="formula">S = D·EN</span> ve <span class="formula">R = <span class="ov">D</span>·EN</span> üretildiği için S ve R hiçbir zaman aynı anda 1 olamaz.</p>
+  <p class="lead">SR mandalın yasak durum sorununu çözmek için S ve R yerine tek bir veri girişi <b>D</b> kullanılır. D mandal iki adımda kurulur: önce enable olmadan, sonra bir etkinleştirme girişi <b>EN</b> ile.</p>
+
+  <h3>Adım 1: Enable girişi olmadan</h3>
+  <p>SR mandalın önüne bir NOT kapısı konur: <span class="formula">S = D</span>, <span class="formula">R = <span class="ov">D</span></span>. S ve R birbirinin tersi olduğundan <b>yasak durum (S = R = 1) artık imkânsızdır</b>.</p>
+  <div class="sim">
+    <div class="sim-grid">
+      <div>
+        <svg viewBox="0 0 360 150" class="circuit" id="d0Svg"></svg>
+        <div class="controls"><button class="toggle" id="d0D">D = 0</button></div>
+        <div class="outs"><span class="led" id="d0Q"><i></i>Q = 0</span></div>
+        <p class="status" id="d0Status"></p>
+      </div>
+      <div class="tbl-wrap">
+        <table class="tt">
+          <tr><th>D</th><th>S</th><th>R</th><th>Q</th></tr>
+          <tr><td>0</td><td>0</td><td>1</td><td>0</td></tr>
+          <tr><td>1</td><td>1</td><td>0</td><td>1</td></tr>
+        </table>
+        <p style="margin-top:12px">Her an: <span class="formula">Q = D</span></p>
+      </div>
+    </div>
+  </div>
+  <div class="callout warn"><b>Ama bu devre bir şey hatırlamaz.</b> S ve R'den biri <i>her zaman</i> 1'dir; mandal hiçbir zaman bekleme durumuna (S = R = 0) giremez. Q, D'yi anında kopyalar: D değişince Q da değişir. Bu hâliyle devre bellek değil, yalnızca bir <b>tampondur</b> (bir kablodan farkı yoktur). Yasak durumu çözdük ama hafızayı kaybettik. Bu yüzden ders kitaplarında bu adım kısaca gösterilip hemen ikinci adıma geçilir.</div>
+
+  <h3>Adım 2: Enable (EN) eklenmiş D mandal</h3>
+  <p>Hafızayı geri getirmek için S ve R, iki AND kapısıyla bir etkinleştirme girişine bağlanır: <span class="formula">S = D·EN</span>, <span class="formula">R = <span class="ov">D</span>·EN</span>. EN = 1 iken devre Adım 1'deki gibi çalışır (Q = D). EN = 0 iken S = R = 0 olur: bekleme durumu, yani mandal son değeri <b>kilitler</b>. S ve R yine hiçbir zaman aynı anda 1 olamaz. EN girişine bazı kaynaklarda C (control) veya G (gate) denir.</p>
   <div class="sim">
     <div class="sim-grid">
       <div>
@@ -655,6 +732,114 @@ function srCircuit(S, R, Q, Qb, x0 = 0){
   }
   $('#srS').onclick = () => { S ^= 1; update(); };
   $('#srR').onclick = () => { R ^= 1; update(); };
+  update();
+})();
+
+/* ---------- 04b NAND tabanlı S̅R̅ mandal ---------- */
+function nandAt(x, y){
+  return `<g transform="translate(${x},${y})" fill="var(--panel)" stroke="var(--ink)" stroke-width="2">
+    <path d="M0 0 H35 A30 30 0 0 1 35 60 H0 Z"/><circle cx="70" cy="30" r="5"/></g>`;
+}
+function srnCircuit(Sb, Rb, Q, Qb){
+  // S̅ üst NAND'a (çıkışı Q), R̅ alt NAND'a (çıkışı Q̅) gider
+  const w = (d, v) => `<path d="${d}" stroke="${W(v)}" stroke-width="3" fill="none" stroke-linejoin="round"/>`;
+  return [
+    w('M20 35 H130', Sb), w('M20 165 H130', Rb),
+    w('M205 50 H330', Q), w('M205 150 H330', Qb),
+    w('M250 50 V100 H90 V135 H130', Q),
+    w('M275 150 V85 H100 V65 H130', Qb),
+    `<circle cx="250" cy="50" r="3.5" fill="${W(Q)}"/><circle cx="275" cy="150" r="3.5" fill="${W(Qb)}"/>`,
+    nandAt(130, 20), nandAt(130, 120),
+  ].join('');
+}
+(function(){
+  let Sb = 1, Rb = 1, q = 0, invalid = false;
+  const rows = [...document.querySelectorAll('#srnTable tr[data-k]')];
+  function update(){
+    const bad = !Sb && !Rb;
+    if (bad) invalid = true;
+    else if (!Sb) { q = 1; invalid = false; }
+    else if (!Rb) { q = 0; invalid = false; }
+    const Q = bad ? 1 : q, Qb = bad ? 1 : 1 - q;
+    $('#srnSvg').innerHTML = srnCircuit(Sb, Rb, Q, Qb) +
+      LBL(4, 40, 'S̅') + LBL(4, 170, 'R̅') + LBL(336, 55, 'Q') + LBL(336, 155, 'Q̅');
+    setToggle($('#srnS'), 'S̅', Sb); setToggle($('#srnR'), 'R̅', Rb);
+    setLed($('#srnQ'), 'Q', Q, bad); setLed($('#srnQb'), 'Q', Qb, bad);
+    rows.forEach(r => { r.classList.toggle('on', r.dataset.k === `${Sb}${Rb}` && !bad); r.classList.toggle('bad', r.dataset.k === '00' && bad); });
+    let msg;
+    if (bad) msg = '<b>Yasak durum!</b> Q ve Q̅ ikisi de 1. Girişler aynı anda 1\'e dönerse sonuç belirsiz olur.';
+    else if (!Sb) msg = '<b>Set:</b> S̅ = 0 olduğu için Q = 1 yapıldı.';
+    else if (!Rb) msg = '<b>Reset:</b> R̅ = 0 olduğu için Q = 0 yapıldı.';
+    else msg = invalid ? '<b>Belirsiz:</b> Yasak durumdan çıkıldı; gerçek devrede Q rastgele 0 ya da 1 olabilir (burada önceki değer gösteriliyor).'
+                       : `<b>Bekleme:</b> iki giriş de 1; Q önceki değeri olan ${q}${q ? "'i" : "'ı"} koruyor.`;
+    $('#srnStatus').innerHTML = msg;
+  }
+  $('#srnS').onclick = () => { Sb ^= 1; update(); };
+  $('#srnR').onclick = () => { Rb ^= 1; update(); };
+  update();
+})();
+
+/* kontak sıçraması giderici: devre + zaman diyagramı (statik) */
+(function(){
+  const ink = 'var(--ink)', mut = 'var(--muted)';
+  const T = (x, y, t, o = '') => `<text x="${x}" y="${y}" font-family="JetBrains Mono,monospace" font-size="12" fill="${ink}" ${o}>${t}</text>`;
+  const L = (d, c = ink, w = 2) => `<path d="${d}" stroke="${c}" stroke-width="${w}" fill="none" stroke-linejoin="round"/>`;
+  const res = (x, y1, y2) => { const m = (y1 + y2) / 2; return L(`M${x} ${y1} V${m - 14}`) + `<rect x="${x - 6}" y="${m - 14}" width="12" height="28" fill="var(--panel)" stroke="${ink}" stroke-width="2"/>` + L(`M${x} ${m + 14} V${y2}`); };
+  let s = '';
+  // devre (sol)
+  s += L('M40 22 H170') + T(176, 26, '+5V');
+  s += res(80, 22, 92) + res(130, 22, 76) + L('M130 76 V142') + T(88, 60, 'R1') + T(138, 52, 'R2');
+  s += L('M80 92 H210') + L('M130 142 H210');              // S̅ ve R̅ hatları
+  s += `<circle cx="80" cy="92" r="3.5" fill="${ink}"/><circle cx="130" cy="142" r="3.5" fill="${ink}"/>`;
+  s += L('M80 92 V112') + L('M130 142 V152');             // kontaklar A ve B
+  s += `<circle cx="80" cy="115" r="4" fill="var(--panel)" stroke="${ink}" stroke-width="2"/><circle cx="130" cy="155" r="4" fill="var(--panel)" stroke="${ink}" stroke-width="2"/>`;
+  s += T(60, 120, 'A') + T(140, 166, 'B');
+  s += L('M110 205 L128 158', ink, 3) + `<circle cx="110" cy="205" r="4" fill="${ink}"/>`; // ortak uç → B
+  s += L('M110 205 V225') + L('M98 225 H122') + L('M102 230 H118') + L('M107 235 H113');   // toprak
+  s += `<rect x="210" y="72" width="90" height="90" rx="8" fill="var(--soft)" stroke="${ink}" stroke-width="2"/>`;
+  s += T(218, 96, 'S̅') + T(218, 146, 'R̅') + T(255, 122, 'S̅R̅', 'text-anchor="middle"') + T(255, 138, 'mandal', 'text-anchor="middle" font-size="10" fill="' + mut + '"');
+  s += L('M300 97 H330') + T(334, 101, 'Q');
+  s += T(20, 248, 'Anahtar A\'dan B\'ye çevriliyor', `fill="${mut}" font-size="11"`);
+  // zaman diyagramı (sağ)
+  const X0 = 390, X1 = 630, row = (y, lab) => T(350, y + 4, lab) + L(`M${X0} ${y + 14} H${X1}`, 'var(--line)', 1);
+  s += row(50, 'S̅') + row(115, 'R̅') + row(180, 'Q');
+  const hi = y => y - 12, lo = y => y + 12;
+  // S̅: A kontağından ayrılınca 1 olur (temiz)
+  s += L(`M${X0} ${lo(50)} H450 V${hi(50)} H${X1}`, 'var(--hi)', 2.5);
+  // R̅: B'ye değince sıçrar: 1 → 0/1/0/1/0 → 0
+  const bx = [470, 478, 486, 496, 504, 516, 522];
+  let d = `M${X0} ${hi(115)} H${bx[0]}`;
+  bx.forEach((x, i) => { d += ` V${i % 2 ? hi(115) : lo(115)} H${bx[i + 1] || X1}`; });
+  s += L(d, 'var(--neg)', 2.5);
+  s += `<rect x="466" y="96" width="62" height="40" rx="5" fill="none" stroke="var(--neg)" stroke-dasharray="3 3"/>` + T(497, 92, 'sıçrama', `text-anchor="middle" font-size="10" fill="var(--neg)"`);
+  // Q: ilk 0'da temizce 0 olur
+  s += L(`M${X0} ${hi(180)} H470 V${lo(180)} H${X1}`, 'var(--accent)', 2.5);
+  s += L(`M470 30 V200`, mut, 1) + T(472, 214, 'ilk temas', `font-size="10" fill="${mut}"`);
+  s += T(X1, 240, 'Q tek ve temiz bir geçiş yapar', `text-anchor="end" font-size="11" fill="var(--accent)"`);
+  $('#dbSvg').innerHTML = s;
+})();
+
+/* ---------- 05a enable'sız D mandal: Q = D (hafıza yok) ---------- */
+(function(){
+  let D = 0;
+  function update(){
+    const w = (d, v) => `<path d="${d}" stroke="${W(v)}" stroke-width="3" fill="none" stroke-linejoin="round"/>`;
+    $('#d0Svg').innerHTML = [
+      w('M20 45 H200', D), w('M60 45 V115 H100', D),
+      `<g transform="translate(100,106)" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"><path d="M0 0 L16 9 L0 18 Z"/><circle cx="19" cy="9" r="3"/></g>`,
+      w('M122 115 H200', 1 - D),
+      `<circle cx="60" cy="45" r="3.5" fill="${W(D)}"/>`,
+      `<rect x="200" y="25" width="90" height="110" rx="8" fill="var(--soft)" stroke="var(--ink)" stroke-width="2"/>`,
+      LBL(208, 50, 'S'), LBL(208, 120, 'R'), LBL(245, 87, 'SR', 'middle'),
+      w('M290 50 H340', D), w('M290 115 H340', 1 - D),
+      LBL(4, 50, 'D'), LBL(282, 45, 'Q', 'end'), LBL(282, 120, 'Q̅', 'end'),
+      LBL(150, 40, `S=${D}`, 'middle'), LBL(150, 135, `R=${1 - D}`, 'middle'),
+    ].join('');
+    setToggle($('#d0D'), 'D', D); setLed($('#d0Q'), 'Q', D, false);
+    $('#d0Status').innerHTML = D ? '<b>D = 1 → S = 1, R = 0:</b> Set, Q = 1.' : '<b>D = 0 → S = 0, R = 1:</b> Reset, Q = 0.';
+    $('#d0Status').innerHTML += ' D\'yi değiştir: Q hemen onu izler; bekleme durumu yok.';
+  }
+  $('#d0D').onclick = () => { D ^= 1; update(); };
   update();
 })();
 
@@ -1024,6 +1209,8 @@ const QUIZ = [
   { q:'Girişler birbirinden farklıyken 1 veren kapı hangisidir?', o:['XNOR','OR','XOR','NAND'], a:2, e:'XOR (özel veya), girişler farklıysa 1 verir.' },
   { q:'Ardıl devreyi kombinasyonel devreden ayıran temel özellik nedir?', o:['Daha çok kapı içermesi','Hafıza (geri besleme) içermesi','Yalnızca NAND kullanması','Daha hızlı olması'], a:1, e:'Ardıl devrenin çıkışı mevcut duruma da bağlıdır; bu, geri besleme ile sağlanan hafızadır.' },
   { q:'NOR tabanlı SR mandalda hangi giriş kombinasyonu yasaktır?', o:['S=0, R=0','S=1, R=0','S=0, R=1','S=1, R=1'], a:3, e:'S = R = 1 iken Q ve Q̅ ikisi de 0 olur; ardından sonuç belirsizdir.' },
+  { q:'NAND tabanlı S̅R̅ mandalda bekleme (hafıza) durumu hangisidir?', o:['S̅=0, R̅=0','S̅=1, R̅=1','S̅=0, R̅=1','S̅=1, R̅=0'], a:1, e:'Girişler aktif-düşüktür; ikisi de 1 iken mandal önceki durumunu korur.' },
+  { q:'NAND tabanlı S̅R̅ mandalda S̅ = R̅ = 0 uygulanırsa çıkışlar ne olur?', o:['Q=0, Q̅=1','Q=1, Q̅=0','Q=1, Q̅=1 (yasak)','Q=0, Q̅=0 (yasak)'], a:2, e:'Her iki NAND\'ın bir girişi 0 olduğundan iki çıkış da 1 olur; bu yasak durumdur.' },
   { q:'D mandalda EN = 1 iken ne olur?', o:['Q sabit kalır','Q, D\'yi takip eder (şeffaf)','Q tersine döner','Q = 0 olur'], a:1, e:'EN = 1 iken D mandal şeffaftır: Q = D.' },
   { q:'Pozitif kenar tetiklemeli bir flip-flop çıkışını ne zaman günceller?', o:['CLK 1 olduğu süre boyunca','CLK 1→0 geçişinde','CLK 0→1 geçişinde','CLK 0 olduğu süre boyunca'], a:2, e:'Pozitif (yükselen) kenar = 0 → 1 geçişi.' },
   { q:'Flip-flop sembolünde CLK girişinde ○▷ (daire + üçgen) neyi gösterir?', o:['Seviye tetikleme','Negatif kenar tetikleme','Pozitif kenar tetikleme','Asenkron reset'], a:1, e:'Üçgen kenar tetiklemeyi, daire ise terslemeyi, yani düşen kenarı gösterir.' },
