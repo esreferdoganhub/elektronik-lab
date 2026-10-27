@@ -96,6 +96,7 @@ select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px
 
 .sim{border:1px solid var(--line);border-radius:12px;padding:18px;background:var(--bg);margin:16px 0}
 .sim-grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:22px;align-items:start}
+.sim-grid.wide{grid-template-columns:minmax(0,1fr)} .sim-grid.wide svg.circuit{max-width:640px} /* kapı düzeyinde geniş şemalar */
 .sim svg.circuit{width:100%;height:auto;display:block}
 .outs{display:flex;gap:22px;margin:10px 0;flex-wrap:wrap}
 .status{font-size:14px;color:var(--muted);min-height:22px}
@@ -363,11 +364,11 @@ select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px
   <p class="lead">SR mandalın yasak durum sorununu çözmek için S ve R yerine tek bir veri girişi <b>D</b> kullanılır. D mandal iki adımda kurulur: önce enable olmadan, sonra bir etkinleştirme girişi <b>EN</b> ile.</p>
 
   <h3>Adım 1: Enable girişi olmadan</h3>
-  <p>SR mandalın önüne bir NOT (DEĞİL) kapısı konur: <span class="formula">S = D</span>, <span class="formula">R = <span class="ov">D</span></span>. S ve R birbirinin tersi olduğundan <b>yasak durum (S = R = 1) artık imkânsızdır</b>.</p>
+  <p>SR mandalın önüne bir NOT (DEĞİL) kapısı konur: <span class="formula">S = D</span>, <span class="formula">R = <span class="ov">D</span></span>. S ve R birbirinin tersi olduğundan <b>yasak durum (S = R = 1) artık imkânsızdır</b>. Şemada SR mandal, Bölüm 04'teki gibi çapraz bağlı iki NOR kapısıyla çizilmiştir (R üst kapıya, S alt kapıya gider).</p>
   <div class="sim">
-    <div class="sim-grid">
+    <div class="sim-grid wide">
       <div>
-        <svg viewBox="0 0 360 150" class="circuit" id="d0Svg"></svg>
+        <svg viewBox="0 0 530 215" class="circuit" id="d0Svg" role="img" aria-label="DEĞİL kapısı ve çapraz bağlı iki NOR kapısından oluşan enable'sız D mandal"></svg>
         <div class="controls"><button class="toggle" id="d0D">D = 0</button></div>
         <div class="outs"><span class="led" id="d0Q"><i></i>Q = 0</span></div>
         <p class="status" id="d0Status"></p>
@@ -387,9 +388,9 @@ select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px
   <h3>Adım 2: Enable (EN) eklenmiş D mandal</h3>
   <p>Hafızayı geri getirmek için S ve R, iki AND (VE) kapısıyla bir etkinleştirme girişine bağlanır: <span class="formula">S = D·EN</span>, <span class="formula">R = <span class="ov">D</span>·EN</span>. EN = 1 iken devre Adım 1'deki gibi çalışır (Q = D). EN = 0 iken S = R = 0 olur: bekleme durumu, yani mandal son değeri <b>kilitler</b>. S ve R yine hiçbir zaman aynı anda 1 olamaz. EN girişine bazı kaynaklarda C (control) veya G (gate) denir.</p>
   <div class="sim">
-    <div class="sim-grid">
+    <div class="sim-grid wide">
       <div>
-        <svg viewBox="0 0 360 170" class="circuit" id="dSvg"></svg>
+        <svg viewBox="0 0 570 225" class="circuit" id="dSvg" role="img" aria-label="DEĞİL, iki VE ve çapraz bağlı iki NOR kapısından oluşan enable girişli D mandal"></svg>
         <div class="controls">
           <button class="toggle" id="dD">D = 0</button>
           <button class="toggle" id="dEN">EN = 0</button>
@@ -838,21 +839,27 @@ function srnCircuit(Sb, Rb, Q, Qb){
   $('#dbSvg').innerHTML = s;
 })();
 
+/* D mandallar içindeki SR mandal: srCircuit'in (R üstte, S altta) kaydırılmış hâli + kesikli çerçeve */
+function srInner(dx, dy, S, R, Q, Qb){
+  return `<rect x="${dx+78}" y="${dy+4}" width="200" height="190" rx="10" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-dasharray="5 4"/>` +
+    `<text x="${dx+178}" y="${dy+212}" font-family="JetBrains Mono,monospace" font-size="11" fill="var(--muted)" text-anchor="middle">SR mandal (NOR)</text>` +
+    `<g transform="translate(${dx},${dy})">${srCircuit(S, R, Q, Qb)}</g>`;
+}
+const notAt = (x, y) => `<g transform="translate(${x},${y - 9})" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"><path d="M0 0 L16 9 L0 18 Z"/><circle cx="19" cy="9" r="3"/></g>`;
+
 /* ---------- 05a enable'sız D mandal: Q = D (hafıza yok) ---------- */
 (function(){
   let D = 0;
   function update(){
     const w = (d, v) => `<path d="${d}" stroke="${W(v)}" stroke-width="3" fill="none" stroke-linejoin="round"/>`;
+    // SR mandal translate(170,0): R girişi (190,35), S girişi (190,165); Q y=50, Q̅ y=150
     $('#d0Svg').innerHTML = [
-      w('M20 45 H200', D), w('M60 45 V115 H100', D),
-      `<g transform="translate(100,106)" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"><path d="M0 0 L16 9 L0 18 Z"/><circle cx="19" cy="9" r="3"/></g>`,
-      w('M122 115 H200', 1 - D),
-      `<circle cx="60" cy="45" r="3.5" fill="${W(D)}"/>`,
-      `<rect x="200" y="25" width="90" height="110" rx="8" fill="var(--soft)" stroke="var(--ink)" stroke-width="2"/>`,
-      LBL(208, 50, 'S'), LBL(208, 120, 'R'), LBL(245, 87, 'SR', 'middle'),
-      w('M290 50 H340', D), w('M290 115 H340', 1 - D),
-      LBL(4, 50, 'D'), LBL(282, 45, 'Q', 'end'), LBL(282, 120, 'Q̅', 'end'),
-      LBL(150, 40, `S=${D}`, 'middle'), LBL(150, 135, `R=${1 - D}`, 'middle'),
+      w('M20 165 H190', D), w('M60 165 V35 H95', D),
+      notAt(95, 35), w('M117 35 H190', 1 - D),
+      `<circle cx="60" cy="165" r="3.5" fill="${W(D)}"/>`,
+      srInner(170, 0, D, 1 - D, D, 1 - D),
+      LBL(4, 170, 'D'), LBL(150, 28, `R=${1 - D}`, 'middle'), LBL(150, 158, `S=${D}`, 'middle'),
+      LBL(506, 55, 'Q'), LBL(506, 155, 'Q̅'),
     ].join('');
     setToggle($('#d0D'), 'D', D); setLed($('#d0Q'), 'Q', D, false);
     $('#d0Status').innerHTML = D ? '<b>D = 1 → S = 1, R = 0:</b> Set, Q = 1.' : '<b>D = 0 → S = 0, R = 1:</b> Reset, Q = 0.';
@@ -870,20 +877,18 @@ function srnCircuit(Sb, Rb, Q, Qb){
     if (EN) q = D;
     const S = D & EN, R = (1 - D) & EN;
     const w = (d, v) => `<path d="${d}" stroke="${W(v)}" stroke-width="3" fill="none" stroke-linejoin="round"/>`;
+    // üst VE: R = D̅·EN, alt VE: S = D·EN; SR mandal translate(210,5): R (230,40), S (230,170), Q y=55, Q̅ y=155
     $('#dSvg').innerHTML = [
-      // D → üst AND, D' → alt AND; EN her ikisine
-      w('M20 40 H90', D), w('M45 40 V130 H58', D),
-      `<g transform="translate(58,121)" fill="var(--panel)" stroke="var(--ink)" stroke-width="2"><path d="M0 0 L16 9 L0 18 Z"/><circle cx="19" cy="9" r="3"/></g>`,
-      w('M80 130 H90', 1 - D),
-      w('M20 85 H70 V60 H90', EN), w('M70 85 V110 H90', EN),
-      `<circle cx="45" cy="40" r="3.5" fill="${W(D)}"/><circle cx="70" cy="85" r="3.5" fill="${W(EN)}"/>`,
-      andAt(90, 25), andAt(90, 95),
-      w('M140 50 H200', S), w('M140 120 H200', R),
-      `<rect x="200" y="30" width="90" height="110" rx="8" fill="var(--soft)" stroke="var(--ink)" stroke-width="2"/>`,
-      LBL(208, 55, 'S'), LBL(208, 125, 'R'), LBL(245, 92, 'SR', 'middle'),
-      w('M290 55 H340', q), w('M290 120 H340', 1 - q),
-      LBL(4, 45, 'D'), LBL(0, 90, 'EN'), LBL(282, 50, 'Q', 'end'), LBL(282, 125, 'Q̅', 'end'),
-      LBL(150, 44, `S=${S}`), LBL(150, 114, `R=${R}`),
+      w('M20 182 H150', D), w('M50 182 V27 H100', D),
+      notAt(100, 27), w('M122 27 H150', 1 - D),
+      w('M20 105 H80 V53 H150', EN), w('M80 105 V156 H150', EN),
+      `<circle cx="50" cy="182" r="3.5" fill="${W(D)}"/><circle cx="80" cy="105" r="3.5" fill="${W(EN)}"/>`,
+      andAt(150, 15), andAt(150, 145),
+      w('M200 40 H230', R), w('M200 170 H230', S),
+      srInner(210, 5, S, R, q, 1 - q),
+      LBL(4, 187, 'D'), LBL(0, 110, 'EN'),
+      LBL(215, 32, `R=${R}`, 'middle'), LBL(215, 192, `S=${S}`, 'middle'),
+      LBL(546, 60, 'Q'), LBL(546, 160, 'Q̅'),
     ].join('');
     setToggle($('#dD'), 'D', D); setToggle($('#dEN'), 'EN', EN);
     setLed($('#dQ'), 'Q', q); setLed($('#dQb'), 'Q', 1 - q);
