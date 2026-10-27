@@ -1377,9 +1377,11 @@ const pick=a=>a[Math.floor(Math.random()*a.length)];
 function siTR(v,u){const a=Math.abs(v);const P=[[1e6,'M'],[1e3,'k'],[1,''],[1e-3,'m'],[1e-6,'µ']];for(const[sc,p]of P)if(a>=sc*0.9995)return (+(v/sc).toPrecision(3)).toLocaleString('tr-TR')+' '+p+u;return (+(v/1e-6).toPrecision(3)).toLocaleString('tr-TR')+' µ'+u}
 function newExample(){
   let p,q,td,vd;
-  // yatay: 1,6…6,0 kare, 0,2 adımlı; dikey: 1,2…6,4 kare, 0,4 adımlı (tepeler ±q/2 de ara çizgiye düşsün); en az biri virgüllü
+  // yatay: 1,6…6,0 kare, 0,2 adımlı; dikey: 1,2…6,4 kare, 0,4 adımlı (tepeler ±q/2 de ara çizgiye düşsün); en az biri virgüllü.
+  // Sonuçlar yuvarlak olsun: f 10 Hz'in, Vpp 50 mV'un katı (örn. 1250 Hz, 2,4 V; 0,88 V veya 3846,15 Hz gibi değerler sorulmaz).
+  const kat=(x,m)=>Math.abs(x/m-Math.round(x/m))<1e-6;
   do{p=+(pick([...Array(23)].map((_,i)=>1.6+i*0.2))).toFixed(1);q=+(pick([...Array(14)].map((_,i)=>1.2+i*0.4))).toFixed(1);td=pick(RD_T);vd=pick(RD_V)}
-  while((Number.isInteger(p)&&Number.isInteger(q))||q*vd>10||(RD.ex&&RD.ex.p===p&&RD.ex.q===q&&RD.ex.td===td));
+  while((Number.isInteger(p)&&Number.isInteger(q))||q*vd>10||!kat(1/(p*td),10)||!kat(q*vd*1000,50)||(RD.ex&&RD.ex.p===p&&RD.ex.q===q&&RD.ex.td===td));
   const wave=RD.wave==='mix'?pick(['sine','square','ramp']):RD.wave,T=p*td,f=1/T,vpp=+(q*vd).toFixed(4);
   RD.ex={p,q,td,vd,wave,T,f,vpp};RD.shown=false;
   resetAll();cfg(0,{on:true,wave,freq:f,amp:vpp,off:0,phase:0,duty:50});G.menu='param';G.param='freq';
