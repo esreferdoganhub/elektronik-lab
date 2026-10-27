@@ -318,6 +318,14 @@ select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px
           <tr data-k="10"><td>1</td><td>0</td><td>0</td><td class="note">Reset</td></tr>
           <tr data-k="00"><td>0</td><td>0</td><td>?</td><td class="note">Geçersiz / yasak</td></tr>
         </table>
+        <p class="status" style="margin:12px 0 4px">Aynı tablo <b>S ve R</b>'ye göre (S = (<span class="ov">S</span>)′, R = (<span class="ov">R</span>)′):</p>
+        <table class="tt" id="srnTable2">
+          <tr><th>S</th><th>R</th><th>Q<sub>+</sub></th><th>Durum</th></tr>
+          <tr data-k="11"><td>0</td><td>0</td><td>Q</td><td class="note">Değişmez (hafıza, bekleme)</td></tr>
+          <tr data-k="01"><td>1</td><td>0</td><td>1</td><td class="note">Set</td></tr>
+          <tr data-k="10"><td>0</td><td>1</td><td>0</td><td class="note">Reset</td></tr>
+          <tr data-k="00"><td>1</td><td>1</td><td>?</td><td class="note">Geçersiz / yasak</td></tr>
+        </table>
         <p style="margin-top:12px">Karakteristik denklem:<br><span class="formula">Q<sub>+</sub> = S + <span class="ov">R</span>·Q</span> &nbsp;(S = (<span class="ov">S</span>)′, R = (<span class="ov">R</span>)′)</p>
       </div>
     </div>
@@ -765,7 +773,7 @@ function srnCircuit(Sb, Rb, Q, Qb){
 }
 (function(){
   let Sb = 1, Rb = 1, q = 0, invalid = false;
-  const rows = [...document.querySelectorAll('#srnTable tr[data-k]')];
+  const rows = [...document.querySelectorAll('#srnTable tr[data-k], #srnTable2 tr[data-k]')]; // iki tablo: S̅R̅'ye ve S,R'ye göre (data-k = S̅R̅)
   function update(){
     const bad = !Sb && !Rb;
     if (bad) invalid = true;
