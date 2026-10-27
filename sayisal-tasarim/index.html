@@ -68,6 +68,7 @@ table.tt th{background:var(--soft);font-weight:600}
 table.tt tr.on td{background:var(--accent-soft);color:var(--accent);font-weight:600}
 table.tt tr.bad td{background:var(--warn-soft);color:var(--warn)}
 table.tt td.note{text-align:left;font-family:Inter,sans-serif;font-size:13.5px}
+.trn{font-weight:500;color:var(--muted);font-size:.82em}
 .tbl-wrap{overflow-x:auto}
 
 .btn{font:inherit;font-size:14px;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:7px 14px;border-radius:8px;cursor:pointer}
@@ -193,13 +194,23 @@ select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px
   <div class="eyebrow">Bölüm 02</div>
   <h2>Mantık Kapıları</h2>
   <p class="lead">Mantık kapıları, bir veya daha fazla girişi tek bir çıkışa dönüştüren temel yapı taşlarıdır. Bütün sayısal sistemler bu kapıların birleşiminden oluşur.</p>
+  <table class="tt" style="width:100%">
+    <tr><th>Kapı (İngilizce)</th><th>Türkçe adı</th><th>Boole ifadesi</th><th>Çıkış 1 olur, eğer…</th></tr>
+    <tr><td>AND</td><td class="note"><b>VE</b></td><td>Y = A·B</td><td class="note">iki giriş de 1 ise</td></tr>
+    <tr><td>OR</td><td class="note"><b>VEYA</b></td><td>Y = A + B</td><td class="note">en az bir giriş 1 ise</td></tr>
+    <tr><td>NOT</td><td class="note"><b>DEĞİL</b> (tersleyici, inverter)</td><td>Y = A'</td><td class="note">giriş 0 ise</td></tr>
+    <tr><td>NAND</td><td class="note"><b>VE-DEĞİL</b></td><td>Y = (A·B)'</td><td class="note">girişlerden en az biri 0 ise</td></tr>
+    <tr><td>NOR</td><td class="note"><b>VEYA-DEĞİL</b></td><td>Y = (A + B)'</td><td class="note">iki giriş de 0 ise</td></tr>
+    <tr><td>XOR</td><td class="note"><b>ÖZEL VEYA</b></td><td>Y = A ⊕ B</td><td class="note">girişler farklı ise</td></tr>
+    <tr><td>XNOR</td><td class="note"><b>ÖZEL VEYA-DEĞİL</b></td><td>Y = (A ⊕ B)'</td><td class="note">girişler aynı ise</td></tr>
+  </table>
   <p>Aşağıdaki <b>A</b> ve <b>B</b> girişlerini değiştir; tüm kapıların çıkışı ve doğruluk tablolarındaki aktif satır anında güncellenir. Yeşil teller <b>1</b>, gri teller <b>0</b> taşır.</p>
   <div class="controls">
     <button class="toggle" id="gA">A = 0</button>
     <button class="toggle" id="gB">B = 0</button>
   </div>
   <div class="gate-grid" id="gateGrid"></div>
-  <div class="callout">NAND ve NOR kapılarına <b>evrensel kapı</b> denir: yalnızca NAND (veya yalnızca NOR) kullanarak diğer tüm kapıları oluşturabilirsin. Bir sonraki bölümlerde mandalları da bu kapılarla kuracağız.</div>
+  <div class="callout">NAND (VE-DEĞİL) ve NOR (VEYA-DEĞİL) kapılarına <b>evrensel kapı</b> denir: yalnızca NAND (veya yalnızca NOR) kullanarak diğer tüm kapıları oluşturabilirsin. Bir sonraki bölümlerde mandalları da bu kapılarla kuracağız.</div>
 </section>
 
 <!-- 03 -->
@@ -253,7 +264,7 @@ select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px
 <section id="sr">
   <div class="eyebrow">Bölüm 04</div>
   <h2>SR Mandal (Set-Reset Latch)</h2>
-  <p class="lead">En basit hafıza elemanıdır. Birbirine çapraz bağlanmış iki NOR kapısından oluşur. <b>S</b> (Set) çıkışı 1 yapar, <b>R</b> (Reset) çıkışı 0 yapar; ikisi de 0 iken mandal son durumunu <b>hatırlar</b>.</p>
+  <p class="lead">En basit hafıza elemanıdır. Birbirine çapraz bağlanmış iki NOR (VEYA-DEĞİL) kapısından oluşur. <b>S</b> (Set) çıkışı 1 yapar, <b>R</b> (Reset) çıkışı 0 yapar; ikisi de 0 iken mandal son durumunu <b>hatırlar</b>.</p>
   <div class="sim">
     <div class="sim-grid">
       <div>
@@ -284,7 +295,7 @@ select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px
   <p>Simülatörde dene: önce S'yi 1 yapıp geri 0'a çek, Q'nun 1'de <b>kaldığını</b> gör. Bu, devrenin bir biti hafızada tuttuğunu gösterir.</p>
 
   <h3>NAND tabanlı SR mandal (<span class="ov">S</span><span class="ov">R</span> mandal)</h3>
-  <p>Aynı hafıza devresi iki <b>NAND</b> kapısının çapraz bağlanmasıyla da kurulur. NAND kapısının çıkışı, girişlerinden biri 0 olunca kesinlikle 1 olur. Bu yüzden bu mandalın girişleri <b>aktif-düşüktür</b>: girişler normalde 1'de bekler, bir girişi kısa süre <b>0'a çekmek</b> o komutu verir. Girişler bu nedenle <span class="ov">S</span> ve <span class="ov">R</span> (S-değil, R-değil) diye yazılır.</p>
+  <p>Aynı hafıza devresi iki <b>NAND</b> (VE-DEĞİL) kapısının çapraz bağlanmasıyla da kurulur. NAND kapısının çıkışı, girişlerinden biri 0 olunca kesinlikle 1 olur. Bu yüzden bu mandalın girişleri <b>aktif-düşüktür</b>: girişler normalde 1'de bekler, bir girişi kısa süre <b>0'a çekmek</b> o komutu verir. Girişler bu nedenle <span class="ov">S</span> ve <span class="ov">R</span> (S-değil, R-değil) diye yazılır.</p>
   <div class="sim">
     <div class="sim-grid">
       <div>
@@ -344,7 +355,7 @@ select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px
   <p class="lead">SR mandalın yasak durum sorununu çözmek için S ve R yerine tek bir veri girişi <b>D</b> kullanılır. D mandal iki adımda kurulur: önce enable olmadan, sonra bir etkinleştirme girişi <b>EN</b> ile.</p>
 
   <h3>Adım 1: Enable girişi olmadan</h3>
-  <p>SR mandalın önüne bir NOT kapısı konur: <span class="formula">S = D</span>, <span class="formula">R = <span class="ov">D</span></span>. S ve R birbirinin tersi olduğundan <b>yasak durum (S = R = 1) artık imkânsızdır</b>.</p>
+  <p>SR mandalın önüne bir NOT (DEĞİL) kapısı konur: <span class="formula">S = D</span>, <span class="formula">R = <span class="ov">D</span></span>. S ve R birbirinin tersi olduğundan <b>yasak durum (S = R = 1) artık imkânsızdır</b>.</p>
   <div class="sim">
     <div class="sim-grid">
       <div>
@@ -366,7 +377,7 @@ select{font:inherit;font-size:14px;padding:7px 10px;border-radius:8px;border:1px
   <div class="callout warn"><b>Ama bu devre bir şey hatırlamaz.</b> S ve R'den biri <i>her zaman</i> 1'dir; mandal hiçbir zaman bekleme durumuna (S = R = 0) giremez. Q, D'yi anında kopyalar: D değişince Q da değişir. Bu hâliyle devre bellek değil, yalnızca bir <b>tampondur</b> (bir kablodan farkı yoktur). Yasak durumu çözdük ama hafızayı kaybettik. Bu yüzden ders kitaplarında bu adım kısaca gösterilip hemen ikinci adıma geçilir.</div>
 
   <h3>Adım 2: Enable (EN) eklenmiş D mandal</h3>
-  <p>Hafızayı geri getirmek için S ve R, iki AND kapısıyla bir etkinleştirme girişine bağlanır: <span class="formula">S = D·EN</span>, <span class="formula">R = <span class="ov">D</span>·EN</span>. EN = 1 iken devre Adım 1'deki gibi çalışır (Q = D). EN = 0 iken S = R = 0 olur: bekleme durumu, yani mandal son değeri <b>kilitler</b>. S ve R yine hiçbir zaman aynı anda 1 olamaz. EN girişine bazı kaynaklarda C (control) veya G (gate) denir.</p>
+  <p>Hafızayı geri getirmek için S ve R, iki AND (VE) kapısıyla bir etkinleştirme girişine bağlanır: <span class="formula">S = D·EN</span>, <span class="formula">R = <span class="ov">D</span>·EN</span>. EN = 1 iken devre Adım 1'deki gibi çalışır (Q = D). EN = 0 iken S = R = 0 olur: bekleme durumu, yani mandal son değeri <b>kilitler</b>. S ve R yine hiçbir zaman aynı anda 1 olamaz. EN girişine bazı kaynaklarda C (control) veya G (gate) denir.</p>
   <div class="sim">
     <div class="sim-grid">
       <div>
@@ -633,13 +644,13 @@ const FUNCS = [
 
 /* ---------- 02 kapılar ---------- */
 const GATES = [
-  { k:'AND',  f:(a,b)=>a&b,       ex:'Y = A·B',      d:'İki giriş de 1 ise 1' },
-  { k:'OR',   f:(a,b)=>a|b,       ex:'Y = A + B',    d:'En az biri 1 ise 1' },
-  { k:'NOT',  f:(a)=>1-a,         ex:"Y = A'",       d:'Girişin tersi' },
-  { k:'NAND', f:(a,b)=>1-(a&b),   ex:"Y = (A·B)'",   d:'AND\'in tersi' },
-  { k:'NOR',  f:(a,b)=>1-(a|b),   ex:"Y = (A + B)'", d:'OR\'un tersi' },
-  { k:'XOR',  f:(a,b)=>a^b,       ex:'Y = A ⊕ B',    d:'Girişler farklı ise 1' },
-  { k:'XNOR', f:(a,b)=>1-(a^b),   ex:"Y = (A ⊕ B)'", d:'Girişler aynı ise 1' },
+  { k:'AND', tr:'VE',  f:(a,b)=>a&b,       ex:'Y = A·B',      d:'İki giriş de 1 ise 1' },
+  { k:'OR', tr:'VEYA',   f:(a,b)=>a|b,       ex:'Y = A + B',    d:'En az biri 1 ise 1' },
+  { k:'NOT', tr:'DEĞİL',  f:(a)=>1-a,         ex:"Y = A'",       d:'Girişin tersi' },
+  { k:'NAND', tr:'VE-DEĞİL', f:(a,b)=>1-(a&b),   ex:"Y = (A·B)'",   d:'AND\'in tersi' },
+  { k:'NOR', tr:'VEYA-DEĞİL',  f:(a,b)=>1-(a|b),   ex:"Y = (A + B)'", d:'OR\'un tersi' },
+  { k:'XOR', tr:'ÖZEL VEYA',  f:(a,b)=>a^b,       ex:'Y = A ⊕ B',    d:'Girişler farklı ise 1' },
+  { k:'XNOR', tr:'ÖZEL VEYA-DEĞİL', f:(a,b)=>1-(a^b),   ex:"Y = (A ⊕ B)'", d:'Girişler aynı ise 1' },
 ];
 function gateBody(k){
   // döndürür: [şekil svg, giriş bitiş x, çıkış x]
@@ -671,7 +682,7 @@ function gateSVG(k, a, b, y){
       if (g.k==='NOT') [0,1].forEach(a => t += `<tr class="${a===A?'on':''}"><td>${a}</td><td>${g.f(a)}</td></tr>`);
       else for (let i=0;i<4;i++){ const a=i>>1, b=i&1; t += `<tr class="${a===A&&b===B?'on':''}"><td>${a}</td><td>${b}</td><td>${g.f(a,b)}</td></tr>`; }
       return `<div class="gate">
-        <div class="hd"><b>${g.k}</b><span class="led ${y?'on':''}"><i></i>Y = ${y}</span></div>
+        <div class="hd"><b>${g.k} <span class="trn">(${g.tr})</span></b><span class="led ${y?'on':''}"><i></i>Y = ${y}</span></div>
         ${gateSVG(g.k, A, B, y)}
         <div class="ex">${g.ex}  ·  ${g.d}</div>
         <table class="tt">${t}</table>
